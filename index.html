@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .hero {
+        background: var(--color-bg);
+        padding: var(--space-24) 0;
+      }
+
+      .hero-inner {
+        text-align: center;
+      }
+
+      .hero h1 {
+        font-size: var(--font-size-4xl);
+        font-weight: var(--font-weight-bold);
+        line-height: var(--line-height-tight);
+        color: var(--color-text-primary);
+      }
+
+      .hero-sub {
+        font-size: var(--font-size-lg);
+        color: var(--color-text-secondary);
+        margin-top: var(--space-6);
+      }
+
+      .hero-actions {
+        display: flex;
+        gap: var(--space-4);
+        justify-content: center;
+        margin-top: var(--space-8);
+      }
+
+      .stats-bar {
+        background: var(--color-surface);
+        border-top: 1px solid var(--color-border);
+        border-bottom: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .stats-inner {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        text-align: center;
+      }
+
+      .stat-number {
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-accent);
+      }
+
+      .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+        margin-top: var(--space-1);
+      }
+
+      .how-it-works {
+        padding: var(--space-20) 0;
+      }
+
+      .how-it-works h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        text-align: center;
+      }
+
+      .steps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-8);
+        margin-top: var(--space-12);
+      }
+
+      .step {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+      }
+
+      .step-number {
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-accent-light);
+      }
+
+      .step h3 {
+        margin-top: var(--space-4);
+      }
+
+      .step p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .feedstocks {
+        background: var(--color-surface);
+        padding: var(--space-20) 0;
+      }
+
+      .feedstocks h2 {
+        text-align: center;
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .feedstock-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: var(--space-4);
+        margin-top: var(--space-10);
+      }
+
+      .feedstock-chip {
+        background: var(--color-accent-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-4) var(--space-5);
+        text-align: center;
+      }
+
+      .feedstock-chip p {
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-2);
+      }
+
+      .cta-section {
+        background: var(--color-accent);
+        padding: var(--space-20) 0;
+        text-align: center;
+      }
+
+      .cta-section h2 {
+        color: white;
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .cta-section p {
+        color: rgba(255, 255, 255, 0.8);
+        margin-top: var(--space-4);
+      }
+
+      .cta-actions {
+        display: flex;
+        gap: var(--space-4);
+        justify-content: center;
+        margin-top: var(--space-8);
+      }
+
+      .cta-btn-light {
+        background: white;
+        color: var(--color-accent);
+      }
+
+      .cta-btn-light:hover {
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      .cta-btn-outline {
+        background: transparent;
+        color: white;
+        border: 1px solid white;
+      }
+
+      .cta-btn-outline:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <section class="hero">
+      <div class="container-narrow hero-inner">
+        <h1>The biochar marketplace.</h1>
+        <p class="hero-sub">
+          Connecting biochar producers to local farms, vineyards, and orchards. Browse verified listings, match material to your soil, and transact with confidence.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="listings.html">Browse Listings</a>
+          <a class="btn btn-secondary" href="producers.html">List Your Biochar</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats-bar">
+      <div class="container stats-inner">
+        <div class="stat">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Verified producers</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">8</div>
+          <div class="stat-label">California counties</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">$0</div>
+          <div class="stat-label">To list your biochar</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="how-it-works">
+      <div class="container">
+        <h2>How it works</h2>
+      </div>
+      <div class="container steps">
+        <article class="step">
+          <div class="step-number">01</div>
+          <h3>Browse verified listings</h3>
+          <p>
+            Filter biochar by feedstock type, county, certification status, and available tonnage. Every listing includes a standardized lab scorecard.
+          </p>
+        </article>
+        <article class="step">
+          <div class="step-number">02</div>
+          <h3>Match to your soil</h3>
+          <p>
+            Use the Soil Match tool to input your crop type, soil conditions, and goals. Get ranked recommendations with plain-English explanations.
+          </p>
+        </article>
+        <article class="step">
+          <div class="step-number">03</div>
+          <h3>Transact with confidence</h3>
+          <p>
+            Send an inquiry directly to the producer. We facilitate introduction, documentation, and payment. Verified transaction badges build long-term trust.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="feedstocks">
+      <div class="container">
+        <h2>Available feedstock types</h2>
+      </div>
+      <div class="container feedstock-grid">
+        <div class="feedstock-chip">
+          Almond Shell
+          <p>San Joaquin Valley</p>
+        </div>
+        <div class="feedstock-chip">
+          Rice Husk
+          <p>Sacramento Valley</p>
+        </div>
+        <div class="feedstock-chip">
+          Forest Thinning
+          <p>Sierra Nevada</p>
+        </div>
+        <div class="feedstock-chip">
+          Vine Pruning
+          <p>Napa / Sonoma</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <div class="container-narrow">
+        <h2>Ready to source biochar?</h2>
+        <p>
+          Browse available listings or apply to list your material. No subscription fees.
+        </p>
+        <div class="cta-actions">
+          <a class="btn cta-btn-outline" href="producers.html">Apply as Producer</a>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+  </body>
+</html>

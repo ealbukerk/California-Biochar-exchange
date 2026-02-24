@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - For Producers</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/airtable.js"></script>
+    <style>
+      .producers-hero {
+        padding: var(--space-20) 0 var(--space-16);
+      }
+
+      .producers-hero h1 {
+        font-size: var(--font-size-4xl);
+        line-height: var(--line-height-tight);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .producers-hero p {
+        margin-top: var(--space-5);
+        max-width: 760px;
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-lg);
+      }
+
+      .section-block {
+        padding: var(--space-16) 0;
+      }
+
+      .section-block h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        margin-bottom: var(--space-8);
+      }
+
+      .criteria-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-5);
+      }
+
+      .criteria-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+      }
+
+      .criteria-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 999px;
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .criteria-card h3 {
+        margin-top: var(--space-4);
+        font-size: var(--font-size-lg);
+      }
+
+      .criteria-card p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-5);
+      }
+
+      .feature-item {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-5);
+      }
+
+      .feature-item h3 {
+        font-size: var(--font-size-lg);
+      }
+
+      .feature-item p {
+        margin-top: var(--space-2);
+        color: var(--color-text-secondary);
+      }
+
+      .apply-section {
+        padding: var(--space-16) 0 var(--space-20);
+      }
+
+      .apply-section h2 {
+        text-align: center;
+        font-size: var(--font-size-2xl);
+      }
+
+      .apply-section > .container-narrow > p {
+        text-align: center;
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .apply-form {
+        max-width: 560px;
+        margin: var(--space-8) auto 0;
+        background: var(--color-surface);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+        border: 1px solid var(--color-border);
+      }
+
+      .form-group {
+        margin-bottom: var(--space-5);
+      }
+
+      .form-group label {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text-primary);
+      }
+
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        width: 100%;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--font-size-base);
+        margin-top: var(--space-2);
+        display: block;
+        font-family: var(--font-sans);
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .form-group textarea {
+        resize: vertical;
+        min-height: 96px;
+      }
+
+      .checkbox-group {
+        margin-top: var(--space-2);
+        display: grid;
+        gap: var(--space-2);
+      }
+
+      .checkbox-group label {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--font-size-base);
+        font-weight: var(--font-weight-normal);
+      }
+
+      .checkbox-group input[type="checkbox"] {
+        width: auto;
+        margin-top: 0;
+        display: inline-block;
+      }
+
+      .submit-wrap {
+        margin-top: var(--space-6);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+
+      @media (max-width: 900px) {
+        .criteria-grid,
+        .features-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="producers-hero">
+        <div class="container">
+          <h1>List your biochar on BM</h1>
+          <p>
+            Biochar.market connects verified producers to local agricultural buyers. Listing is free. We charge a 4% commission only on completed transactions.
+          </p>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="container">
+          <h2>Who we list</h2>
+          <div class="criteria-grid">
+            <article class="criteria-card">
+              <span class="criteria-icon" aria-hidden="true">✓</span>
+              <h3>US-based production</h3>
+              <p>
+                Your pyrolysis operation must be located in the United States. We serve agricultural buyers across the United States.
+              </p>
+            </article>
+            <article class="criteria-card">
+              <span class="criteria-icon" aria-hidden="true">✓</span>
+              <h3>Lab characterization on file</h3>
+              <p>
+                You must have a recent third-party lab report. If you don't have one, UC Davis Analytical Lab provides a standard biochar characterization panel for approximately $200 with 10–15 business day turnaround. We can provide the exact submission instructions.
+              </p>
+            </article>
+            <article class="criteria-card">
+              <span class="criteria-icon" aria-hidden="true">✓</span>
+              <h3>Minimum 5 tonnes available</h3>
+              <p>
+                We focus on agricultural-scale orders. Minimum listing quantity is 5 tonnes.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section-block">
+        <div class="container">
+          <h2>What you get</h2>
+          <div class="features-grid">
+            <article class="feature-item">
+              <h3>Standardized lab scorecard</h3>
+              <p>Your characterization data presented in a consistent format buyers trust.</p>
+            </article>
+            <article class="feature-item">
+              <h3>Soil Match visibility</h3>
+              <p>Your listing surfaces in our Soil Match tool when buyers' needs align with your material.</p>
+            </article>
+            <article class="feature-item">
+              <h3>Verified transaction badges</h3>
+              <p>Completed transactions are confirmed and displayed on your listing, building reputation.</p>
+            </article>
+            <article class="feature-item">
+              <h3>Availability calendar</h3>
+              <p>Set your production windows so buyers plan around your actual schedule.</p>
+            </article>
+            <article class="feature-item">
+              <h3>Repeat order workflow</h3>
+              <p>Previous buyers can reorder in one click. You don't need to re-acquire them.</p>
+            </article>
+            <article class="feature-item">
+              <h3>Zero upfront cost</h3>
+              <p>No subscription. No listing fee. 4% commission on completed transactions only.</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="apply-section">
+        <div class="container-narrow">
+          <h2>Apply to list</h2>
+          <p>Applications reviewed within 2 business days.</p>
+
+          <form id="producer-form" class="apply-form">
+            <div class="form-group">
+              <label for="business-name">Business name</label>
+              <input id="business-name" name="businessName" type="text" required />
+            </div>
+
+            <div class="form-group">
+              <label for="contact-name">Contact name</label>
+              <input id="contact-name" name="contactName" type="text" required />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email address</label>
+              <input id="email" name="email" type="email" required />
+            </div>
+
+            <div class="form-group">
+              <label for="county-operation">County of operation</label>
+              <input id="county-operation" name="county" type="text" required />
+            </div>
+
+            <div class="form-group">
+              <label for="feedstock">Primary feedstock</label>
+              <select id="feedstock" name="feedstock">
+                <option value="">Select feedstock</option>
+                <option value="Almond Shell">Almond Shell</option>
+                <option value="Walnut Shell">Walnut Shell</option>
+                <option value="Pistachio Shell">Pistachio Shell</option>
+                <option value="Vine Pruning">Vine Pruning</option>
+                <option value="Wood Chip">Wood Chip</option>
+                <option value="Forest Thinning">Forest Thinning</option>
+                <option value="Rice Husk">Rice Husk</option>
+                <option value="Corn Stover">Corn Stover</option>
+                <option value="Wheat Straw">Wheat Straw</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tonnes">Approximate available tonnes</label>
+              <input id="tonnes" name="availableTonnes" type="number" min="0" />
+            </div>
+
+            <div class="form-group">
+              <label for="lab-report">Lab Report Status</label>
+              <select id="lab-report" name="labReport">
+                <option value="">Select one</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="In progress">In progress</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Certifications held</label>
+              <div class="checkbox-group">
+                <label><input type="checkbox" name="certifications" value="OMRI Listed" /> OMRI Listed</label>
+                <label><input type="checkbox" name="certifications" value="IBI Certified" /> IBI Certified</label>
+                <label><input type="checkbox" name="certifications" value="California Organic" /> California Organic</label>
+                <label><input type="checkbox" name="certifications" value="None Yet" /> None Yet</label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="operation-details">Tell us about your operation</label>
+              <textarea id="operation-details" name="notes" rows="3"></textarea>
+            </div>
+
+            <div class="submit-wrap">
+              <button type="submit" class="btn btn-primary">Submit application</button>
+            </div>
+          </form>
+          <div id="form-success" style="display: none;">
+            <p>Thank you — we'll review your application within 2 business days.</p>
+          </div>
+          <div id="form-error" style="display: none;"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+    <script>document.getElementById('producer-form').addEventListener('submit', handleProducerForm)</script>
+  </body>
+</html>

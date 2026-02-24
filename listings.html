@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Listings</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/listings.css" />
+    <style>
+      .filter-pill-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+
+      .filter-pill {
+        display: inline-flex;
+      }
+
+      .filter-pill input {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0, 0, 0, 0) !important;
+        border: 0 !important;
+        opacity: 0 !important;
+      }
+
+      .filter-pill span {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        padding: var(--space-1) var(--space-3);
+        border-radius: 999px;
+        border: 1px solid var(--color-border);
+        font-size: var(--font-size-sm);
+        cursor: pointer;
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .filter-pill input:checked + span {
+        background: var(--color-accent);
+        color: white;
+        border-color: var(--color-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <div class="filter-bar" id="filter-bar">
+      <div class="container filter-inner">
+        <input id="search" type="text" placeholder="Search producers, counties..." />
+
+        <div id="filter-feedstock" class="filter-pill-group">
+          <label class="filter-pill"><input type="checkbox" value="All" checked /><span>All</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Almond Shell" /><span>Almond Shell</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Walnut Shell" /><span>Walnut Shell</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Pistachio Shell" /><span>Pistachio Shell</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Vine Pruning" /><span>Vine Pruning</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Wood Chip" /><span>Wood Chip</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Forest Thinning" /><span>Forest Thinning</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Rice Husk" /><span>Rice Husk</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Corn Stover" /><span>Corn Stover</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Wheat Straw" /><span>Wheat Straw</span></label>
+        </div>
+
+        <div id="filter-region" class="filter-pill-group">
+          <label class="filter-pill"><input type="checkbox" value="All" checked /><span>All</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Sacramento Valley" /><span>Sacramento Valley</span></label>
+          <label class="filter-pill"><input type="checkbox" value="San Joaquin Valley" /><span>San Joaquin Valley</span></label>
+          <label class="filter-pill"><input type="checkbox" value="North Coast" /><span>North Coast</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Central Coast" /><span>Central Coast</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Sierra Foothills" /><span>Sierra Foothills</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Pacific Northwest" /><span>Pacific Northwest</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Great Plains" /><span>Great Plains</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Southeast" /><span>Southeast</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Northeast" /><span>Northeast</span></label>
+          <label class="filter-pill"><input type="checkbox" value="Midwest" /><span>Midwest</span></label>
+        </div>
+
+        <div id="filter-cert" class="filter-pill-group">
+          <label class="filter-pill"><input type="checkbox" value="All" checked /><span>All</span></label>
+          <label class="filter-pill"><input type="checkbox" value="OMRI Listed" /><span>OMRI Listed</span></label>
+          <label class="filter-pill"><input type="checkbox" value="IBI Certified" /><span>IBI Certified</span></label>
+          <label class="filter-pill"><input type="checkbox" value="California Organic" /><span>California Organic</span></label>
+        </div>
+
+        <select id="filter-sort">
+          <option value="price-asc">Sort by: Price (Low–High)</option>
+          <option value="price-desc">Price (High–Low)</option>
+          <option value="carbon-desc">Carbon Content</option>
+          <option value="tonnes-desc">Available Tonnes</option>
+          <option value="rating-desc">Rating</option>
+        </select>
+      </div>
+    </div>
+
+    <main class="listings-page">
+      <div class="container">
+        <div id="listings-grid" class="listings-grid" aria-live="polite"></div>
+        <div id="comparison-view" style="display: none;"></div>
+      </div>
+    </main>
+
+    <div
+      id="compare-bar"
+      style="background: var(--color-surface); border-top: 1px solid var(--color-border); padding: var(--space-4) var(--space-6); display: none; align-items: center; justify-content: space-between; position: sticky; bottom: 0;"
+    >
+      <span id="compare-count">0 listings selected</span>
+      <button id="compare-btn" class="btn btn-primary" type="button">Compare Selected</button>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/listings.js"></script>
+  </body>
+</html>

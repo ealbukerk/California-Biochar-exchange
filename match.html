@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Soil Match</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/match.css" />
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main class="match-page">
+      <div class="container-narrow">
+        <section class="match-shell" id="match-shell">
+          <div class="progress-wrap" id="progress-wrap">
+            <p class="step-label" id="step-label">Step 1 of 4</p>
+            <div class="progress-track" aria-hidden="true">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+
+          <form id="match-form" novalidate>
+            <section class="step" data-step="1">
+              <h1>What are you growing?</h1>
+              <div class="option-grid">
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Almond Orchards" required />
+                  <span>Almond Orchards</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Walnut Orchards" />
+                  <span>Walnut Orchards</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Pistachio Orchards" />
+                  <span>Pistachio Orchards</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Grapevine / Vineyards" />
+                  <span>Grapevine / Vineyards</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Corn" />
+                  <span>Corn</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Wheat" />
+                  <span>Wheat</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Rice" />
+                  <span>Rice</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Row Crops" />
+                  <span>Row Crops</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Pasture" />
+                  <span>Pasture</span>
+                </label>
+                <label class="option-card">
+                  <input type="radio" name="crop" value="Forestry" />
+                  <span>Forestry</span>
+                </label>
+              </div>
+            </section>
+
+            <section class="step" data-step="2" hidden>
+              <h1>Your soil profile</h1>
+              <div class="field-block">
+                <label for="soil-ph">What is your current soil pH?</label>
+                <select id="soil-ph" name="soilPh" required>
+                  <option value="">Select pH range</option>
+                  <option value="Below 5.5">Below 5.5</option>
+                  <option value="5.5–6.5">5.5–6.5</option>
+                  <option value="6.5–7.5">6.5–7.5</option>
+                  <option value="7.5–8.5">7.5–8.5</option>
+                  <option value="Above 8.5">Above 8.5</option>
+                </select>
+              </div>
+
+              <div class="field-block">
+                <p class="field-label">Primary goal?</p>
+                <div class="option-grid">
+                  <label class="option-card">
+                    <input type="radio" name="goal" value="Improve Water Retention" required />
+                    <span>Improve Water Retention</span>
+                  </label>
+                  <label class="option-card">
+                    <input type="radio" name="goal" value="Increase Nutrient Holding" />
+                    <span>Increase Nutrient Holding</span>
+                  </label>
+                  <label class="option-card">
+                    <input type="radio" name="goal" value="Raise Soil pH" />
+                    <span>Raise Soil pH</span>
+                  </label>
+                  <label class="option-card">
+                    <input type="radio" name="goal" value="Reduce Fertilizer Use" />
+                    <span>Reduce Fertilizer Use</span>
+                  </label>
+                  <label class="option-card">
+                    <input type="radio" name="goal" value="Carbon Sequestration" />
+                    <span>Carbon Sequestration</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section class="step" data-step="3" hidden>
+              <h1>Your order details</h1>
+              <div class="field-block">
+                <label for="volume">Approximate volume needed (tonnes)?</label>
+                <input id="volume" name="volume" type="number" min="1" max="500" placeholder="e.g. 20" required />
+              </div>
+
+              <div class="field-row">
+                <div class="field-block">
+                  <label for="date-from">Target delivery window? From</label>
+                  <input id="date-from" name="dateFrom" type="date" />
+                </div>
+                <div class="field-block">
+                  <label for="date-to">To</label>
+                  <input id="date-to" name="dateTo" type="date" />
+                </div>
+              </div>
+
+              <div class="field-block">
+                <p class="field-label">Are you certified organic?</p>
+                <div class="inline-radio">
+                  <label><input type="radio" name="organic" value="Yes" required /> Yes</label>
+                  <label><input type="radio" name="organic" value="No" /> No</label>
+                </div>
+              </div>
+            </section>
+
+            <section class="step" data-step="4" hidden>
+              <h1>Your location</h1>
+              <div class="field-block">
+                <button id="geolocate-btn" class="btn-secondary" type="button">Detect My Location</button>
+                <p id="geo-status" class="step-label"></p>
+                <p id="geo-result"></p>
+                <a href="#" id="manual-entry-link" class="step-label">Enter manually instead</a>
+                <input id="county-manual" name="countyManual" type="text" placeholder="City or county name" hidden />
+              </div>
+            </section>
+
+            <div class="form-actions" id="form-actions">
+              <button class="btn btn-secondary" type="button" id="btn-back">Back</button>
+              <button class="btn btn-primary" type="button" id="btn-next">Next</button>
+            </div>
+          </form>
+
+          <section id="results" class="results" hidden>
+            <div class="results-head">
+              <h2>Your best matches</h2>
+              <button class="btn btn-secondary" type="button" id="btn-reset">Start Over</button>
+            </div>
+            <div id="results-list" class="results-list"></div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/match.js"></script>
+  </body>
+</html>

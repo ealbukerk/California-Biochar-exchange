@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - For Buyers</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="js/airtable.js"></script>
+    <style>
+      .buyers-placeholder {
+        padding: var(--space-20) 0;
+      }
+
+      .buyers-placeholder p {
+        color: var(--color-text-secondary);
+      }
+
+      .buyers-form {
+        margin-top: var(--space-6);
+        max-width: 420px;
+      }
+
+      .buyers-form label {
+        display: block;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+        color: var(--color-text-primary);
+      }
+
+      .buyers-form .form-group {
+        margin-bottom: var(--space-4);
+      }
+
+      .buyers-form input,
+      .buyers-form select {
+        width: 100%;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-size: var(--font-size-base);
+        margin-top: var(--space-2);
+        font-family: var(--font-sans);
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main class="buyers-placeholder">
+      <div class="container">
+        <p>Buyer resources page coming soon.</p>
+        <form id="buyer-form" class="buyers-form">
+          <div class="form-group">
+            <label for="buyer-business-name">Business name</label>
+            <input id="buyer-business-name" type="text" name="businessName" required />
+          </div>
+          <div class="form-group">
+            <label for="buyer-contact-name">Contact name</label>
+            <input id="buyer-contact-name" type="text" name="contactName" required />
+          </div>
+          <div class="form-group">
+            <label for="buyer-email">Email address</label>
+            <input id="buyer-email" type="email" name="email" required />
+          </div>
+          <div class="form-group">
+            <label for="buyer-county">County</label>
+            <input id="buyer-county" type="text" name="county" required />
+          </div>
+          <div class="form-group">
+            <label for="soil-ph">Current soil pH</label>
+            <select id="soil-ph" name="soilPH">
+              <option value="Not sure">Not sure</option>
+              <option value="Below 5.5">Below 5.5</option>
+              <option value="5.5–6.5">5.5–6.5</option>
+              <option value="6.5–7.5">6.5–7.5</option>
+              <option value="7.5–8.5">7.5–8.5</option>
+              <option value="Above 8.5">Above 8.5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="primary-goal">Primary goal for biochar use</label>
+            <select id="primary-goal" name="primaryGoal">
+              <option value="Improve Water Retention">Improve Water Retention</option>
+              <option value="Increase Nutrient Holding">Increase Nutrient Holding</option>
+              <option value="Raise Soil pH">Raise Soil pH</option>
+              <option value="Reduce Fertilizer Use">Reduce Fertilizer Use</option>
+              <option value="Carbon Sequestration">Carbon Sequestration</option>
+              <option value="Not sure yet">Not sure yet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="application-timeline">Target application timeline</label>
+            <select id="application-timeline" name="timeline">
+              <option value="Within 3 months">Within 3 months</option>
+              <option value="3–6 months">3–6 months</option>
+              <option value="6–12 months">6–12 months</option>
+              <option value="Planning only">Planning only</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="primary-crop">Primary Crop</label>
+            <select id="primary-crop" name="cropType" required>
+              <option value="">Select crop</option>
+              <option value="Almond Orchards">Almond Orchards</option>
+              <option value="Walnut Orchards">Walnut Orchards</option>
+              <option value="Pistachio Orchards">Pistachio Orchards</option>
+              <option value="Grapevine / Vineyards">Grapevine / Vineyards</option>
+              <option value="Corn">Corn</option>
+              <option value="Wheat">Wheat</option>
+              <option value="Rice">Rice</option>
+              <option value="Row Crops">Row Crops</option>
+              <option value="Pasture">Pasture</option>
+              <option value="Forestry">Forestry</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="buyer-annual-volume">Annual volume needed (tonnes)</label>
+            <input id="buyer-annual-volume" type="number" name="annualVolume" required />
+          </div>
+          <div class="form-group">
+            <label for="buyer-organic-certified">Organic certified</label>
+            <select id="buyer-organic-certified" name="organicCertified" required>
+              <option value="">Select one</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit application</button>
+        </form>
+        <div id="form-success" style="display: none;">
+          <p>Thank you — we have received your registration.</p>
+        </div>
+        <div id="form-error" style="display: none;"></div>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+    <script>document.getElementById('buyer-form').addEventListener('submit', handleBuyerForm)</script>
+  </body>
+</html>

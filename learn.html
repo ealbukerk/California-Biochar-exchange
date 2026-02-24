@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Learn</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .learn-page {
+        padding: var(--space-12) 0 var(--space-20);
+      }
+
+      .hero {
+        margin-bottom: var(--space-16);
+      }
+
+      .hero h1 {
+        font-size: var(--font-size-4xl);
+        line-height: var(--line-height-tight);
+      }
+
+      .hero p {
+        margin-top: var(--space-4);
+        max-width: var(--max-width-narrow);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-lg);
+      }
+
+      .learn-section {
+        margin-top: var(--space-16);
+      }
+
+      .learn-section h2 {
+        font-size: var(--font-size-2xl);
+      }
+
+      .learn-section > p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .scorecard-guide {
+        margin-top: var(--space-8);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+
+      .guide-card,
+      .feedstock-guide-card,
+      .cert-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+      }
+
+      .guide-card h3,
+      .feedstock-guide-card h3,
+      .cert-card h3 {
+        font-size: var(--font-size-lg);
+      }
+
+      .guide-unit,
+      .feedstock-source {
+        margin-top: var(--space-1);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+      }
+
+      .guide-card p,
+      .feedstock-guide-card p,
+      .cert-card p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .guide-look,
+      .feedstock-suited,
+      .cert-needs {
+        margin-top: var(--space-4);
+        color: var(--color-accent);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .feedstock-guide {
+        margin-top: var(--space-8);
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+
+      .cert-guide {
+        margin-top: var(--space-8);
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+
+      .cta-section {
+        margin-top: var(--space-16);
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-10);
+        text-align: center;
+      }
+
+      .cta-section p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .cta-actions {
+        margin-top: var(--space-6);
+        display: flex;
+        justify-content: center;
+        gap: var(--space-3);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+
+      @media (max-width: 1000px) {
+        .feedstock-guide,
+        .cert-guide,
+        .scorecard-guide {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main class="learn-page">
+      <div class="container">
+        <section class="hero">
+          <h1>Understanding biochar</h1>
+          <p>
+            A practical reference for California farmers, vineyard managers, and agronomists evaluating biochar as a soil amendment.
+          </p>
+        </section>
+
+        <section class="learn-section">
+          <h2>Reading a lab scorecard</h2>
+          <p>
+            Every listing on BM includes a standardized lab scorecard. Here is what each field means and what values to look for.
+          </p>
+          <div class="scorecard-guide">
+            <article class="guide-card">
+              <h3>Carbon Content</h3>
+              <p class="guide-unit">%</p>
+              <p>
+                The percentage of the biochar that is stable carbon. Higher carbon content means more effective long-term sequestration and better soil conditioning.
+              </p>
+              <p class="guide-look">What to look for: Above 60% for general use. Above 70% for carbon credit qualification.</p>
+            </article>
+            <article class="guide-card">
+              <h3>pH</h3>
+              <p class="guide-unit">pH units</p>
+              <p>
+                The alkalinity or acidity of the biochar. Biochar is typically alkaline and raises soil pH on application — beneficial for acidic soils common in Northern California.
+              </p>
+              <p class="guide-look">What to look for: Match to your soil need. pH 7–9 is typical. Avoid high pH biochar on already-alkaline soils.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Surface Area</h3>
+              <p class="guide-unit">m²/g</p>
+              <p>
+                The total internal pore surface area per gram. Higher surface area means more capacity to hold water and nutrients in soil.
+              </p>
+              <p class="guide-look">What to look for: Above 200 m²/g is good. Above 400 m²/g is excellent for water retention.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Particle Size</h3>
+              <p class="guide-unit">mm</p>
+              <p>
+                The size range of biochar particles. Smaller particles integrate more easily and have more surface contact with soil. Larger particles improve drainage and aeration.
+              </p>
+              <p class="guide-look">What to look for: 1–4mm is versatile for most applications. Finer for vegetable beds, coarser for orchards.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Moisture</h3>
+              <p class="guide-unit">%</p>
+              <p>
+                Water content at time of testing. High moisture adds weight without value and indicates poor storage conditions.
+              </p>
+              <p class="guide-look">What to look for: Below 15% preferred. Above 25% may indicate storage issues.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Ash Content</h3>
+              <p class="guide-unit">%</p>
+              <p>
+                Mineral residue remaining from the original feedstock. Contains nutrients but high ash content reduces the proportion of stable carbon.
+              </p>
+              <p class="guide-look">What to look for: Below 20% for high-carbon biochar. Rice husk biochar typically has higher ash than wood-based biochar.</p>
+            </article>
+            <article class="guide-card">
+              <h3>Electrical Conductivity</h3>
+              <p class="guide-unit">dS/m</p>
+              <p>
+                Measures soluble salt concentration. Very high EC can stress salt-sensitive crops.
+              </p>
+              <p class="guide-look">What to look for: Below 2 dS/m for most crops. Below 1 dS/m for salt-sensitive vegetables.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="learn-section">
+          <h2>California feedstocks</h2>
+          <p>
+            The material biochar is made from significantly affects its properties. Here are the main feedstocks available in California.
+          </p>
+          <div class="feedstock-guide">
+            <article class="feedstock-guide-card">
+              <h3>Almond Shell</h3>
+              <p class="feedstock-source">San Joaquin Valley</p>
+              <p>
+                Produces high-carbon biochar with good surface area and neutral to slightly alkaline pH. Widely available due to California's dominant almond production.
+              </p>
+              <p class="feedstock-suited">Best suited for: Almond Orchards, Row Crops, Grapevine / Vineyards</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Rice Husk</h3>
+              <p class="feedstock-source">Sacramento Valley</p>
+              <p>
+                Higher ash content than wood-based biochar but excellent silica content. Seasonal availability tied to harvest. Well suited for water retention applications.
+              </p>
+              <p class="feedstock-suited">Best suited for: Rice, Row Crops, Pasture</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Wood Chip</h3>
+              <p class="feedstock-source">Northern California, Sierra Foothills</p>
+              <p>
+                Produces the highest surface area of common feedstocks. Very stable carbon, low ash content. The most versatile biochar type.
+              </p>
+              <p class="feedstock-suited">Best suited for: All crop types, especially water retention applications</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Vine Pruning</h3>
+              <p class="feedstock-source">Napa, Sonoma, Central Coast</p>
+              <p>
+                Produced from wine grape cuttings post-harvest. Moderate carbon content, good pH range. Provenance is highly valued by organic and biodynamic vineyards.
+              </p>
+              <p class="feedstock-suited">Best suited for: Grapevine / Vineyards, Row Crops</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Walnut Shell</h3>
+              <p class="feedstock-source">San Joaquin Valley</p>
+              <p>
+                Dense feedstock producing hard, stable biochar with high carbon content and low moisture. Similar properties to almond shell with slightly higher surface area.
+              </p>
+              <p class="feedstock-suited">Best suited for: Walnut Orchards, Grapevine / Vineyards, Row Crops</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Pistachio Shell</h3>
+              <p class="feedstock-source">San Joaquin Valley</p>
+              <p>
+                Similar properties to almond and walnut shell biochar. High carbon content, low ash, and good surface area. Availability tied to harvest season in late summer.
+              </p>
+              <p class="feedstock-suited">Best suited for: Pistachio Orchards, Almond Orchards, Row Crops</p>
+            </article>
+            <article class="feedstock-guide-card">
+              <h3>Forest Thinning</h3>
+              <p class="feedstock-source">Sierra Nevada, Northern California</p>
+              <p>
+                Produced from woody biomass generated by prescribed burns and mechanical thinning programs. High surface area wood-class biochar available year-round unlike harvest-seasonal feedstocks. Increasingly supported by USDA wildfire resilience funding.
+              </p>
+              <p class="feedstock-suited">Best suited for: Forestry, Pasture, Row Crops, Grapevine / Vineyards</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="learn-section">
+          <h2>What certifications mean</h2>
+          <div class="cert-guide">
+            <article class="cert-card">
+              <h3>OMRI Listed</h3>
+              <p>
+                The Organic Materials Review Institute independently reviews and lists products approved for use in organic production. OMRI Listed biochar can be used on certified organic farms without risking certification status.
+              </p>
+              <p class="cert-needs">Who needs it: Any buyer with USDA organic certification.</p>
+            </article>
+            <article class="cert-card">
+              <h3>IBI Certified</h3>
+              <p>
+                The International Biochar Initiative certification verifies that biochar meets minimum quality and safety standards. Covers carbon content, pH, surface area, and contaminant limits.
+              </p>
+              <p class="cert-needs">Who needs it: Buyers who want independently verified quality claims.</p>
+            </article>
+            <article class="cert-card">
+              <h3>California Organic</h3>
+              <p>
+                California Department of Food and Agriculture organic certification, aligned with USDA NOP standards but administered at state level.
+              </p>
+              <p class="cert-needs">Who needs it: California farms selling organic produce in-state.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="cta-section">
+          <h2>Ready to find the right biochar?</h2>
+          <p>Use the Soil Match tool to get ranked recommendations, or browse all available listings.</p>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href="match.html">Find My Match</a>
+            <a class="btn btn-secondary" href="listings.html">Browse Listings</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+  </body>
+</html>
