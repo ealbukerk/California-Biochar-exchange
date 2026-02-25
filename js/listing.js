@@ -186,96 +186,100 @@
       "</p>" +
       "</div></section>" +
       '<section class="inquiry-section">' +
-      "<h2>Send an Inquiry</h2>" +
-      "<p>Your inquiry goes to the Biochar.market team. We introduce you to the producer within 24 hours.</p>" +
-      '<form id="inquiry-form">' +
-      '<input type="hidden" name="listing_id" value="' +
-      listing.id +
-      '">' +
-      '<input type="hidden" name="producer_name" value="' +
-      listing.producerName +
-      '">' +
-      '<input type="hidden" name="pricePerTonne" value="' +
-      listing.pricePerTonne +
-      '">' +
-      '<div><label for="inq-name">Your name</label><input id="inq-name" type="text" name="name" required></div>' +
-      '<div><label for="inq-email">Your email</label><input id="inq-email" type="email" name="email" required></div>' +
-      '<div><label for="inq-business">Farm or business name</label><input id="inq-business" type="text" name="businessName" required></div>' +
-      '<div><label for="inq-volume">Volume needed (tonnes)</label><input id="inq-volume" type="number" name="volume" required></div>' +
-      '<div id="commission-preview" hidden></div>' +
-      '<div><label for="inq-notes">Soil conditions or questions</label><textarea id="inq-notes" name="notes" rows="3"></textarea></div>' +
-      '<button class="btn btn-primary" type="submit">Send Inquiry</button>' +
-      "</form>" +
-      '<div id="form-success" hidden><p>Thank you — we\'ll be in touch within 24 hours.</p></div>' +
-      '<div id="form-error" hidden></div>' +
+      "<h2>Enter Deal Room</h2>" +
+      (window.currentUser
+        ? '<div class="deal-entry-buttons" style="display:flex;gap:var(--space-4);margin-top:var(--space-4);flex-wrap:wrap;">' +
+          '<button id="make-offer-btn" class="btn btn-primary" type="button">Make an offer</button>' +
+          '<button id="quick-buy-btn" class="btn btn-secondary" type="button">Buy now at $' +
+          listing.pricePerTonne +
+          '/tonne</button>' +
+          "</div>" +
+          '<div id="quick-buy-panel" class="buynow-quick" style="display:none;margin-top:var(--space-4);max-width:560px;">' +
+          '<div><label for="quick-volume">Volume (tonnes)</label><input id="quick-volume" type="number" min="' +
+          listing.minOrderTonnes +
+          '" placeholder="Min ' +
+          listing.minOrderTonnes +
+          ' tonnes"></div>' +
+          '<div style="margin-top:var(--space-4);"><label for="quick-delivery-method">Delivery method</label><select id="quick-delivery-method"><option>Buyer collects</option><option>Producer delivers</option><option>Third party freight</option></select></div>' +
+          '<div style="margin-top:var(--space-4);"><label for="quick-delivery-date">Target delivery date</label><input id="quick-delivery-date" type="date"></div>' +
+          '<button id="confirm-quick-buy-btn" class="btn btn-primary" type="button" style="margin-top:var(--space-4);">Confirm purchase</button>' +
+          "</div>"
+        : '<p style="margin-top:var(--space-3);">Create a free account to send an offer or buy now.</p>' +
+          '<a class="btn btn-primary" href="auth.html?role=buyer" style="margin-top:var(--space-4);">Create account</a>') +
+      '<p id="deal-entry-error" style="display:none;color:var(--color-warning);margin-top:var(--space-3);">Could not create deal room. Please try again.</p>' +
       "</section>" +
       "</div>";
 
-    var form = document.getElementById("inquiry-form");
-    form.addEventListener("submit", handleInquiryForm);
-    var volumeInput = document.getElementById("inq-volume");
-    var commissionPreview = document.getElementById("commission-preview");
+    if (window.currentUser) {
+      var dealError = document.getElementById("deal-entry-error");
+      var makeOfferBtn = document.getElementById("make-offer-btn");
+      var quickBuyBtn = document.getElementById("quick-buy-btn");
+      var quickPanel = document.getElementById("quick-buy-panel");
+      var confirmQuickBuyBtn = document.getElementById("confirm-quick-buy-btn");
+      var currentUserUID =
+        window.currentUser && window.currentUser.uid ? window.currentUser.uid : window.currentUser;
+      var buyerName =
+        (window.userProfile && (window.userProfile.businessName || window.userProfile.name)) || "Buyer";
 
-    function updateCommissionPreview() {
-      var volume = Number(volumeInput.value);
-      if (!(volume > 0) || typeof calculateCommission !== "function") {
-        commissionPreview.hidden = true;
-        commissionPreview.innerHTML = "";
-        return;
-      }
-
-      var transactionValue = volume * Number(listing.pricePerTonne || 0);
-      var commission = calculateCommission(transactionValue);
-
-      commissionPreview.hidden = false;
-      commissionPreview.innerHTML =
-        "<p>Estimated transaction value: " +
-        formatCurrency(transactionValue, 0) +
-        "</p>" +
-        "<p>Platform commission: " +
-        commission.rateDisplay +
-        " (" +
-        formatCurrency(commission.commissionAmount, 2) +
-        ") — " +
-        commission.bracketLabel +
-        "</p>" +
-        "<p>You pay: " +
-        formatCurrency(transactionValue, 0) +
-        "</p>";
-    }
-
-    volumeInput.addEventListener("input", updateCommissionPreview);
-    volumeInput.addEventListener("change", updateCommissionPreview);
-
-    var params = new URLSearchParams(window.location.search);
-    if (params.get("reorder") === "true") {
-      var payload = null;
-      try {
-        payload = JSON.parse(sessionStorage.getItem("reorderPayload") || "null");
-      } catch (error) {
-        payload = null;
-      }
-
-      var notesInput = document.getElementById("inq-notes");
-      var businessInput = document.getElementById("inq-business");
-
-      if (payload && payload.listingID === listing.id) {
-        if (volumeInput && payload.tonnes) {
-          volumeInput.value = payload.tonnes;
+      function showDealError() {
+        if (dealError) {
+          dealError.style.display = "block";
         }
-        if (notesInput) {
-          notesInput.value = "Reorder request for " + (payload.feedstock || listing.feedstock) + " from " + (payload.producerName || listing.producerName) + ".";
-        }
-      } else if (notesInput) {
-        notesInput.value = "Reorder request for " + listing.feedstock + " from " + listing.producerName + ".";
       }
 
-      if (businessInput && window.userProfile && window.userProfile.businessName) {
-        businessInput.value = window.userProfile.businessName;
+      if (makeOfferBtn) {
+        makeOfferBtn.addEventListener("click", async function () {
+          if (dealError) {
+            dealError.style.display = "none";
+          }
+          try {
+            var dealId = await createDealRoom(listing, window.userProfile || {}, currentUserUID);
+            window.location.href = "dealroom.html?id=" + encodeURIComponent(dealId);
+          } catch (error) {
+            showDealError();
+          }
+        });
+      }
+
+      if (quickBuyBtn && quickPanel) {
+        quickBuyBtn.addEventListener("click", function () {
+          quickPanel.style.display = quickPanel.style.display === "none" ? "block" : "none";
+        });
+      }
+
+      if (confirmQuickBuyBtn) {
+        confirmQuickBuyBtn.addEventListener("click", async function () {
+          var volumeEl = document.getElementById("quick-volume");
+          var deliveryMethodEl = document.getElementById("quick-delivery-method");
+          var deliveryDateEl = document.getElementById("quick-delivery-date");
+          var volume = Number(volumeEl && volumeEl.value ? volumeEl.value : 0);
+
+          if (!volume || volume < listing.minOrderTonnes) {
+            showDealError();
+            return;
+          }
+
+          if (dealError) {
+            dealError.style.display = "none";
+          }
+
+          try {
+            var dealId = await createDealRoom(listing, window.userProfile || {}, currentUserUID);
+            await buyNow(
+              dealId,
+              currentUserUID,
+              buyerName,
+              volume,
+              deliveryMethodEl ? deliveryMethodEl.value : "Buyer collects",
+              deliveryDateEl ? deliveryDateEl.value : ""
+            );
+            window.location.href = "dealroom.html?id=" + encodeURIComponent(dealId);
+          } catch (error) {
+            showDealError();
+          }
+        });
       }
     }
-
-    updateCommissionPreview();
   }
 
   document.addEventListener("DOMContentLoaded", function () {

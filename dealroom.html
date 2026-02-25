@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Deal Room</title>
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <style>
+      .dealroom-page {
+        padding: var(--space-8) 0 var(--space-16);
+      }
+
+      .deal-grid {
+        display: grid;
+        grid-template-columns: 3fr 2fr;
+        gap: var(--space-6);
+        align-items: start;
+      }
+
+      .deal-left,
+      .deal-right {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+      }
+
+      .deal-header {
+        border-bottom: 1px solid var(--color-border);
+        padding: var(--space-4) var(--space-6);
+      }
+
+      .header-top {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        flex-wrap: wrap;
+      }
+
+      .feedstock-chip {
+        display: inline-flex;
+        align-items: center;
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        border-radius: 999px;
+        padding: 2px var(--space-3);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 2px var(--space-3);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .status-open {
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+      }
+
+      .status-agreed {
+        background: var(--color-accent);
+        color: white;
+      }
+
+      .status-expired {
+        background: #efefef;
+        color: var(--color-text-muted);
+      }
+
+      .status-cancelled {
+        background: #f5eaea;
+        color: #9c3a3a;
+      }
+
+      .deal-meta {
+        margin-top: var(--space-3);
+        display: grid;
+        gap: var(--space-1);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
+      .expiry-warning,
+      .extension-banner,
+      .auto-reject-notice {
+        margin: var(--space-4) var(--space-6);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+      }
+
+      .expiry-warning,
+      .auto-reject-notice {
+        background: var(--color-warning-light);
+        border: 1px solid var(--color-warning);
+      }
+
+      .extension-banner {
+        background: var(--color-accent-light);
+        border: 1px solid var(--color-border);
+      }
+
+      .deal-summary {
+        background: var(--color-accent-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-5);
+        margin: var(--space-4) var(--space-6);
+      }
+
+      .deal-summary h3 {
+        font-size: var(--font-size-base);
+        margin-bottom: var(--space-3);
+      }
+
+      .deal-summary p {
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-2);
+      }
+
+      #messages-list {
+        overflow-y: auto;
+        height: 400px;
+        padding: var(--space-4) var(--space-6);
+      }
+
+      .message-row {
+        margin-bottom: var(--space-3);
+      }
+
+      .message-row.right {
+        text-align: right;
+      }
+
+      .message-row.left {
+        text-align: left;
+      }
+
+      .message {
+        display: inline-block;
+        max-width: 80%;
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+      }
+
+      .message.right {
+        background: var(--color-accent-light);
+      }
+
+      .message.left {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+      }
+
+      .message-sender {
+        display: block;
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+        margin-bottom: var(--space-1);
+      }
+
+      .message-time {
+        display: block;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+        margin-top: var(--space-1);
+      }
+
+      .message-input-bar {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-4) var(--space-6);
+        display: flex;
+        gap: var(--space-3);
+      }
+
+      #message-input {
+        flex: 1;
+        resize: none;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3);
+        font-family: var(--font-sans);
+      }
+
+      .panel {
+        padding: var(--space-6);
+      }
+
+      .panel h3 {
+        font-size: var(--font-size-lg);
+      }
+
+      .current-bid,
+      .bid-form,
+      .buy-now-section,
+      .agreed-panel {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-5);
+        background: var(--color-surface);
+      }
+
+      .current-bid,
+      .bid-form,
+      .buy-now-section {
+        margin-bottom: var(--space-4);
+      }
+
+      .agreed-panel {
+        background: var(--color-accent-light);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+      }
+
+      .agreed-check {
+        text-align: center;
+        color: var(--color-accent);
+        font-size: 48px;
+      }
+
+      .agreed-panel h3 {
+        text-align: center;
+        margin-top: var(--space-4);
+      }
+
+      .detail-list {
+        margin-top: var(--space-5);
+        display: grid;
+        gap: var(--space-2);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
+      .field {
+        margin-top: var(--space-3);
+      }
+
+      .field label {
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+      }
+
+      .field input,
+      .field select,
+      .field textarea {
+        width: 100%;
+        margin-top: var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+      }
+
+      .field-error {
+        margin-top: var(--space-2);
+        color: var(--color-warning);
+        font-size: var(--font-size-sm);
+      }
+
+      .offer-hint,
+      .calc-line,
+      .muted {
+        margin-top: var(--space-2);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+      }
+
+      .near-asking {
+        background: var(--color-accent);
+        color: white;
+        font-size: var(--font-size-xs);
+        padding: var(--space-1) var(--space-3);
+        border-radius: 999px;
+      }
+
+      .actions {
+        display: flex;
+        gap: var(--space-2);
+        flex-wrap: wrap;
+        margin-top: var(--space-4);
+      }
+
+      .actions .reject {
+        color: #9c3a3a;
+        border-color: #c97c7c;
+      }
+
+      .divider {
+        border: none;
+        border-top: 1px solid var(--color-border);
+        margin: var(--space-5) 0;
+      }
+
+      .extension-link {
+        margin-top: var(--space-4);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+        text-decoration: none;
+      }
+
+      .rating-wrap {
+        margin-top: var(--space-5);
+      }
+
+      .rating-stars {
+        display: flex;
+        gap: var(--space-2);
+        margin-top: var(--space-2);
+      }
+
+      .rating-stars button {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-size: 20px;
+        color: var(--color-warning);
+        padding: 0;
+      }
+
+      .complete-badge {
+        margin-top: var(--space-4);
+        display: inline-flex;
+        padding: var(--space-1) var(--space-3);
+        border-radius: 999px;
+        background: var(--color-accent);
+        color: white;
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .deal-empty {
+        max-width: var(--max-width-narrow);
+        margin: var(--space-20) auto;
+        text-align: center;
+        color: var(--color-text-secondary);
+      }
+
+      @media (max-width: 1000px) {
+        .deal-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <a class="btn btn-secondary" href="profile.html">Profile</a>
+      </div>
+    </nav>
+
+    <main class="dealroom-page">
+      <!-- Deal summary card line format:
+      "Estimated order size: $" + complexity.estimatedValue.toLocaleString() + " — " + complexity.label + " (" + maxRounds + " rounds, " + expiryDays + " days)" -->
+      <div id="dealroom-container" class="container"></div>
+    </main>
+
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/commission.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/airtable.js"></script>
+    <script src="js/dealroom.js"></script>
+  </body>
+</html>

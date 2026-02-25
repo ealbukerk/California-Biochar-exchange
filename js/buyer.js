@@ -5,6 +5,12 @@
     compareList: []
   };
 
+  if (typeof window.submitToAirtable !== "function") {
+    window.submitToAirtable = async function () {
+      return {};
+    };
+  }
+
   var countyCoords = {
     Butte: [39.6, -121.6],
     Colusa: [39.2, -122.0],
@@ -294,11 +300,45 @@
           '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
           '<p class="card-detail" style="margin-top:var(--space-2);">' + htmlEscape(explanation || "") + "</p>"
         : "") +
-      '<div class="listing-actions"><a class="btn btn-primary" href="listing.html?id=' +
+      '<div class="listing-actions" style="display:flex;gap:var(--space-2);flex-wrap:wrap;">' +
+      '<a class="btn btn-primary" href="listing.html?id=' +
       encodeURIComponent(listing.id) +
-      '">View &amp; Inquire</a></div>' +
+      '">Make an offer</a>' +
+      '<button class="btn btn-secondary buy-now-card-btn" type="button" data-id="' +
+      htmlEscape(listing.id) +
+      '">Buy now</button></div>' +
       "</article>"
     );
+  }
+
+  async function handleCardBuyNow(listingId) {
+    var listing = (window.LISTINGS || []).find(function (item) {
+      return item.id === listingId;
+    });
+    if (!listing) return;
+
+    if (!state.user) {
+      window.location.href = "auth.html?role=buyer";
+      return;
+    }
+
+    var buyerUID = state.user.uid;
+    var buyerName = (state.profile && (state.profile.businessName || state.profile.name)) || state.user.email || "Buyer";
+
+    try {
+      var dealId = await createDealRoom(listing, state.profile || {}, buyerUID);
+      await buyNow(
+        dealId,
+        buyerUID,
+        buyerName,
+        Number(listing.minOrderTonnes) || 1,
+        "Buyer collects",
+        ""
+      );
+      window.location.href = "dealroom.html?id=" + encodeURIComponent(dealId);
+    } catch (error) {
+      // no-op
+    }
   }
 
   function renderTopMatchesBlock() {
@@ -808,6 +848,16 @@
     initAuthState();
     initBrowseFilters();
     initMap();
+    document.addEventListener("click", function (event) {
+      var target = event.target;
+      if (!target || !target.classList || !target.classList.contains("buy-now-card-btn")) {
+        return;
+      }
+
+      var listingId = target.getAttribute("data-id");
+      if (!listingId) return;
+      handleCardBuyNow(listingId);
+    });
   }
 
   document.addEventListener("DOMContentLoaded", init);

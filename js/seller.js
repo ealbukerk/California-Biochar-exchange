@@ -64,6 +64,30 @@
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function getSortTime(value) {
+    if (!value) return 0;
+    if (value.toDate && typeof value.toDate === "function") {
+      return value.toDate().getTime();
+    }
+    var parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+
+  function getDealStatusClass(status) {
+    if (status === "Open") return "deal-status-open";
+    if (status === "Agreed") return "deal-status-agreed";
+    if (status === "Expired") return "deal-status-expired";
+    if (status === "Cancelled") return "deal-status-cancelled";
+    return "deal-status-expired";
+  }
+
+  function isClosingSoon(expiryDate, status) {
+    if (status !== "Open" || !expiryDate) return false;
+    var expiry = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    var diff = expiry.getTime() - Date.now();
+    return diff > 0 && diff <= 48 * 60 * 60 * 1000;
+  }
+
   function formatDateRange(fromISO, untilISO) {
     var from = new Date(fromISO);
     var until = new Date(untilISO);
@@ -432,6 +456,73 @@
       });
   }
 
+  function renderDealRoomsSection() {
+    var section = document.getElementById("dealrooms-section");
+    var container = document.getElementById("dealrooms-content");
+    if (!section || !container) return;
+
+    if (!state.user || String((state.profile && state.profile.role) || "").toLowerCase() !== "seller") {
+      section.classList.add("hidden");
+      container.innerHTML = "";
+      return;
+    }
+
+    section.classList.remove("hidden");
+
+    db.collection("deals")
+      .where("producerUID", "==", state.user.uid)
+      .get()
+      .then(function (snapshot) {
+        var deals = [];
+        snapshot.forEach(function (doc) {
+          deals.push({ id: doc.id, data: doc.data() || {} });
+        });
+
+        deals.sort(function (a, b) {
+          return getSortTime(b.data.createdAt) - getSortTime(a.data.createdAt);
+        });
+
+        if (!deals.length) {
+          container.innerHTML = '<p class="muted">No deal rooms yet.</p>';
+          return;
+        }
+
+        container.innerHTML = deals
+          .map(function (deal) {
+            var d = deal.data;
+            var status = d.status || "Open";
+            var roundX = Number(d.roundsUsed || 0) + 1;
+            var roundY = Number(d.maxRounds || (d.complexity && d.complexity.maxRounds) || 1);
+            var statusClass = getDealStatusClass(status);
+            var soon = isClosingSoon(d.expiryDate, status);
+            var actionText = status === "Open" ? "Enter deal room" : (status === "Agreed" ? "View deal" : "");
+            var actionClass = status === "Open" ? "btn btn-primary" : "btn btn-secondary";
+            var actionHtml = actionText
+              ? '<a class="' + actionClass + '" href="dealroom.html?id=' + encodeURIComponent(deal.id) + '">' + htmlEscape(actionText) + "</a>"
+              : "";
+
+            return (
+              '<div class="deal-row">' +
+              '<div class="deal-left-meta">' +
+              '<span class="deal-chip">' + htmlEscape(d.feedstock || "-") + "</span>" +
+              "<strong>" + htmlEscape(d.buyerName || "-") + "</strong>" +
+              '<span class="deal-round">Round ' + roundX + "/" + roundY + "</span>" +
+              "</div>" +
+              '<div class="deal-right-meta">' +
+              '<span class="deal-status ' + statusClass + '">' + htmlEscape(status) + "</span>" +
+              (soon ? '<span class="deal-close-warning">Closes soon</span>' : "") +
+              actionHtml +
+              "</div>" +
+              "</div>"
+            );
+          })
+          .join("");
+      })
+      .catch(function () {
+        container.innerHTML = '<p class="muted">Unable to load deal rooms right now.</p>';
+      });
+  }
+
   function initApplicationForm() {
     var form = document.getElementById("producer-form");
     if (!form) return;
@@ -525,11 +616,15 @@
     var appSection = document.getElementById("application-section");
     var listingSection = document.getElementById("listing-status-section");
     var txnSection = document.getElementById("transaction-section");
+    var dealSection = document.getElementById("dealrooms-section");
 
     if (!state.user) {
       appSection.classList.remove("hidden");
       listingSection.classList.add("hidden");
       txnSection.classList.add("hidden");
+      if (dealSection) {
+        dealSection.classList.add("hidden");
+      }
       return;
     }
 
@@ -538,14 +633,21 @@
 
     if (String((state.profile && state.profile.role) || "").toLowerCase() === "seller") {
       listingSection.classList.remove("hidden");
+      if (dealSection) {
+        dealSection.classList.remove("hidden");
+      }
     } else {
       listingSection.classList.add("hidden");
+      if (dealSection) {
+        dealSection.classList.add("hidden");
+      }
     }
   }
 
   function refreshLoggedInSections() {
     renderListingStatusSection();
     renderTransactionsSection();
+    renderDealRoomsSection();
   }
 
   function initAuthWatcher() {

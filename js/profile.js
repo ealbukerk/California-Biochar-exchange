@@ -29,6 +29,15 @@
     repeatTarget: null
   };
 
+  function htmlEscape(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
   function toDateLabel(value) {
     if (!value) {
       return "-";
@@ -38,6 +47,97 @@
       return String(value);
     }
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function getSortTime(value) {
+    if (!value) return 0;
+    if (value.toDate && typeof value.toDate === "function") {
+      return value.toDate().getTime();
+    }
+    var parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  }
+
+  function getDealStatusClass(status) {
+    if (status === "Open") return "deal-status-open";
+    if (status === "Agreed") return "deal-status-agreed";
+    if (status === "Expired") return "deal-status-expired";
+    if (status === "Cancelled") return "deal-status-cancelled";
+    return "deal-status-expired";
+  }
+
+  function isClosingSoon(expiryDate, status) {
+    if (status !== "Open" || !expiryDate) return false;
+    var expiry = expiryDate.toDate ? expiryDate.toDate() : new Date(expiryDate);
+    var ms = expiry.getTime() - Date.now();
+    return ms > 0 && ms <= 48 * 60 * 60 * 1000;
+  }
+
+  async function loadDealRooms() {
+    var wrap = document.getElementById("dealrooms-wrap");
+    if (!wrap) return;
+
+    try {
+      var snapshots = await Promise.all([
+        db.collection("deals").where("buyerUID", "==", state.user.uid).get(),
+        db.collection("deals").where("producerUID", "==", state.user.uid).get()
+      ]);
+
+      var byId = {};
+      snapshots.forEach(function (snapshot) {
+        snapshot.forEach(function (doc) {
+          var data = doc.data() || {};
+          byId[doc.id] = { id: doc.id, data: data };
+        });
+      });
+
+      var deals = Object.keys(byId)
+        .map(function (id) {
+          return byId[id];
+        })
+        .sort(function (a, b) {
+          return getSortTime(b.data.createdAt) - getSortTime(a.data.createdAt);
+        });
+
+      if (!deals.length) {
+        wrap.innerHTML = '<p class="empty-state">No deal rooms yet.</p>';
+        return;
+      }
+
+      wrap.innerHTML = deals
+        .map(function (deal) {
+          var d = deal.data;
+          var status = d.status || "Open";
+          var otherParty = state.user.uid === d.buyerUID ? (d.producerName || "-") : (d.buyerName || "-");
+          var roundX = Number(d.roundsUsed || 0) + 1;
+          var roundY = Number(d.maxRounds || (d.complexity && d.complexity.maxRounds) || 1);
+          var badgeClass = getDealStatusClass(status);
+          var soon = isClosingSoon(d.expiryDate, status);
+          var actionText = status === "Open" ? "Enter deal room" : (status === "Agreed" ? "View deal" : "");
+          var actionClass = status === "Open" ? "btn btn-primary" : "btn btn-secondary";
+          var actionHtml = actionText
+            ? '<a class="' + actionClass + '" href="dealroom.html?id=' + encodeURIComponent(deal.id) + '">' + htmlEscape(actionText) + "</a>"
+            : "";
+
+          return (
+            '<div class="deal-row">' +
+            '<div class="deal-left-meta">' +
+            '<span class="deal-chip">' + htmlEscape(d.feedstock || "-") + "</span>" +
+            "<strong>" + htmlEscape(otherParty) + "</strong>" +
+            '<span class="deal-round">Round ' + roundX + "/" + roundY + "</span>" +
+            "</div>" +
+            '<div class="deal-right-meta">' +
+            '<span class="deal-status ' + badgeClass + '">' + htmlEscape(status) + "</span>" +
+            (soon ? '<span class="deal-close-warning">Closes soon</span>' : "") +
+            actionHtml +
+            "</div>" +
+            "</div>"
+          );
+        })
+        .join("");
+    } catch (error) {
+      wrap.innerHTML = '<p class="empty-state">Unable to load deal rooms right now.</p>';
+    }
   }
 
   function toNumber(value) {
@@ -409,6 +509,7 @@
     renderAccountInfo();
     initPreferencesSection();
     await loadTransactions();
+    await loadDealRooms();
     await loadScheduledOrders();
   }
 
