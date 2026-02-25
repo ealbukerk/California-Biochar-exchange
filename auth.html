@@ -126,6 +126,18 @@
         font-size: var(--font-size-sm);
       }
 
+      .crop-help {
+        margin-top: var(--space-2);
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+      }
+
+      .crop-help a {
+        color: var(--color-accent);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
+      }
+
       @media (max-width: 720px) {
         .role-grid {
           grid-template-columns: 1fr;
@@ -199,8 +211,10 @@
               </div>
 
               <div class="step" data-step="3">
-                <h2>Step 3 - Your Crops and Soil</h2>
+                <h2>Step 3 - Your interests</h2>
                 <div id="buyer-step-fields">
+                  <h3>Which crop types are you interested in?</h3>
+                  <p class="crop-help">Not sure yet? <a href="crops.html" target="_blank">Learn which best suits you →</a></p>
                   <div class="field">
                     <label>Crop types</label>
                     <div id="ms-signup-crops"></div>

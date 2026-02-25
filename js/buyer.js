@@ -2,20 +2,7 @@
   var state = {
     user: null,
     profile: null,
-    compareList: [],
-    matchForm: {
-      crop: [],
-      soilPh: "",
-      goal: [],
-      volume: "",
-      fromDate: "",
-      toDate: "",
-      organic: "",
-      county: "",
-      locationState: "",
-      geoDetected: false,
-      manualLocation: ""
-    }
+    compareList: []
   };
 
   var countyCoords = {
@@ -159,7 +146,7 @@
     var score = 0;
     var reasons = [];
 
-    var crops = Array.isArray(profileLike.cropTypes) ? profileLike.cropTypes : (Array.isArray(profileLike.crop) ? profileLike.crop : []);
+    var crops = Array.isArray(profileLike.cropTypes) ? profileLike.cropTypes : [];
     var cropMatches = crops.filter(function (crop) {
       return listing.suitableFor.indexOf(crop) !== -1;
     });
@@ -168,7 +155,7 @@
       reasons.push("suitable for " + cropMatches[0].toLowerCase());
     }
 
-    var soilPh = profileLike.soilPH || profileLike.soilPh || "";
+    var soilPh = profileLike.soilPH || "";
     if (soilPh === "Below 5.5" && listing.scorecard.pH > 7.0) {
       score += 20;
       reasons.push("alkaline profile aligns with low-pH soil");
@@ -200,7 +187,7 @@
       reasons.push("lab-verified");
     }
 
-    var organicFlag = String(profileLike.organicCertified || profileLike.organic || "").toLowerCase();
+    var organicFlag = String(profileLike.organicCertified || "").toLowerCase();
     if (
       (organicFlag === "yes" || organicFlag === "true") &&
       (listing.certifications.indexOf("OMRI Listed") !== -1 || listing.certifications.indexOf("California Organic") !== -1)
@@ -211,8 +198,7 @@
 
     score += 10;
 
-    var locationState = profileLike.state || profileLike.locationState || "";
-    if (isBroadRegionMatch(locationState, listing.region)) {
+    if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
       reasons.push("regional proximity advantage");
     }
 
@@ -315,19 +301,24 @@
     );
   }
 
-  function renderMatchedSection() {
-    var section = document.getElementById("matched-section");
+  function renderTopMatchesBlock() {
+    var block = document.getElementById("top-matches-block");
     var grid = document.getElementById("matched-grid");
-    if (!section || !grid) return;
+    if (!block || !grid) return;
 
-    if (!state.user || !state.profile) {
-      section.classList.add("hidden");
+    var hasSavedCrops =
+      !!state.user &&
+      state.profile &&
+      Array.isArray(state.profile.cropTypes) &&
+      state.profile.cropTypes.length > 0;
+
+    if (!hasSavedCrops) {
+      block.classList.add("hidden");
       grid.innerHTML = "";
       return;
     }
 
-    section.classList.remove("hidden");
-
+    block.classList.remove("hidden");
     var ranked = (window.LISTINGS || [])
       .map(function (listing) {
         return scoreListingForInputs(listing, state.profile);
@@ -360,18 +351,15 @@
   function updateTopNav() {
     var login = document.getElementById("nav-login");
     var profile = document.getElementById("nav-profile");
-    var logout = document.getElementById("nav-logout");
 
-    if (!login || !profile || !logout) return;
+    if (!login || !profile) return;
 
     if (state.user) {
       login.classList.add("hidden");
       profile.classList.remove("hidden");
-      logout.classList.remove("hidden");
     } else {
       login.classList.remove("hidden");
       profile.classList.add("hidden");
-      logout.classList.add("hidden");
     }
   }
 
@@ -678,244 +666,6 @@
     renderBrowseListings();
   }
 
-  function renderMatchTool() {
-    var tool = document.getElementById("match-tool");
-    if (!tool) return;
-
-    tool.innerHTML =
-      '<div id="progress-wrap" class="progress-wrap">' +
-      '<p id="step-label" class="step-label">Step 1 of 4</p>' +
-      '<div class="progress-bar"><div id="progress-fill" class="progress-fill" style="width:25%;"></div></div>' +
-      "</div>" +
-      '<form id="buyer-match-form" class="match-form">' +
-      '<section class="step" data-step="1"><h3>What are you growing?</h3><div id="ms-match-crop"></div></section>' +
-      '<section class="step" data-step="2" hidden><h3>What is your current soil pH?</h3>' +
-      '<select id="match-soil-ph"><option value="">Select one</option><option>Below 5.5</option><option>5.5–6.5</option><option>6.5–7.5</option><option>7.5–8.5</option><option>Above 8.5</option></select>' +
-      '<h3 style="margin-top:var(--space-6);">Primary goal?</h3><div id="ms-match-goal"></div></section>' +
-      '<section class="step" data-step="3" hidden><h3>Approximate volume needed (tonnes)?</h3>' +
-      '<input id="match-volume" type="number" min="1" max="500" placeholder="e.g. 20" />' +
-      '<h3 style="margin-top:var(--space-6);">Target delivery window?</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);"><input id="match-from" type="date" /><input id="match-to" type="date" /></div>' +
-      '<h3 style="margin-top:var(--space-6);">Are you certified organic?</h3><div><label><input type="radio" name="match-organic" value="Yes" /> Yes</label> <label style="margin-left:var(--space-4);"><input type="radio" name="match-organic" value="No" /> No</label></div>' +
-      "</section>" +
-      '<section class="step" data-step="4" hidden><h3>Where are you located?</h3>' +
-      '<button id="match-geolocate" type="button" class="btn btn-secondary">Detect My Location</button>' +
-      '<p id="match-geo-status" style="margin-top:var(--space-3);color:var(--color-text-muted);"></p>' +
-      '<p id="match-geo-result" style="margin-top:var(--space-2);color:var(--color-accent);"></p>' +
-      '<p style="margin-top:var(--space-2);"><a id="match-manual-link" href="#">Enter manually instead</a></p>' +
-      '<input id="match-manual" type="text" placeholder="City or county name" class="hidden" />' +
-      "</section>" +
-      '<div id="match-actions" style="display:flex;justify-content:space-between;gap:var(--space-3);margin-top:var(--space-8);">' +
-      '<button id="match-back" type="button" class="btn btn-secondary" disabled>Back</button>' +
-      '<button id="match-next" type="button" class="btn btn-primary" disabled>Next</button>' +
-      "</div>" +
-      "</form>";
-
-    makeMultiSelect(document.getElementById("ms-match-crop"), [
-      "Almond Orchards", "Walnut Orchards", "Pistachio Orchards", "Grapevine / Vineyards", "Corn", "Wheat", "Rice", "Row Crops", "Pasture", "Forestry"
-    ], "Select crops");
-
-    makeMultiSelect(document.getElementById("ms-match-goal"), [
-      "Improve Water Retention", "Increase Nutrient Holding", "Raise Soil pH", "Reduce Fertilizer Use", "Carbon Sequestration"
-    ], "Select goals");
-
-    initMatchFlow();
-  }
-
-  function initMatchFlow() {
-    var formEl = document.getElementById("buyer-match-form");
-    var currentStep = 1;
-    var totalSteps = 4;
-    var detectedCounty = "";
-    var detectedState = "";
-
-    function collect() {
-      var organicChecked = formEl.querySelector('input[name="match-organic"]:checked');
-      state.matchForm.crop = getMultiSelectValues("ms-match-crop").filter(function (v) { return v !== "All"; });
-      state.matchForm.soilPh = document.getElementById("match-soil-ph").value;
-      state.matchForm.goal = getMultiSelectValues("ms-match-goal").filter(function (v) { return v !== "All"; });
-      state.matchForm.volume = document.getElementById("match-volume").value;
-      state.matchForm.fromDate = document.getElementById("match-from").value;
-      state.matchForm.toDate = document.getElementById("match-to").value;
-      state.matchForm.organic = organicChecked ? organicChecked.value : "";
-      state.matchForm.manualLocation = document.getElementById("match-manual").value.trim();
-      state.matchForm.county = state.matchForm.geoDetected ? detectedCounty : state.matchForm.manualLocation;
-      state.matchForm.locationState = state.matchForm.geoDetected ? detectedState : "";
-    }
-
-    function stepValid(step) {
-      if (step === 1) return state.matchForm.crop.length > 0;
-      if (step === 2) return !!state.matchForm.soilPh && state.matchForm.goal.length > 0;
-      if (step === 3) return !!state.matchForm.volume && Number(state.matchForm.volume) >= 1;
-      if (step === 4) return state.matchForm.geoDetected || !!state.matchForm.manualLocation;
-      return false;
-    }
-
-    function updateStepUI() {
-      var stepLabel = document.getElementById("step-label");
-      var fill = document.getElementById("progress-fill");
-      var back = document.getElementById("match-back");
-      var next = document.getElementById("match-next");
-
-      Array.prototype.forEach.call(formEl.querySelectorAll(".step"), function (el) {
-        el.hidden = Number(el.getAttribute("data-step")) !== currentStep;
-      });
-
-      stepLabel.textContent = "Step " + currentStep + " of " + totalSteps;
-      fill.style.width = (currentStep / totalSteps) * 100 + "%";
-      back.disabled = currentStep === 1;
-      next.disabled = !stepValid(currentStep);
-      next.textContent = currentStep === 4 ? "See Matches" : "Next";
-    }
-
-    function renderMatchResults() {
-      var wrap = document.getElementById("match-results");
-      var scored = (window.LISTINGS || [])
-        .map(function (listing) {
-          return scoreListingForInputs(listing, {
-            crop: state.matchForm.crop,
-            soilPh: state.matchForm.soilPh,
-            goal: state.matchForm.goal,
-            organic: state.matchForm.organic,
-            locationState: state.matchForm.locationState
-          });
-        })
-        .sort(function (a, b) {
-          return b.score - a.score;
-        });
-
-      var html =
-        '<div class="results" style="margin-top:var(--space-8);"><h3>Recommended listings</h3><div class="result-grid" style="display:grid;gap:var(--space-4);margin-top:var(--space-5);">' +
-        scored.slice(0, 6).map(function (item) {
-          return (
-            '<article class="result-card" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);">' +
-            '<div style="display:flex;align-items:center;justify-content:space-between;gap:var(--space-3);">' +
-            '<h4>' + htmlEscape(item.listing.producerName) + '</h4>' +
-            '<span style="font-size:var(--font-size-sm);color:var(--color-text-secondary);">' + htmlEscape(item.score) + '/100</span></div>' +
-            '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(item.score) + '%"></div></div>' +
-            '<p style="margin-top:var(--space-2);color:var(--color-text-secondary);">' + htmlEscape(item.explanation) + '</p>' +
-            '</article>'
-          );
-        }).join("") +
-        "</div></div>";
-
-      if (state.user) {
-        html +=
-          '<div class="save-match-wrap"><button id="save-match-prefs" class="btn btn-primary" type="button">Save these preferences to my profile</button></div>';
-      }
-
-      wrap.innerHTML = html;
-
-      if (state.user) {
-        document.getElementById("save-match-prefs").addEventListener("click", function () {
-          db.collection("users")
-            .doc(state.user.uid)
-            .set(
-              {
-                cropTypes: state.matchForm.crop,
-                soilPH: state.matchForm.soilPh,
-                goals: state.matchForm.goal
-              },
-              { merge: true }
-            )
-            .then(function () {
-              if (!state.profile) state.profile = {};
-              state.profile.cropTypes = state.matchForm.crop.slice();
-              state.profile.soilPH = state.matchForm.soilPh;
-              state.profile.goals = state.matchForm.goal.slice();
-              renderMatchedSection();
-            });
-        });
-      }
-    }
-
-    formEl.addEventListener("input", function () {
-      collect();
-      updateStepUI();
-    });
-
-    formEl.addEventListener("change", function () {
-      collect();
-      updateStepUI();
-    });
-
-    document.getElementById("match-back").addEventListener("click", function () {
-      if (currentStep > 1) {
-        currentStep -= 1;
-        updateStepUI();
-      }
-    });
-
-    document.getElementById("match-next").addEventListener("click", function () {
-      collect();
-      if (!stepValid(currentStep)) return;
-      if (currentStep < totalSteps) {
-        currentStep += 1;
-        updateStepUI();
-      } else {
-        renderMatchResults();
-      }
-    });
-
-    document.getElementById("match-manual-link").addEventListener("click", function (event) {
-      event.preventDefault();
-      document.getElementById("match-geolocate").classList.add("hidden");
-      document.getElementById("match-manual").classList.remove("hidden");
-      document.getElementById("match-manual").focus();
-      state.matchForm.geoDetected = false;
-      detectedCounty = "";
-      detectedState = "";
-      collect();
-      updateStepUI();
-    });
-
-    document.getElementById("match-geolocate").addEventListener("click", function () {
-      var geoStatus = document.getElementById("match-geo-status");
-      var geoResult = document.getElementById("match-geo-result");
-      if (!navigator.geolocation) {
-        geoStatus.textContent = "Could not detect location. Please enter manually.";
-        document.getElementById("match-manual").classList.remove("hidden");
-        return;
-      }
-
-      geoStatus.textContent = "Detecting location...";
-      navigator.geolocation.getCurrentPosition(
-        function (position) {
-          var lat = position.coords.latitude;
-          var lng = position.coords.longitude;
-          fetch("https://nominatim.openstreetmap.org/reverse?format=json&lat=" + lat + "&lon=" + lng)
-            .then(function (response) { return response.json(); })
-            .then(function (payload) {
-              var address = payload && payload.address ? payload.address : {};
-              detectedCounty = address.county || address.state_district || "";
-              detectedState = address.state || "";
-              state.matchForm.geoDetected = !!detectedCounty;
-              geoStatus.textContent = "Location detected";
-              geoResult.textContent = detectedCounty && detectedState ? detectedCounty + ", " + detectedState : "";
-              collect();
-              updateStepUI();
-            })
-            .catch(function () {
-              state.matchForm.geoDetected = false;
-              geoStatus.textContent = "Could not detect location. Please enter manually.";
-              document.getElementById("match-manual").classList.remove("hidden");
-              collect();
-              updateStepUI();
-            });
-        },
-        function () {
-          state.matchForm.geoDetected = false;
-          geoStatus.textContent = "Could not detect location. Please enter manually.";
-          document.getElementById("match-manual").classList.remove("hidden");
-          collect();
-          updateStepUI();
-        }
-      );
-    });
-
-    collect();
-    updateStepUI();
-  }
-
   function getProducerCoordinate(listing) {
     if (countyCoords[listing.county]) {
       return countyCoords[listing.county];
@@ -1031,7 +781,7 @@
         state.profile = null;
         updateTopNav();
         renderHeroSlot();
-        renderMatchedSection();
+        renderTopMatchesBlock();
         return;
       }
 
@@ -1043,29 +793,19 @@
           state.profile = doc.exists ? doc.data() : null;
           updateTopNav();
           renderHeroSlot();
-          renderMatchedSection();
+          renderTopMatchesBlock();
         })
         .catch(function () {
           state.profile = null;
           updateTopNav();
           renderHeroSlot();
-          renderMatchedSection();
+          renderTopMatchesBlock();
         });
     });
   }
 
   function init() {
-    var logoutBtn = document.getElementById("nav-logout");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", function () {
-        auth.signOut().then(function () {
-          window.location.href = "index.html";
-        });
-      });
-    }
-
     initAuthState();
-    renderMatchTool();
     initBrowseFilters();
     initMap();
   }

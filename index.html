@@ -134,6 +134,55 @@
         margin-top: var(--space-1);
       }
 
+      .stat-link {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .stat-link:hover {
+        color: var(--color-accent);
+      }
+
+      .how-it-works {
+        padding: var(--space-20) 0;
+      }
+
+      .how-it-works h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        text-align: center;
+      }
+
+      .steps-grid {
+        margin-top: var(--space-8);
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: var(--space-4);
+      }
+
+      .step-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        text-align: center;
+      }
+
+      .step-number {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        color: var(--color-accent-light);
+      }
+
+      .step-card h3 {
+        margin-top: var(--space-3);
+      }
+
+      .step-card p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
       .what-is-biochar {
         background: var(--color-surface);
         padding: var(--space-20) 0;
@@ -164,6 +213,10 @@
         .hero-cards {
           flex-direction: column;
         }
+
+        .steps-grid {
+          grid-template-columns: 1fr;
+        }
       }
 
       .site-footer {
@@ -184,12 +237,10 @@
     <nav>
       <div class="container nav-inner">
         <a class="nav-logo" href="index.html">BM</a>
-        <div style="display: flex; gap: var(--space-3);">
-          <a class="btn btn-secondary" href="buyer.html">I want to buy</a>
-          <a class="btn btn-secondary" href="seller.html">I want to sell</a>
+        <div style="display: flex; gap: var(--space-3); align-items: center;">
+          <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+          <a id="nav-profile" class="btn btn-secondary" href="profile.html" style="display: none;">Profile</a>
         </div>
-        <ul class="nav-links"></ul>
-        <a class="nav-cta" href="auth.html">Login</a>
       </div>
     </nav>
 
@@ -221,12 +272,47 @@
           <div class="stat-label">Verified producers</div>
         </div>
         <div class="stat">
-          <div class="stat-number">9</div>
-          <div class="stat-label">Supported crop types</div>
+          <a class="stat-link" href="crops.html">
+            <div class="stat-number">9</div>
+            <div class="stat-label">Supported crop types</div>
+          </a>
         </div>
         <div class="stat">
           <div class="stat-number">$0</div>
           <div class="stat-label">To list your biochar</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="how-it-works">
+      <div class="container">
+        <h2>How it works</h2>
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">01</div>
+            <h3>Browse or get matched</h3>
+            <p>Create a free account, answer a few questions about your crops and soil, and get ranked producer matches. Or browse all listings and filter by feedstock, region, and certification.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">02</div>
+            <h3>Send an inquiry</h3>
+            <p>Found a listing that fits? Send an inquiry through the platform. We introduce you to the producer within 24 hours.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">03</div>
+            <h3>Negotiate directly</h3>
+            <p>You and the producer agree on volume, price, and delivery terms directly. The buyer arranges pickup or the producer arranges delivery — this is agreed between both parties before confirming.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">04</div>
+            <h3>Confirm delivery</h3>
+            <p>Once material is received and accepted both parties confirm delivery through the platform. No returns are accepted after delivery confirmation. Quality disputes must be raised within 7 days with lab evidence.</p>
+          </div>
+          <div class="step-card">
+            <div class="step-number">05</div>
+            <h3>Transaction complete</h3>
+            <p>The transaction is marked complete, a verified badge is added to the producer listing, and both parties leave a rating. Commission is invoiced to the producer on completed transactions only.</p>
+          </div>
         </div>
       </div>
     </section>
@@ -251,6 +337,19 @@
       </div>
     </footer>
     <script src="js/firebase-config.js"></script>
-    <script src="js/auth-state.js"></script>
+    <script>
+      auth.onAuthStateChanged(function (user) {
+        var login = document.getElementById('nav-login')
+        var profile = document.getElementById('nav-profile')
+        if (!login || !profile) return
+        if (user) {
+          login.style.display = 'none'
+          profile.style.display = 'inline-flex'
+        } else {
+          login.style.display = 'inline-flex'
+          profile.style.display = 'none'
+        }
+      })
+    </script>
   </body>
 </html>

@@ -78,61 +78,6 @@
         gap: var(--space-3);
       }
 
-      .listing-grid {
-        margin-top: var(--space-6);
-        display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: var(--space-6);
-      }
-
-      .listing-card {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: var(--space-6);
-        box-shadow: var(--shadow-sm);
-        display: grid;
-        gap: var(--space-3);
-      }
-
-      .listing-meta {
-        color: var(--color-text-muted);
-        font-size: var(--font-size-sm);
-      }
-
-      .feedstock-tag {
-        display: inline-flex;
-        width: fit-content;
-        background: var(--color-accent-light);
-        color: var(--color-accent);
-        border-radius: var(--radius-sm);
-        padding: var(--space-1) var(--space-3);
-        font-size: var(--font-size-sm);
-        font-weight: var(--font-weight-semibold);
-      }
-
-      .match-score-label {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-secondary);
-      }
-
-      .match-score-bar {
-        height: 10px;
-        border-radius: 999px;
-        background: var(--color-accent-light);
-        overflow: hidden;
-      }
-
-      .match-score-fill {
-        height: 100%;
-        background: var(--color-accent);
-      }
-
-      .match-explanation {
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-      }
-
       .table-shell {
         margin-top: var(--space-6);
         overflow-x: auto;
@@ -209,6 +154,36 @@
         font-family: var(--font-sans);
       }
 
+      .settings-section {
+        padding: var(--space-16) 0;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .settings-section h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .settings-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+        margin-top: var(--space-8);
+      }
+
+      .settings-card h3 {
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-semibold);
+        margin-bottom: var(--space-6);
+      }
+
+      .settings-future {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-8);
+      }
+
       .site-footer {
         border-top: 1px solid var(--color-border);
         padding: var(--space-8) 0;
@@ -229,8 +204,7 @@
       }
 
       @media (max-width: 760px) {
-        .info-grid,
-        .listing-grid {
+        .info-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -303,13 +277,6 @@
           <p id="prefs-status" class="status-message"></p>
         </section>
 
-        <section class="profile-section" id="matches-section" hidden>
-          <h2>Your Matched Listings</h2>
-          <p class="section-sub">Based on your crop types, soil conditions, and goals.</p>
-          <div id="matched-listings" class="listing-grid"></div>
-          <p id="matches-empty" class="empty-state" hidden>Complete your preferences above to see matched listings.</p>
-        </section>
-
         <section class="profile-section" id="history-section">
           <h2>Order History</h2>
           <div id="order-history-wrap"></div>
@@ -321,6 +288,19 @@
         </section>
       </div>
     </main>
+
+    <section class="settings-section">
+      <div class="container-narrow">
+        <h2>Settings</h2>
+        <div class="settings-card">
+          <h3>Account</h3>
+          <button id="logout-btn" class="btn btn-secondary" type="button">Log out</button>
+          <p class="settings-future">
+            Additional settings including FAQs, contracts, and legal documents will appear here.
+          </p>
+        </div>
+      </div>
+    </section>
 
     <div id="repeat-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
       <div class="modal" id="repeat-modal">

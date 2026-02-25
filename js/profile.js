@@ -60,140 +60,6 @@
     });
   }
 
-  function getStateRegionBucket(stateName) {
-    if (!stateName) return "";
-
-    var buckets = {
-      california: ["California"],
-      pacific_northwest: ["Washington", "Oregon", "Idaho"],
-      great_plains: ["Montana", "Wyoming", "Colorado", "New Mexico", "North Dakota", "South Dakota", "Nebraska", "Kansas", "Oklahoma", "Texas"],
-      southeast: ["Florida", "Georgia", "South Carolina", "North Carolina", "Virginia", "West Virginia", "Kentucky", "Tennessee", "Alabama", "Mississippi", "Arkansas", "Louisiana"],
-      northeast: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland"],
-      midwest: ["Ohio", "Michigan", "Indiana", "Illinois", "Wisconsin", "Minnesota", "Iowa", "Missouri"]
-    };
-
-    var key = Object.keys(buckets).find(function (bucketKey) {
-      return buckets[bucketKey].indexOf(stateName) !== -1;
-    });
-
-    return key || "";
-  }
-
-  function getListingRegionBucket(regionName) {
-    var regionBuckets = {
-      california: ["Sacramento Valley", "San Joaquin Valley", "North Coast", "Central Coast", "Sierra Foothills"],
-      pacific_northwest: ["Pacific Northwest"],
-      great_plains: ["Great Plains"],
-      southeast: ["Southeast"],
-      northeast: ["Northeast"],
-      midwest: ["Midwest"]
-    };
-
-    var key = Object.keys(regionBuckets).find(function (bucketKey) {
-      return regionBuckets[bucketKey].indexOf(regionName) !== -1;
-    });
-
-    return key || "";
-  }
-
-  function isBroadRegionMatch(stateName, listingRegion) {
-    var stateBucket = getStateRegionBucket(stateName);
-    var listingBucket = getListingRegionBucket(listingRegion);
-    return stateBucket && listingBucket && stateBucket === listingBucket;
-  }
-
-  function scoreListingWithProfile(listing, profile) {
-    var score = 0;
-    var reasons = [];
-
-    var cropTypes = Array.isArray(profile.cropTypes) ? profile.cropTypes : [];
-    var cropMatches = cropTypes.filter(function (crop) {
-      return listing.suitableFor.indexOf(crop) !== -1;
-    });
-
-    if (cropMatches.length > 0) {
-      score += 30;
-      reasons.push("suitable for " + cropMatches[0].toLowerCase());
-    }
-
-    var soilPH = profile.soilPH || "";
-    if (soilPH === "Below 5.5" && listing.scorecard.pH > 7.0) {
-      score += 20;
-      reasons.push("alkaline profile aligns with low-pH soil");
-    } else if (soilPH === "5.5–6.5" && listing.scorecard.pH >= 6.5 && listing.scorecard.pH <= 8.0) {
-      score += 20;
-      reasons.push("pH compatibility in your target range");
-    } else if (soilPH === "Above 8.5" && listing.scorecard.pH < 7.5) {
-      score += 10;
-      reasons.push("more neutral pH for high-alkaline soils");
-    } else {
-      score += 10;
-    }
-
-    if (listing.scorecard.carbonContent >= 70) {
-      score += 10;
-      reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    } else if (listing.scorecard.carbonContent >= 60) {
-      score += 5;
-      reasons.push("solid carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    }
-
-    if (listing.scorecard.labVerified) {
-      score += 10;
-      reasons.push("lab-verified");
-    }
-
-    var goals = Array.isArray(profile.goals) ? profile.goals : [];
-    if (goals.indexOf("Improve Water Retention") !== -1 && listing.scorecard.surfaceArea >= 300) {
-      score += 5;
-      reasons.push("high surface area for water retention");
-    }
-    if (goals.indexOf("Increase Nutrient Holding") !== -1 && listing.scorecard.surfaceArea >= 280) {
-      score += 5;
-      reasons.push("porosity supports nutrient holding");
-    }
-    if (goals.indexOf("Raise Soil pH") !== -1 && listing.scorecard.pH >= 7.0) {
-      score += 5;
-      reasons.push("alkaline profile supports pH correction");
-    }
-    if (goals.indexOf("Reduce Fertilizer Use") !== -1 && listing.scorecard.surfaceArea >= 280) {
-      score += 5;
-      reasons.push("supports nutrient retention efficiency");
-    }
-    if (goals.indexOf("Carbon Sequestration") !== -1 && listing.scorecard.carbonContent >= 70) {
-      score += 5;
-      reasons.push("strong sequestration potential");
-    }
-
-    if (profile.annualVolume && listing.availableTonnes >= Number(profile.annualVolume)) {
-      score += 15;
-      reasons.push("available in sufficient volume");
-    }
-
-    if (
-      String(profile.organicCertified || "").toLowerCase() === "yes" &&
-      (listing.certifications.indexOf("OMRI Listed") !== -1 || listing.certifications.indexOf("California Organic") !== -1)
-    ) {
-      score += 15;
-      reasons.push("organic-compatible certification");
-    }
-
-    if (isBroadRegionMatch(profile.state, listing.region)) {
-      score += 10;
-      reasons.push("regional proximity advantage");
-    } else {
-      score += 5;
-    }
-
-    return {
-      listing: listing,
-      score: Math.min(score, 100),
-      explanation: reasons.length
-        ? "Strong match - " + reasons.join(", ") + "."
-        : "Possible match based on baseline compatibility."
-    };
-  }
-
   function setStatus(id, message, isError) {
     var el = document.getElementById(id);
     if (!el) return;
@@ -256,7 +122,6 @@
   function initPreferencesSection() {
     var isBuyer = (state.profile.role || "buyer").toLowerCase() === "buyer";
     document.getElementById("prefs-section").hidden = !isBuyer;
-    document.getElementById("matches-section").hidden = !isBuyer;
     document.getElementById("scheduled-section").hidden = !isBuyer;
 
     if (!isBuyer) {
@@ -296,60 +161,9 @@
       await db.collection("users").doc(state.user.uid).update(updates);
       Object.assign(state.profile, updates);
       setStatus("prefs-status", "Preferences saved.", false);
-      renderMatches();
     } catch (error) {
       setStatus("prefs-status", "Failed to save preferences.", true);
     }
-  }
-
-  function renderMatches() {
-    var wrap = document.getElementById("matched-listings");
-    var empty = document.getElementById("matches-empty");
-
-    if (!(state.profile.cropTypes && state.profile.cropTypes.length) && !state.profile.soilPH && !(state.profile.goals && state.profile.goals.length)) {
-      wrap.innerHTML = "";
-      empty.hidden = false;
-      return;
-    }
-
-    empty.hidden = true;
-
-    var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS : [];
-    var ranked = listings
-      .map(function (listing) {
-        return scoreListingWithProfile(listing, state.profile);
-      })
-      .sort(function (a, b) {
-        return b.score - a.score;
-      })
-      .slice(0, 6);
-
-    wrap.innerHTML = ranked
-      .map(function (item) {
-        var listing = item.listing;
-        var certText = listing.certifications.length ? listing.certifications.join(", ") : "-";
-        var suitableText = listing.suitableFor.slice(0, 3).join(", ");
-
-        return (
-          '<article class="listing-card">' +
-          '<h3>' + listing.producerName + '</h3>' +
-          '<p class="listing-meta">' + listing.county + ' County · ' + listing.region + '</p>' +
-          '<span class="feedstock-tag">' + listing.feedstock + '</span>' +
-          '<p><strong>$' + listing.pricePerTonne + '</strong> /tonne</p>' +
-          '<p class="listing-meta">Available: ' + listing.availableTonnes + ' tonnes</p>' +
-          '<p class="listing-meta">Availability: ' + toDateLabel(listing.availableFrom) + ' - ' + toDateLabel(listing.availableUntil) + '</p>' +
-          '<p class="listing-meta">C: ' + listing.scorecard.carbonContent.toFixed(1) + '% · pH: ' + listing.scorecard.pH.toFixed(1) + ' · ' + listing.scorecard.surfaceArea + ' m²/g</p>' +
-          '<p class="listing-meta">Certifications: ' + certText + '</p>' +
-          '<p class="listing-meta">Suitable for: ' + (suitableText || "-") + '</p>' +
-          '<p class="listing-meta">' + listing.transactionsCompleted + ' transactions · ' + (listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1)) + '</p>' +
-          '<p class="match-score-label">Match score: ' + item.score + '%</p>' +
-          '<div class="match-score-bar"><div class="match-score-fill" style="width:' + item.score + '%"></div></div>' +
-          '<p class="match-explanation">' + item.explanation + '</p>' +
-          '<a class="btn btn-primary" href="listing.html?id=' + listing.id + '">View & Inquire</a>' +
-          '</article>'
-        );
-      })
-      .join("");
   }
 
   function normalizeTransaction(tx, id) {
@@ -594,7 +408,6 @@
 
     renderAccountInfo();
     initPreferencesSection();
-    renderMatches();
     await loadTransactions();
     await loadScheduledOrders();
   }
@@ -625,6 +438,12 @@
       if (event.target.id === "repeat-modal-backdrop") {
         closeRepeatModal();
       }
+    });
+
+    document.getElementById("logout-btn").addEventListener("click", function () {
+      auth.signOut().then(function () {
+        window.location.href = "index.html";
+      });
     });
   }
 
