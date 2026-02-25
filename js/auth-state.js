@@ -1,10 +1,4 @@
 (function () {
-  function renderVerifiedBadge() {
-    return '<span class="verified-badge" title="Verified — 90%+ delivery confirmation and 4.0+ average rating">✓ Verified</span>';
-  }
-
-  window.renderVerifiedBadge = renderVerifiedBadge;
-
   function ensureLoginLink(navLinks, isLoggedIn) {
     if (!navLinks) {
       return;
@@ -112,12 +106,10 @@
         }
 
         window.userProfile = profile;
-        window.userVerified = !!(profile && profile.verified === true);
         updateNavForState(true, profile);
       } else {
         window.currentUser = null;
         window.userProfile = null;
-        window.userVerified = false;
         updateNavForState(false, null);
       }
     });

@@ -235,10 +235,6 @@
     var stars = renderStars(listing.averageRating);
     var lead = getLeadTimeDisplay(listing.leadTimeDays);
 
-    var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
-      ? window.renderVerifiedBadge()
-      : "";
-
     return (
       '<article class="listing-card" id="listing-' +
       htmlEscape(listing.id) +
@@ -252,7 +248,6 @@
       " />+ Compare</label></div>" +
       "<h3>" +
       htmlEscape(listing.producerName) +
-      (verifiedBadge ? '<span style="margin-left:var(--space-2);vertical-align:middle;">' + verifiedBadge + "</span>" : "") +
       "</h3>" +
       '<p class="listing-meta">' +
       htmlEscape(listing.county) +
@@ -279,42 +274,14 @@
       '">' +
       htmlEscape(lead.text) +
       "</p>" +
-      '<div class="scorecard-inline">' +
-      '<span class="scorecard-badge">' +
+      '<div class="scorecard-mini">' +
+      '<span class="score-item">C: ' +
       htmlEscape(listing.scorecard.carbonContent.toFixed(1)) +
-      "% C</span>" +
-      '<span class="scorecard-badge">pH ' +
+      '%</span><span class="score-item">pH: ' +
       htmlEscape(listing.scorecard.pH.toFixed(1)) +
-      "</span>" +
-      '<span class="scorecard-badge">' +
-      htmlEscape(listing.scorecard.surfaceArea) +
-      " m²/g</span>" +
-      "</div>" +
-      '<a class="scorecard-toggle" href="#" data-action="expand-scorecard">Full scorecard ↓</a>' +
-      '<div class="scorecard-expanded">' +
-      '<div class="scorecard-row"><span class="field-name">Carbon Content</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.carbonContent.toFixed(1)) +
-      "%</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">pH</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.pH.toFixed(1)) +
-      "</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">Surface Area</span><span class="field-value">' +
+      '</span><span class="score-item">' +
       htmlEscape(listing.scorecard.surfaceArea) +
       " m²/g</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">Particle Size</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.particleSize) +
-      "</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">Moisture</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.moisture.toFixed(1)) +
-      "%</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">Ash Content</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.ashContent.toFixed(1)) +
-      "%</span></div>" +
-      '<div class="scorecard-row"><span class="field-name">Electrical Conductivity</span><span class="field-value">' +
-      htmlEscape(listing.scorecard.electricalConductivity.toFixed(1)) +
-      " dS/m</span></div>" +
-      '<a class="scorecard-hide" href="#" data-action="collapse-scorecard">Hide ↑</a>' +
-      "</div>" +
       '<div class="badge-row">' +
       certBadges +
       "</div>" +
@@ -883,38 +850,13 @@
     initMap();
     document.addEventListener("click", function (event) {
       var target = event.target;
-      if (!target || !target.classList) {
+      if (!target || !target.classList || !target.classList.contains("buy-now-card-btn")) {
         return;
       }
 
-      if (target.classList.contains("buy-now-card-btn")) {
-        var listingId = target.getAttribute("data-id");
-        if (!listingId) return;
-        handleCardBuyNow(listingId);
-        return;
-      }
-
-      var action = target.getAttribute("data-action");
-      if (action !== "expand-scorecard" && action !== "collapse-scorecard") {
-        return;
-      }
-
-      event.preventDefault();
-      var card = target.closest(".listing-card");
-      if (!card) {
-        return;
-      }
-
-      var expanded = card.querySelector(".scorecard-expanded");
-      if (!expanded) {
-        return;
-      }
-
-      if (action === "expand-scorecard") {
-        expanded.classList.add("open");
-      } else {
-        expanded.classList.remove("open");
-      }
+      var listingId = target.getAttribute("data-id");
+      if (!listingId) return;
+      handleCardBuyNow(listingId);
     });
   }
 
