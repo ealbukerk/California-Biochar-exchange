@@ -8,6 +8,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <script src="js/airtable.js"></script>
     <style>
@@ -173,6 +179,39 @@
         margin-top: var(--space-6);
       }
 
+      .field-note {
+        margin-top: var(--space-2);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+      }
+
+      #file-list {
+        margin-top: var(--space-3);
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-2);
+      }
+
+      .file-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-1) var(--space-3);
+        border-radius: 999px;
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        font-size: var(--font-size-sm);
+      }
+
+      .file-tag button {
+        border: none;
+        background: transparent;
+        color: inherit;
+        cursor: pointer;
+        font-size: var(--font-size-sm);
+        line-height: 1;
+      }
+
       .site-footer {
         border-top: 1px solid var(--color-border);
         padding: var(--space-8) 0;
@@ -309,18 +348,8 @@
 
             <div class="form-group">
               <label for="feedstock">Primary feedstock</label>
-              <select id="feedstock" name="feedstock">
-                <option value="">Select feedstock</option>
-                <option value="Almond Shell">Almond Shell</option>
-                <option value="Walnut Shell">Walnut Shell</option>
-                <option value="Pistachio Shell">Pistachio Shell</option>
-                <option value="Vine Pruning">Vine Pruning</option>
-                <option value="Wood Chip">Wood Chip</option>
-                <option value="Forest Thinning">Forest Thinning</option>
-                <option value="Rice Husk">Rice Husk</option>
-                <option value="Corn Stover">Corn Stover</option>
-                <option value="Wheat Straw">Wheat Straw</option>
-              </select>
+              <div id="ms-feedstock-producer"></div>
+              <input id="feedstock" type="hidden" name="feedstock" />
             </div>
 
             <div class="form-group">
@@ -340,12 +369,15 @@
 
             <div class="form-group">
               <label>Certifications held</label>
-              <div class="checkbox-group">
-                <label><input type="checkbox" name="certifications" value="OMRI Listed" /> OMRI Listed</label>
-                <label><input type="checkbox" name="certifications" value="IBI Certified" /> IBI Certified</label>
-                <label><input type="checkbox" name="certifications" value="California Organic" /> California Organic</label>
-                <label><input type="checkbox" name="certifications" value="None Yet" /> None Yet</label>
-              </div>
+              <div id="ms-certs-producer"></div>
+              <input id="producer-certs" type="hidden" name="certifications" />
+            </div>
+
+            <div class="form-group">
+              <label for="cert-docs">Upload certification documents</label>
+              <p class="field-note">Upload your OMRI, IBI, or CDFA certificate PDFs. Accepted formats: PDF, JPG, PNG. Max 5MB per file.</p>
+              <input id="cert-docs" name="certDocs" type="file" multiple accept=".pdf,.jpg,.jpeg,.png" />
+              <div id="file-list"></div>
             </div>
 
             <div class="form-group">
@@ -371,6 +403,96 @@
         <span>United States · 2025</span>
       </div>
     </footer>
-    <script>document.getElementById('producer-form').addEventListener('submit', handleProducerForm)</script>
+    <script>
+      (function () {
+        function valuesToString(values) {
+          return (values || [])
+            .filter(function (value) { return value !== "All"; })
+            .join(", ");
+        }
+
+        var feedstockEl = document.getElementById("ms-feedstock-producer");
+        var certsEl = document.getElementById("ms-certs-producer");
+        var feedstockInput = document.getElementById("feedstock");
+        var certsInput = document.getElementById("producer-certs");
+        var certDocsInput = document.getElementById("cert-docs");
+        var fileList = document.getElementById("file-list");
+        var selectedFiles = [];
+
+        makeMultiSelect(feedstockEl, [
+          "Almond Shell",
+          "Walnut Shell",
+          "Pistachio Shell",
+          "Vine Pruning",
+          "Wood Chip",
+          "Forest Thinning",
+          "Rice Husk",
+          "Corn Stover",
+          "Wheat Straw"
+        ], "Select feedstock");
+
+        makeMultiSelect(certsEl, ["OMRI Listed", "IBI Certified", "California Organic", "None Yet"], "Select certifications");
+
+        function syncProducerMulti() {
+          var feedstockValues = feedstockEl.getValue().filter(function (value) { return value !== "All"; });
+          feedstockInput.value = feedstockValues[0] || "";
+          certsInput.value = valuesToString(certsEl.getValue());
+        }
+
+        feedstockEl.addEventListener("change", syncProducerMulti);
+        certsEl.addEventListener("change", syncProducerMulti);
+
+        function syncFileInputFromSelection() {
+          var dataTransfer = new DataTransfer();
+          selectedFiles.forEach(function (file) {
+            dataTransfer.items.add(file);
+          });
+          certDocsInput.files = dataTransfer.files;
+        }
+
+        function renderSelectedFiles() {
+          fileList.innerHTML = "";
+
+          selectedFiles.forEach(function (file, index) {
+            var tag = document.createElement("span");
+            tag.className = "file-tag";
+            tag.textContent = file.name;
+
+            var removeBtn = document.createElement("button");
+            removeBtn.type = "button";
+            removeBtn.setAttribute("aria-label", "Remove " + file.name);
+            removeBtn.textContent = "x";
+            removeBtn.addEventListener("click", function () {
+              selectedFiles.splice(index, 1);
+              syncFileInputFromSelection();
+              renderSelectedFiles();
+            });
+
+            tag.appendChild(removeBtn);
+            fileList.appendChild(tag);
+          });
+        }
+
+        certDocsInput.addEventListener("change", function () {
+          var incoming = Array.from(certDocsInput.files || []);
+          incoming.forEach(function (file) {
+            var exists = selectedFiles.some(function (item) {
+              return item.name === file.name && item.size === file.size && item.lastModified === file.lastModified;
+            });
+            if (!exists) {
+              selectedFiles.push(file);
+            }
+          });
+          syncFileInputFromSelection();
+          renderSelectedFiles();
+        });
+
+        feedstockEl.setValue(["Almond Shell"]);
+        certsEl.setValue(["None Yet"]);
+        syncProducerMulti();
+      })();
+
+      document.getElementById('producer-form').addEventListener('submit', handleProducerForm)
+    </script>
   </body>
 </html>

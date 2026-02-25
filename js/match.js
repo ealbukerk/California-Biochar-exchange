@@ -1,8 +1,8 @@
 (function () {
   var state = {
-    crop: "",
+    crop: [],
     soilPh: "",
-    goal: "",
+    goal: [],
     volume: "",
     fromDate: "",
     toDate: "",
@@ -20,11 +20,11 @@
 
   function getRequiredFilled(step) {
     if (step === 1) {
-      return !!state.crop;
+      return Array.isArray(state.crop) && state.crop.length > 0;
     }
 
     if (step === 2) {
-      return !!state.soilPh && !!state.goal;
+      return !!state.soilPh && Array.isArray(state.goal) && state.goal.length > 0;
     }
 
     if (step === 3) {
@@ -65,15 +65,17 @@
   }
 
   function collectStateFromForm() {
-    var selectedCrop = document.querySelector('input[name="crop"]:checked');
-    var selectedGoal = document.querySelector('input[name="goal"]:checked');
     var selectedOrganic = document.querySelector('input[name="organic"]:checked');
     var manualInput = document.getElementById("county-manual");
     var manualLocation = manualInput ? manualInput.value.trim() : "";
+    var cropEl = document.getElementById("ms-crop");
+    var goalEl = document.getElementById("ms-goal");
+    var cropValues = cropEl && typeof cropEl.getValue === "function" ? cropEl.getValue() : [];
+    var goalValues = goalEl && typeof goalEl.getValue === "function" ? goalEl.getValue() : [];
 
-    state.crop = selectedCrop ? selectedCrop.value : "";
+    state.crop = cropValues.filter(function (value) { return value !== "All"; });
     state.soilPh = document.getElementById("soil-ph").value;
-    state.goal = selectedGoal ? selectedGoal.value : "";
+    state.goal = goalValues.filter(function (value) { return value !== "All"; });
     state.volume = document.getElementById("volume").value;
     state.fromDate = document.getElementById("date-from").value;
     state.toDate = document.getElementById("date-to").value;
@@ -174,12 +176,13 @@
   function scoreListing(listing, user) {
     var score = 0;
     var reasons = [];
+    var cropMatches = (user.crop || []).filter(function (cropName) {
+      return listing.suitableFor.indexOf(cropName) !== -1;
+    });
 
-    var normalizedCrop = user.crop;
-
-    if (listing.suitableFor.includes(normalizedCrop)) {
+    if (cropMatches.length > 0) {
       score += 30;
-      reasons.push("suitable for " + normalizedCrop.toLowerCase());
+      reasons.push("suitable for " + cropMatches[0].toLowerCase());
     }
 
     if (user.soilPh === "Below 5.5" && listing.scorecard.pH > 7.0) {
@@ -306,11 +309,13 @@
     var geoResult = document.getElementById("geo-result");
     var manualLink = document.getElementById("manual-entry-link");
     var manualInput = document.getElementById("county-manual");
+    var cropEl = document.getElementById("ms-crop");
+    var goalEl = document.getElementById("ms-goal");
 
     state = {
-      crop: "",
+      crop: [],
       soilPh: "",
-      goal: "",
+      goal: [],
       volume: "",
       fromDate: "",
       toDate: "",
@@ -344,6 +349,12 @@
     }
     if (manualLink) {
       manualLink.hidden = false;
+    }
+    if (cropEl && typeof cropEl.setValue === "function") {
+      cropEl.setValue(["All"]);
+    }
+    if (goalEl && typeof goalEl.setValue === "function") {
+      goalEl.setValue(["All"]);
     }
 
     updateStepVisibility();
@@ -472,6 +483,33 @@
     var nextBtn = document.getElementById("btn-next");
     var resetBtn = document.getElementById("btn-reset");
     var form = document.getElementById("match-form");
+    var cropEl = document.getElementById("ms-crop");
+    var goalEl = document.getElementById("ms-goal");
+
+    if (cropEl) {
+      makeMultiSelect(cropEl, [
+        "Almond Orchards",
+        "Walnut Orchards",
+        "Pistachio Orchards",
+        "Grapevine / Vineyards",
+        "Corn",
+        "Wheat",
+        "Rice",
+        "Row Crops",
+        "Pasture",
+        "Forestry"
+      ], "Select crops");
+    }
+
+    if (goalEl) {
+      makeMultiSelect(goalEl, [
+        "Improve Water Retention",
+        "Increase Nutrient Holding",
+        "Raise Soil pH",
+        "Reduce Fertilizer Use",
+        "Carbon Sequestration"
+      ], "Select goals");
+    }
 
     form.addEventListener("input", function () {
       collectStateFromForm();

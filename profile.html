@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Profile</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <script src="js/commission.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .profile-page {
+        padding: var(--space-10) 0 var(--space-20);
+      }
+
+      .profile-shell {
+        display: grid;
+        gap: var(--space-8);
+      }
+
+      .profile-section {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+      }
+
+      .profile-section h2 {
+        font-size: var(--font-size-2xl);
+      }
+
+      .profile-section p.section-sub {
+        margin-top: var(--space-2);
+        color: var(--color-text-secondary);
+      }
+
+      .info-grid {
+        margin-top: var(--space-6);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+
+      .info-item {
+        display: grid;
+        gap: var(--space-2);
+      }
+
+      .info-item label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+      }
+
+      .info-item input,
+      .info-item select {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+      }
+
+      .role-badge {
+        display: inline-flex;
+        width: fit-content;
+        border-radius: 999px;
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        padding: 2px var(--space-3);
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .section-actions {
+        margin-top: var(--space-6);
+        display: flex;
+        gap: var(--space-3);
+      }
+
+      .listing-grid {
+        margin-top: var(--space-6);
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: var(--space-6);
+      }
+
+      .listing-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        display: grid;
+        gap: var(--space-3);
+      }
+
+      .listing-meta {
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+      }
+
+      .feedstock-tag {
+        display: inline-flex;
+        width: fit-content;
+        background: var(--color-accent-light);
+        color: var(--color-accent);
+        border-radius: var(--radius-sm);
+        padding: var(--space-1) var(--space-3);
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .match-score-label {
+        font-size: var(--font-size-sm);
+        color: var(--color-text-secondary);
+      }
+
+      .match-score-bar {
+        height: 10px;
+        border-radius: 999px;
+        background: var(--color-accent-light);
+        overflow: hidden;
+      }
+
+      .match-score-fill {
+        height: 100%;
+        background: var(--color-accent);
+      }
+
+      .match-explanation {
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
+      .table-shell {
+        margin-top: var(--space-6);
+        overflow-x: auto;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 900px;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: var(--space-3) var(--space-4);
+        border-bottom: 1px solid var(--color-border);
+        font-size: var(--font-size-sm);
+      }
+
+      th {
+        background: var(--color-bg);
+      }
+
+      .empty-state {
+        margin-top: var(--space-5);
+        color: var(--color-text-secondary);
+      }
+
+      .status-message {
+        margin-top: var(--space-3);
+        font-size: var(--font-size-sm);
+      }
+
+      .status-error {
+        color: var(--color-warning);
+      }
+
+      .status-success {
+        color: var(--color-accent);
+      }
+
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(26, 26, 26, 0.45);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 400;
+      }
+
+      .modal {
+        width: min(480px, calc(100% - 2rem));
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .modal .field {
+        display: grid;
+        gap: var(--space-2);
+      }
+
+      .modal .field select,
+      .modal .field input {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+
+      @media (max-width: 1080px) {
+        .listing-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .info-grid,
+        .listing-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main class="profile-page">
+      <div class="container profile-shell">
+        <section class="profile-section" id="account-section">
+          <h2>Your Profile</h2>
+          <div class="info-grid" id="account-info-grid"></div>
+          <div class="section-actions">
+            <button class="btn btn-secondary" id="edit-account-btn" type="button">Edit</button>
+            <button class="btn btn-primary" id="save-account-btn" type="button" hidden>Save</button>
+          </div>
+          <p id="account-status" class="status-message"></p>
+        </section>
+
+        <section class="profile-section" id="prefs-section" hidden>
+          <h2>Your Preferences</h2>
+          <p class="section-sub">These are used to match you with relevant listings.</p>
+          <div class="info-grid">
+            <div class="info-item">
+              <label>Crop Types</label>
+              <div id="ms-profile-crops"></div>
+            </div>
+            <div class="info-item">
+              <label>Primary Goals</label>
+              <div id="ms-profile-goals"></div>
+            </div>
+            <div class="info-item">
+              <label for="profile-soil">Soil pH</label>
+              <select id="profile-soil">
+                <option>Not sure</option>
+                <option>Below 5.5</option>
+                <option>5.5–6.5</option>
+                <option>6.5–7.5</option>
+                <option>7.5–8.5</option>
+                <option>Above 8.5</option>
+              </select>
+            </div>
+            <div class="info-item">
+              <label for="profile-timeline">Application Timeline</label>
+              <select id="profile-timeline">
+                <option>Within 3 months</option>
+                <option>3–6 months</option>
+                <option>6–12 months</option>
+                <option>Planning only</option>
+              </select>
+            </div>
+          </div>
+          <div class="section-actions">
+            <button class="btn btn-primary" id="save-prefs-btn" type="button">Save Preferences</button>
+          </div>
+          <p id="prefs-status" class="status-message"></p>
+        </section>
+
+        <section class="profile-section" id="matches-section" hidden>
+          <h2>Your Matched Listings</h2>
+          <p class="section-sub">Based on your crop types, soil conditions, and goals.</p>
+          <div id="matched-listings" class="listing-grid"></div>
+          <p id="matches-empty" class="empty-state" hidden>Complete your preferences above to see matched listings.</p>
+        </section>
+
+        <section class="profile-section" id="history-section">
+          <h2>Order History</h2>
+          <div id="order-history-wrap"></div>
+        </section>
+
+        <section class="profile-section" id="scheduled-section" hidden>
+          <h2>Scheduled Orders</h2>
+          <div id="scheduled-orders-wrap"></div>
+        </section>
+      </div>
+    </main>
+
+    <div id="repeat-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true">
+      <div class="modal" id="repeat-modal">
+        <h3>Schedule Repeat</h3>
+        <div class="field">
+          <label for="repeat-frequency">Repeat frequency</label>
+          <select id="repeat-frequency">
+            <option>Monthly</option>
+            <option>Quarterly</option>
+            <option>Biannually</option>
+            <option>Annually</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="repeat-date">Next order date</label>
+          <input id="repeat-date" type="date" />
+        </div>
+        <div class="section-actions">
+          <button class="btn btn-secondary" id="repeat-cancel" type="button">Cancel</button>
+          <button class="btn btn-primary" id="repeat-save" type="button">Schedule</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/profile.js"></script>
+  </body>
+</html>

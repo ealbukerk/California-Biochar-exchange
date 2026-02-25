@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Auth</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
+    <link rel="stylesheet" href="css/style.css" />
+    <style>
+      .auth-page {
+        padding: var(--space-12) 0 var(--space-20);
+      }
+
+      .auth-shell {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+      }
+
+      .auth-tabs {
+        display: flex;
+        gap: var(--space-3);
+        margin-bottom: var(--space-6);
+      }
+
+      .auth-tab {
+        border: 1px solid var(--color-border);
+        background: var(--color-surface);
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-4);
+        cursor: pointer;
+      }
+
+      .auth-tab.active {
+        background: var(--color-accent);
+        color: white;
+        border-color: var(--color-accent);
+      }
+
+      .auth-form,
+      .signup-flow {
+        display: grid;
+        gap: var(--space-5);
+      }
+
+      .field label {
+        display: block;
+        font-size: var(--font-size-sm);
+        font-weight: var(--font-weight-medium);
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        margin-top: var(--space-2);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+      }
+
+      .role-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: var(--space-4);
+      }
+
+      .role-card {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-5);
+        cursor: pointer;
+      }
+
+      .role-card.active {
+        border-color: var(--color-accent);
+        background: var(--color-accent-light);
+      }
+
+      .role-card p {
+        margin-top: var(--space-2);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
+      .step {
+        display: none;
+      }
+
+      .step.active {
+        display: grid;
+        gap: var(--space-5);
+      }
+
+      .step-actions {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-3);
+      }
+
+      .auth-link {
+        color: var(--color-accent);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
+      }
+
+      .auth-error {
+        color: var(--color-warning);
+        font-size: var(--font-size-sm);
+      }
+
+      .auth-success {
+        color: var(--color-accent);
+        font-size: var(--font-size-sm);
+      }
+
+      @media (max-width: 720px) {
+        .role-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="container nav-inner">
+        <a class="nav-logo" href="index.html">BM</a>
+        <ul class="nav-links">
+          <li><a href="listings.html">Listings</a></li>
+          <li><a href="match.html">Soil Match</a></li>
+          <li><a href="learn.html">Learn</a></li>
+          <li><a href="producers.html">For Producers</a></li>
+          <li><a href="buyers.html">For Buyers</a></li>
+          <li><a href="admin.html">Dashboard</a></li>
+        </ul>
+        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+      </div>
+    </nav>
+
+    <main class="auth-page">
+      <div class="container">
+        <div class="auth-shell">
+          <div class="auth-tabs">
+            <button id="tab-login" class="auth-tab active" type="button">Login</button>
+            <button id="tab-signup" class="auth-tab" type="button">Sign Up</button>
+          </div>
+
+          <section id="login-mode">
+            <form id="login-form" class="auth-form">
+              <div class="field">
+                <label for="login-email">Email</label>
+                <input id="login-email" type="email" required />
+              </div>
+              <div class="field">
+                <label for="login-password">Password</label>
+                <input id="login-password" type="password" required />
+              </div>
+              <button class="btn btn-primary" type="submit">Log in</button>
+              <a href="#" id="link-to-signup" class="auth-link">Don't have an account? Sign up</a>
+              <p id="login-error" class="auth-error"></p>
+            </form>
+          </section>
+
+          <section id="signup-mode" hidden>
+            <form id="signup-form" class="signup-flow" novalidate>
+              <div class="step active" data-step="1">
+                <h2>Step 1 - Account</h2>
+                <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" required /></div>
+                <div class="field"><label for="su-password">Password</label><input id="su-password" type="password" minlength="8" required /></div>
+                <div class="field"><label for="su-confirm">Confirm password</label><input id="su-confirm" type="password" required /></div>
+                <div class="field"><label for="su-name">Full name</label><input id="su-name" type="text" required /></div>
+                <div class="field"><label for="su-business">Farm or business name</label><input id="su-business" type="text" required /></div>
+              </div>
+
+              <div class="step" data-step="2">
+                <h2>Step 2 - Your Role</h2>
+                <div class="role-grid">
+                  <article class="role-card" data-role="buyer">
+                    <h3>I want to buy biochar</h3>
+                    <p>Find and purchase biochar from verified producers</p>
+                  </article>
+                  <article class="role-card" data-role="seller">
+                    <h3>I want to sell biochar</h3>
+                    <p>List your biochar and reach agricultural buyers</p>
+                  </article>
+                </div>
+              </div>
+
+              <div class="step" data-step="3">
+                <h2>Step 3 - Your Crops and Soil</h2>
+                <div id="buyer-step-fields">
+                  <div class="field">
+                    <label>Crop types</label>
+                    <div id="ms-signup-crops"></div>
+                  </div>
+                  <div class="field">
+                    <label>Primary goals</label>
+                    <div id="ms-signup-goals"></div>
+                  </div>
+                  <div class="field">
+                    <label for="su-soil">Soil pH</label>
+                    <select id="su-soil">
+                      <option>Not sure</option>
+                      <option>Below 5.5</option>
+                      <option>5.5–6.5</option>
+                      <option>6.5–7.5</option>
+                      <option>7.5–8.5</option>
+                      <option>Above 8.5</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="su-timeline">Application timeline</label>
+                    <select id="su-timeline">
+                      <option>Within 3 months</option>
+                      <option>3–6 months</option>
+                      <option>6–12 months</option>
+                      <option>Planning only</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div class="step" data-step="4">
+                <h2>Step 4 - Location</h2>
+                <div class="field"><label for="su-county">County</label><input id="su-county" type="text" /></div>
+                <div class="field"><label for="su-state">State</label><input id="su-state" type="text" /></div>
+                <div class="field">
+                  <label for="su-country">Country</label>
+                  <select id="su-country">
+                    <option>United States</option>
+                    <option>Canada</option>
+                    <option>Mexico</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="step-actions">
+                <button id="signup-back" class="btn btn-secondary" type="button">Back</button>
+                <button id="signup-next" class="btn btn-primary" type="button">Next</button>
+              </div>
+              <p id="signup-error" class="auth-error"></p>
+              <p id="signup-success" class="auth-success"></p>
+            </form>
+          </section>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      (function () {
+        var loginMode = document.getElementById("login-mode");
+        var signupMode = document.getElementById("signup-mode");
+        var tabLogin = document.getElementById("tab-login");
+        var tabSignup = document.getElementById("tab-signup");
+        var linkToSignup = document.getElementById("link-to-signup");
+        var loginForm = document.getElementById("login-form");
+        var signupForm = document.getElementById("signup-form");
+        var signupBack = document.getElementById("signup-back");
+        var signupNext = document.getElementById("signup-next");
+        var signupError = document.getElementById("signup-error");
+        var signupSuccess = document.getElementById("signup-success");
+        var loginError = document.getElementById("login-error");
+        var roleCards = Array.prototype.slice.call(document.querySelectorAll(".role-card"));
+        var buyerFields = document.getElementById("buyer-step-fields");
+
+        var currentStep = 1;
+        var selectedRole = "";
+
+        var cropEl = document.getElementById("ms-signup-crops");
+        var goalEl = document.getElementById("ms-signup-goals");
+
+        makeMultiSelect(cropEl, [
+          "Almond Orchards",
+          "Walnut Orchards",
+          "Pistachio Orchards",
+          "Grapevine / Vineyards",
+          "Corn",
+          "Wheat",
+          "Rice",
+          "Row Crops",
+          "Pasture",
+          "Forestry"
+        ], "Select crop types");
+
+        makeMultiSelect(goalEl, [
+          "Improve Water Retention",
+          "Increase Nutrient Holding",
+          "Raise Soil pH",
+          "Reduce Fertilizer Use",
+          "Carbon Sequestration"
+        ], "Select goals");
+
+        function setMode(mode) {
+          var isLogin = mode === "login";
+          loginMode.hidden = !isLogin;
+          signupMode.hidden = isLogin;
+          tabLogin.classList.toggle("active", isLogin);
+          tabSignup.classList.toggle("active", !isLogin);
+        }
+
+        function showStep(step) {
+          currentStep = step;
+          Array.prototype.slice.call(signupForm.querySelectorAll(".step")).forEach(function (el) {
+            el.classList.toggle("active", Number(el.getAttribute("data-step")) === step);
+          });
+          signupBack.disabled = step === 1;
+          signupNext.textContent = step === 4 ? "Create Account" : "Next";
+          if (selectedRole !== "buyer" && step === 3) {
+            showStep(4);
+            return;
+          }
+        }
+
+        function validateStep(step) {
+          if (step === 1) {
+            var email = document.getElementById("su-email").value.trim();
+            var password = document.getElementById("su-password").value;
+            var confirm = document.getElementById("su-confirm").value;
+            var name = document.getElementById("su-name").value.trim();
+            var businessName = document.getElementById("su-business").value.trim();
+            if (!email || !password || !confirm || !name || !businessName) {
+              signupError.textContent = "Please complete all required fields in Step 1.";
+              return false;
+            }
+            if (password.length < 8) {
+              signupError.textContent = "Password must be at least 8 characters.";
+              return false;
+            }
+            if (password !== confirm) {
+              signupError.textContent = "Passwords do not match.";
+              return false;
+            }
+          }
+
+          if (step === 2) {
+            if (!selectedRole) {
+              signupError.textContent = "Please choose a role.";
+              return false;
+            }
+          }
+
+          signupError.textContent = "";
+          return true;
+        }
+
+        async function completeSignup() {
+          var email = document.getElementById("su-email").value.trim();
+          var password = document.getElementById("su-password").value;
+          var name = document.getElementById("su-name").value.trim();
+          var businessName = document.getElementById("su-business").value.trim();
+          var county = document.getElementById("su-county").value.trim();
+          var state = document.getElementById("su-state").value.trim();
+          var country = document.getElementById("su-country").value;
+
+          var cropTypes = selectedRole === "buyer"
+            ? cropEl.getValue().filter(function (value) { return value !== "All"; })
+            : [];
+          var goals = selectedRole === "buyer"
+            ? goalEl.getValue().filter(function (value) { return value !== "All"; })
+            : [];
+
+          var soilPH = selectedRole === "buyer" ? document.getElementById("su-soil").value : "";
+          var timeline = selectedRole === "buyer" ? document.getElementById("su-timeline").value : "";
+
+          signupNext.disabled = true;
+          signupNext.textContent = "Creating...";
+
+          try {
+            var userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            var uid = userCredential.user.uid;
+
+            await db.collection("users").doc(uid).set({
+              name: name,
+              businessName: businessName,
+              role: selectedRole,
+              cropTypes: cropTypes,
+              goals: goals,
+              soilPH: soilPH,
+              timeline: timeline,
+              county: county,
+              state: state,
+              country: country,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              email: email
+            });
+
+            signupSuccess.textContent = "Account created. Redirecting...";
+            window.location.href = "index.html";
+          } catch (error) {
+            signupError.textContent = error && error.message ? error.message : "Signup failed.";
+            signupNext.disabled = false;
+            signupNext.textContent = "Create Account";
+          }
+        }
+
+        roleCards.forEach(function (card) {
+          card.addEventListener("click", function () {
+            selectedRole = card.getAttribute("data-role");
+            roleCards.forEach(function (x) { x.classList.remove("active"); });
+            card.classList.add("active");
+            buyerFields.hidden = selectedRole !== "buyer";
+          });
+        });
+
+        tabLogin.addEventListener("click", function () { setMode("login"); });
+        tabSignup.addEventListener("click", function () { setMode("signup"); });
+        linkToSignup.addEventListener("click", function (event) {
+          event.preventDefault();
+          setMode("signup");
+        });
+
+        signupBack.addEventListener("click", function () {
+          if (currentStep > 1) {
+            showStep(currentStep - 1);
+          }
+        });
+
+        signupNext.addEventListener("click", function () {
+          if (!validateStep(currentStep)) {
+            return;
+          }
+
+          if (currentStep < 4) {
+            var nextStep = currentStep + 1;
+            if (currentStep === 2 && selectedRole !== "buyer") {
+              nextStep = 4;
+            }
+            showStep(nextStep);
+            return;
+          }
+
+          completeSignup();
+        });
+
+        loginForm.addEventListener("submit", async function (event) {
+          event.preventDefault();
+          loginError.textContent = "";
+          var email = document.getElementById("login-email").value.trim();
+          var password = document.getElementById("login-password").value;
+
+          try {
+            await auth.signInWithEmailAndPassword(email, password);
+            window.location.href = "index.html";
+          } catch (error) {
+            loginError.textContent = error && error.message ? error.message : "Login failed.";
+          }
+        });
+
+        if (window.location.hash === "#signup") {
+          setMode("signup");
+        }
+      })();
+    </script>
+  </body>
+</html>

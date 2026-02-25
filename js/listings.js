@@ -50,9 +50,9 @@
 
     return {
       search: searchInput ? searchInput.value.trim() : "",
-      feedstock: getCheckedPillValues("filter-feedstock"),
-      region: getCheckedPillValues("filter-region"),
-      cert: getCheckedPillValues("filter-cert"),
+      feedstock: getMultiSelectValues("ms-feedstock"),
+      region: getMultiSelectValues("ms-region"),
+      cert: getMultiSelectValues("ms-cert"),
       sort: sortSelect ? sortSelect.value : ""
     };
   }
@@ -100,39 +100,31 @@
     if (searchInput && params.has("search")) {
       searchInput.value = params.get("search");
     }
-    hydratePillGroupFromParam("filter-feedstock", params.get("feedstock"));
-    hydratePillGroupFromParam("filter-region", params.get("region"));
-    hydratePillGroupFromParam("filter-cert", params.get("cert"));
+    hydrateMultiSelectFromParam("ms-feedstock", params.get("feedstock"));
+    hydrateMultiSelectFromParam("ms-region", params.get("region"));
+    hydrateMultiSelectFromParam("ms-cert", params.get("cert"));
     if (sortSelect && params.has("sort")) {
       sortSelect.value = params.get("sort");
     }
   }
 
-  function getCheckedPillValues(groupId) {
-    var group = document.getElementById(groupId);
-    if (!group) {
+  function getMultiSelectValues(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container || typeof container.getValue !== "function") {
       return [];
     }
 
-    return Array.prototype.slice
-      .call(group.querySelectorAll('input[type="checkbox"]:checked'))
-      .map(function (input) {
-        return input.value;
-      });
+    return container.getValue();
   }
 
-  function hydratePillGroupFromParam(groupId, paramValue) {
-    var group = document.getElementById(groupId);
-    if (!group) {
-      return;
-    }
-
-    var inputs = Array.prototype.slice.call(group.querySelectorAll('input[type="checkbox"]'));
-    if (!inputs.length) {
+  function hydrateMultiSelectFromParam(containerId, paramValue) {
+    var container = document.getElementById(containerId);
+    if (!container || typeof container.setValue !== "function") {
       return;
     }
 
     if (!paramValue) {
+      container.setValue(["All"]);
       return;
     }
 
@@ -143,50 +135,7 @@
       })
       .filter(Boolean);
 
-    inputs.forEach(function (input) {
-      input.checked = desired.indexOf(input.value) !== -1;
-    });
-
-    var checkedCount = inputs.filter(function (input) {
-      return input.checked;
-    }).length;
-
-    if (checkedCount === 0) {
-      var allInput = group.querySelector('input[type="checkbox"][value="All"]');
-      if (allInput) {
-        allInput.checked = true;
-      }
-    }
-  }
-
-  function applyAllPillBehavior(group, changedInput) {
-    if (!group || !changedInput) {
-      return;
-    }
-
-    var allInput = group.querySelector('input[type="checkbox"][value="All"]');
-    var inputs = Array.prototype.slice.call(group.querySelectorAll('input[type="checkbox"]'));
-
-    if (changedInput.value === "All" && changedInput.checked) {
-      inputs.forEach(function (input) {
-        if (input !== changedInput) {
-          input.checked = false;
-        }
-      });
-      return;
-    }
-
-    if (changedInput.value !== "All" && changedInput.checked && allInput) {
-      allInput.checked = false;
-    }
-
-    var anyChecked = inputs.some(function (input) {
-      return input.checked;
-    });
-
-    if (!anyChecked && allInput) {
-      allInput.checked = true;
-    }
+    container.setValue(desired.length ? desired : ["All"]);
   }
 
   function updateCompareBar() {
@@ -462,9 +411,9 @@
 
     var filters = {
       search: searchInput.value.trim().toLowerCase(),
-      feedstock: getCheckedPillValues("filter-feedstock"),
-      region: getCheckedPillValues("filter-region"),
-      cert: getCheckedPillValues("filter-cert"),
+      feedstock: getMultiSelectValues("ms-feedstock"),
+      region: getMultiSelectValues("ms-region"),
+      cert: getMultiSelectValues("ms-cert"),
       sort: sortSelect.value
     };
 
@@ -591,9 +540,31 @@
       updateUrlFromFilters();
     }
 
+    var feedstockEl = document.getElementById("ms-feedstock");
+    var regionEl = document.getElementById("ms-region");
+    var certEl = document.getElementById("ms-cert");
     var searchElement = document.getElementById("search");
     var sortElement = document.getElementById("filter-sort");
-    var pillGroups = ["filter-feedstock", "filter-region", "filter-cert"];
+
+    if (feedstockEl) {
+      makeMultiSelect(
+        feedstockEl,
+        ["Almond Shell", "Walnut Shell", "Pistachio Shell", "Vine Pruning", "Wood Chip", "Forest Thinning", "Rice Husk", "Corn Stover", "Wheat Straw"],
+        "All Feedstocks"
+      );
+    }
+
+    if (regionEl) {
+      makeMultiSelect(
+        regionEl,
+        ["Sacramento Valley", "San Joaquin Valley", "North Coast", "Central Coast", "Sierra Foothills", "Pacific Northwest", "Great Plains", "Southeast", "Northeast", "Midwest"],
+        "All Regions"
+      );
+    }
+
+    if (certEl) {
+      makeMultiSelect(certEl, ["OMRI Listed", "IBI Certified", "California Organic"], "Any Certification");
+    }
 
     if (searchElement) {
       searchElement.addEventListener("input", update);
@@ -603,21 +574,10 @@
       sortElement.addEventListener("change", update);
     }
 
-    pillGroups.forEach(function (groupId) {
-      var group = document.getElementById(groupId);
-      if (!group) {
-        return;
+    [feedstockEl, regionEl, certEl].forEach(function (el) {
+      if (el) {
+        el.addEventListener("change", update);
       }
-
-      group.addEventListener("change", function (event) {
-        var target = event.target;
-        if (!target || target.type !== "checkbox") {
-          return;
-        }
-
-        applyAllPillBehavior(group, target);
-        update();
-      });
     });
 
     grid.addEventListener("change", function (event) {

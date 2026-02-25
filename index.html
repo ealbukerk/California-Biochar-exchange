@@ -8,6 +8,11 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <style>
       .hero {
@@ -32,11 +37,78 @@
         margin-top: var(--space-6);
       }
 
-      .hero-actions {
+      .hero-cards {
         display: flex;
-        gap: var(--space-4);
+        gap: var(--space-6);
         justify-content: center;
         margin-top: var(--space-8);
+        max-width: 640px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .hero-card-buy,
+      .hero-card-sell {
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .hero-card-buy {
+        background: var(--color-accent);
+      }
+
+      .hero-card-buy:hover {
+        background: var(--color-accent-hover);
+      }
+
+      .hero-card-sell {
+        background: var(--color-text-primary);
+      }
+
+      .hero-card-sell:hover {
+        background: #2a2a2a;
+      }
+
+      .hero-card-buy h3,
+      .hero-card-sell h3 {
+        color: white;
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .hero-card-buy p,
+      .hero-card-sell p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-2);
+      }
+
+      .hero-card-buy .btn {
+        background: white;
+        color: var(--color-accent);
+        margin-top: var(--space-5);
+        display: inline-block;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-md);
+        font-weight: var(--font-weight-semibold);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
+      }
+
+      .hero-card-sell .btn {
+        background: var(--color-accent);
+        color: white;
+        margin-top: var(--space-5);
+        display: inline-block;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-md);
+        font-weight: var(--font-weight-semibold);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
       }
 
       .stats-bar {
@@ -64,117 +136,36 @@
         margin-top: var(--space-1);
       }
 
-      .how-it-works {
-        padding: var(--space-20) 0;
-      }
-
-      .how-it-works h2 {
-        font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-        text-align: center;
-      }
-
-      .steps {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--space-8);
-        margin-top: var(--space-12);
-      }
-
-      .step {
-        background: var(--color-surface);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: var(--space-8);
-      }
-
-      .step-number {
-        font-size: var(--font-size-3xl);
-        font-weight: var(--font-weight-bold);
-        color: var(--color-accent-light);
-      }
-
-      .step h3 {
-        margin-top: var(--space-4);
-      }
-
-      .step p {
-        margin-top: var(--space-3);
-        color: var(--color-text-secondary);
-      }
-
-      .feedstocks {
+      .what-is-biochar {
         background: var(--color-surface);
         padding: var(--space-20) 0;
       }
 
-      .feedstocks h2 {
-        text-align: center;
+      .what-is-biochar .container-narrow {
+        text-align: left;
+      }
+
+      .what-is-biochar h2 {
         font-size: var(--font-size-2xl);
         font-weight: var(--font-weight-bold);
+        margin-bottom: var(--space-6);
       }
 
-      .feedstock-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: var(--space-4);
-        margin-top: var(--space-10);
+      .what-is-biochar p {
+        margin-bottom: var(--space-5);
       }
 
-      .feedstock-chip {
-        background: var(--color-accent-light);
-        border-radius: var(--radius-md);
-        padding: var(--space-4) var(--space-5);
-        text-align: center;
-      }
-
-      .feedstock-chip p {
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-        margin-top: var(--space-2);
-      }
-
-      .cta-section {
-        background: var(--color-accent);
-        padding: var(--space-20) 0;
-        text-align: center;
-      }
-
-      .cta-section h2 {
-        color: white;
-        font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-      }
-
-      .cta-section p {
-        color: rgba(255, 255, 255, 0.8);
-        margin-top: var(--space-4);
-      }
-
-      .cta-actions {
-        display: flex;
-        gap: var(--space-4);
-        justify-content: center;
+      .what-is-biochar h3 {
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-semibold);
         margin-top: var(--space-8);
+        margin-bottom: var(--space-4);
       }
 
-      .cta-btn-light {
-        background: white;
-        color: var(--color-accent);
-      }
-
-      .cta-btn-light:hover {
-        background: rgba(255, 255, 255, 0.9);
-      }
-
-      .cta-btn-outline {
-        background: transparent;
-        color: white;
-        border: 1px solid white;
-      }
-
-      .cta-btn-outline:hover {
-        background: rgba(255, 255, 255, 0.12);
+      @media (max-width: 760px) {
+        .hero-cards {
+          flex-direction: column;
+        }
       }
 
       .site-footer {
@@ -213,9 +204,17 @@
         <p class="hero-sub">
           Connecting biochar producers to local farms, vineyards, and orchards. Browse verified listings, match material to your soil, and transact with confidence.
         </p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="listings.html">Browse Listings</a>
-          <a class="btn btn-secondary" href="producers.html">List Your Biochar</a>
+        <div class="hero-cards">
+          <div class="hero-card-buy">
+            <h3>I want to buy biochar</h3>
+            <p>Find verified producers and match biochar to your soil.</p>
+            <a class="btn" href="auth.html?role=buyer">Get Started</a>
+          </div>
+          <div class="hero-card-sell">
+            <h3>I want to sell biochar</h3>
+            <p>List your material and reach agricultural buyers across the US.</p>
+            <a class="btn" href="auth.html?role=seller">Apply to List</a>
+          </div>
         </div>
       </div>
     </section>
@@ -227,8 +226,8 @@
           <div class="stat-label">Verified producers</div>
         </div>
         <div class="stat">
-          <div class="stat-number">8</div>
-          <div class="stat-label">California counties</div>
+          <div class="stat-number">9</div>
+          <div class="stat-label">Supported crop types</div>
         </div>
         <div class="stat">
           <div class="stat-number">$0</div>
@@ -237,68 +236,16 @@
       </div>
     </section>
 
-    <section class="how-it-works">
-      <div class="container">
-        <h2>How it works</h2>
-      </div>
-      <div class="container steps">
-        <article class="step">
-          <div class="step-number">01</div>
-          <h3>Browse verified listings</h3>
-          <p>
-            Filter biochar by feedstock type, county, certification status, and available tonnage. Every listing includes a standardized lab scorecard.
-          </p>
-        </article>
-        <article class="step">
-          <div class="step-number">02</div>
-          <h3>Match to your soil</h3>
-          <p>
-            Use the Soil Match tool to input your crop type, soil conditions, and goals. Get ranked recommendations with plain-English explanations.
-          </p>
-        </article>
-        <article class="step">
-          <div class="step-number">03</div>
-          <h3>Transact with confidence</h3>
-          <p>
-            Send an inquiry directly to the producer. We facilitate introduction, documentation, and payment. Verified transaction badges build long-term trust.
-          </p>
-        </article>
-      </div>
-    </section>
-
-    <section class="feedstocks">
-      <div class="container">
-        <h2>Available feedstock types</h2>
-      </div>
-      <div class="container feedstock-grid">
-        <div class="feedstock-chip">
-          Almond Shell
-          <p>San Joaquin Valley</p>
-        </div>
-        <div class="feedstock-chip">
-          Rice Husk
-          <p>Sacramento Valley</p>
-        </div>
-        <div class="feedstock-chip">
-          Forest Thinning
-          <p>Sierra Nevada</p>
-        </div>
-        <div class="feedstock-chip">
-          Vine Pruning
-          <p>Napa / Sonoma</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="cta-section">
+    <section class="what-is-biochar">
       <div class="container-narrow">
-        <h2>Ready to source biochar?</h2>
-        <p>
-          Browse available listings or apply to list your material. No subscription fees.
-        </p>
-        <div class="cta-actions">
-          <a class="btn cta-btn-outline" href="producers.html">Apply as Producer</a>
-        </div>
+        <h2>What is biochar?</h2>
+        <p>Biochar is charcoal made from organic waste. The process is called pyrolysis — organic material such as wood chips, agricultural residue, rice husks, almond shells, or forest thinnings is heated in a low-oxygen environment to temperatures between 350°C and 700°C. Without oxygen the material does not combust. Instead it carbonizes into a stable, porous, charcoal-like substance that can persist in soil for hundreds to thousands of years.</p>
+        <p>This is not a new or experimental technology. Biochar has been produced and used in agriculture for centuries. Ancient Amazonian civilizations created terra preta soils using charred organic material that remain extraordinarily fertile today. The modern commercial biochar industry applies the same principle at industrial scale using controlled equipment.</p>
+        <h3>What biochar does in soil</h3>
+        <p>When incorporated into agricultural soil, biochar improves water retention — meaning crops need less irrigation. It increases the soil's ability to hold nutrients like nitrogen and phosphorus rather than losing them to runoff, reducing fertilizer requirements. It raises soil pH in acidic soils and improves microbial activity. And because the carbon in biochar is chemically stable, it remains locked in the soil rather than returning to the atmosphere as CO₂ — making it a genuine carbon sequestration tool, not just a soil amendment.</p>
+        <p>For farms and orchards facing water scarcity and rising input costs, biochar offers a meaningful improvement to water efficiency and soil health simultaneously. Anything that credibly reduces irrigation demand while improving yields gets serious attention from growers.</p>
+        <h3>Why source locally</h3>
+        <p>Local sourcing means shorter supply chains, lower transport costs, and a smaller carbon footprint — important for farms making sustainability claims. It also means feedstock transparency: you know exactly what your biochar was made from and where. Biochar.market connects buyers directly to producers in their region, with standardized lab documentation so every purchase is an informed one.</p>
       </div>
     </section>
 

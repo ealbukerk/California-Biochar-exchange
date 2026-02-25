@@ -8,6 +8,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/match.css" />
   </head>
@@ -40,48 +46,7 @@
           <form id="match-form" novalidate>
             <section class="step" data-step="1">
               <h1>What are you growing?</h1>
-              <div class="option-grid">
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Almond Orchards" required />
-                  <span>Almond Orchards</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Walnut Orchards" />
-                  <span>Walnut Orchards</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Pistachio Orchards" />
-                  <span>Pistachio Orchards</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Grapevine / Vineyards" />
-                  <span>Grapevine / Vineyards</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Corn" />
-                  <span>Corn</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Wheat" />
-                  <span>Wheat</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Rice" />
-                  <span>Rice</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Row Crops" />
-                  <span>Row Crops</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Pasture" />
-                  <span>Pasture</span>
-                </label>
-                <label class="option-card">
-                  <input type="radio" name="crop" value="Forestry" />
-                  <span>Forestry</span>
-                </label>
-              </div>
+              <div id="ms-crop"></div>
             </section>
 
             <section class="step" data-step="2" hidden>
@@ -100,28 +65,7 @@
 
               <div class="field-block">
                 <p class="field-label">Primary goal?</p>
-                <div class="option-grid">
-                  <label class="option-card">
-                    <input type="radio" name="goal" value="Improve Water Retention" required />
-                    <span>Improve Water Retention</span>
-                  </label>
-                  <label class="option-card">
-                    <input type="radio" name="goal" value="Increase Nutrient Holding" />
-                    <span>Increase Nutrient Holding</span>
-                  </label>
-                  <label class="option-card">
-                    <input type="radio" name="goal" value="Raise Soil pH" />
-                    <span>Raise Soil pH</span>
-                  </label>
-                  <label class="option-card">
-                    <input type="radio" name="goal" value="Reduce Fertilizer Use" />
-                    <span>Reduce Fertilizer Use</span>
-                  </label>
-                  <label class="option-card">
-                    <input type="radio" name="goal" value="Carbon Sequestration" />
-                    <span>Carbon Sequestration</span>
-                  </label>
-                </div>
+                <div id="ms-goal"></div>
               </div>
             </section>
 

@@ -36,6 +36,15 @@
     return stars;
   }
 
+  function formatCurrency(value, maximumFractionDigits) {
+    return Number(value || 0).toLocaleString("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: maximumFractionDigits
+    });
+  }
+
   function renderNotFound(container) {
     container.innerHTML =
       '<p class="not-found">Listing not found. <a href="listings.html">Back to listings</a></p>';
@@ -186,10 +195,14 @@
       '<input type="hidden" name="producer_name" value="' +
       listing.producerName +
       '">' +
+      '<input type="hidden" name="pricePerTonne" value="' +
+      listing.pricePerTonne +
+      '">' +
       '<div><label for="inq-name">Your name</label><input id="inq-name" type="text" name="name" required></div>' +
       '<div><label for="inq-email">Your email</label><input id="inq-email" type="email" name="email" required></div>' +
       '<div><label for="inq-business">Farm or business name</label><input id="inq-business" type="text" name="businessName" required></div>' +
       '<div><label for="inq-volume">Volume needed (tonnes)</label><input id="inq-volume" type="number" name="volume" required></div>' +
+      '<div id="commission-preview" hidden></div>' +
       '<div><label for="inq-notes">Soil conditions or questions</label><textarea id="inq-notes" name="notes" rows="3"></textarea></div>' +
       '<button class="btn btn-primary" type="submit">Send Inquiry</button>' +
       "</form>" +
@@ -200,6 +213,69 @@
 
     var form = document.getElementById("inquiry-form");
     form.addEventListener("submit", handleInquiryForm);
+    var volumeInput = document.getElementById("inq-volume");
+    var commissionPreview = document.getElementById("commission-preview");
+
+    function updateCommissionPreview() {
+      var volume = Number(volumeInput.value);
+      if (!(volume > 0) || typeof calculateCommission !== "function") {
+        commissionPreview.hidden = true;
+        commissionPreview.innerHTML = "";
+        return;
+      }
+
+      var transactionValue = volume * Number(listing.pricePerTonne || 0);
+      var commission = calculateCommission(transactionValue);
+
+      commissionPreview.hidden = false;
+      commissionPreview.innerHTML =
+        "<p>Estimated transaction value: " +
+        formatCurrency(transactionValue, 0) +
+        "</p>" +
+        "<p>Platform commission: " +
+        commission.rateDisplay +
+        " (" +
+        formatCurrency(commission.commissionAmount, 2) +
+        ") — " +
+        commission.bracketLabel +
+        "</p>" +
+        "<p>You pay: " +
+        formatCurrency(transactionValue, 0) +
+        "</p>";
+    }
+
+    volumeInput.addEventListener("input", updateCommissionPreview);
+    volumeInput.addEventListener("change", updateCommissionPreview);
+
+    var params = new URLSearchParams(window.location.search);
+    if (params.get("reorder") === "true") {
+      var payload = null;
+      try {
+        payload = JSON.parse(sessionStorage.getItem("reorderPayload") || "null");
+      } catch (error) {
+        payload = null;
+      }
+
+      var notesInput = document.getElementById("inq-notes");
+      var businessInput = document.getElementById("inq-business");
+
+      if (payload && payload.listingID === listing.id) {
+        if (volumeInput && payload.tonnes) {
+          volumeInput.value = payload.tonnes;
+        }
+        if (notesInput) {
+          notesInput.value = "Reorder request for " + (payload.feedstock || listing.feedstock) + " from " + (payload.producerName || listing.producerName) + ".";
+        }
+      } else if (notesInput) {
+        notesInput.value = "Reorder request for " + listing.feedstock + " from " + listing.producerName + ".";
+      }
+
+      if (businessInput && window.userProfile && window.userProfile.businessName) {
+        businessInput.value = window.userProfile.businessName;
+      }
+    }
+
+    updateCommissionPreview();
   }
 
   document.addEventListener("DOMContentLoaded", function () {

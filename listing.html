@@ -8,6 +8,13 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/commission.js"></script>
+    <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/listings.css" />
     <script src="js/airtable.js"></script>
@@ -206,6 +213,18 @@
         padding: var(--space-3) var(--space-4);
         font-family: var(--font-sans);
         font-size: var(--font-size-base);
+      }
+
+      #commission-preview {
+        background: var(--color-accent-light);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-3);
+      }
+
+      #commission-preview p + p {
+        margin-top: var(--space-2);
       }
 
       #form-success,

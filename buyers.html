@@ -8,6 +8,12 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
     <script src="js/airtable.js"></script>
     <style>
@@ -111,14 +117,8 @@
           </div>
           <div class="form-group">
             <label for="primary-goal">Primary goal for biochar use</label>
-            <select id="primary-goal" name="primaryGoal">
-              <option value="Improve Water Retention">Improve Water Retention</option>
-              <option value="Increase Nutrient Holding">Increase Nutrient Holding</option>
-              <option value="Raise Soil pH">Raise Soil pH</option>
-              <option value="Reduce Fertilizer Use">Reduce Fertilizer Use</option>
-              <option value="Carbon Sequestration">Carbon Sequestration</option>
-              <option value="Not sure yet">Not sure yet</option>
-            </select>
+            <div id="ms-goal-buyer"></div>
+            <input id="primary-goal" type="hidden" name="primaryGoal" />
           </div>
           <div class="form-group">
             <label for="application-timeline">Target application timeline</label>
@@ -131,19 +131,8 @@
           </div>
           <div class="form-group">
             <label for="primary-crop">Primary Crop</label>
-            <select id="primary-crop" name="cropType" required>
-              <option value="">Select crop</option>
-              <option value="Almond Orchards">Almond Orchards</option>
-              <option value="Walnut Orchards">Walnut Orchards</option>
-              <option value="Pistachio Orchards">Pistachio Orchards</option>
-              <option value="Grapevine / Vineyards">Grapevine / Vineyards</option>
-              <option value="Corn">Corn</option>
-              <option value="Wheat">Wheat</option>
-              <option value="Rice">Rice</option>
-              <option value="Row Crops">Row Crops</option>
-              <option value="Pasture">Pasture</option>
-              <option value="Forestry">Forestry</option>
-            </select>
+            <div id="ms-crop-buyer"></div>
+            <input id="primary-crop" type="hidden" name="cropType" required />
           </div>
           <div class="form-group">
             <label for="buyer-annual-volume">Annual volume needed (tonnes)</label>
@@ -151,11 +140,8 @@
           </div>
           <div class="form-group">
             <label for="buyer-organic-certified">Organic certified</label>
-            <select id="buyer-organic-certified" name="organicCertified" required>
-              <option value="">Select one</option>
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
+            <div id="ms-organic"></div>
+            <input id="buyer-organic-certified" type="hidden" name="organicCertified" required />
           </div>
           <button type="submit" class="btn btn-primary">Submit application</button>
         </form>
@@ -172,6 +158,60 @@
         <span>United States · 2025</span>
       </div>
     </footer>
-    <script>document.getElementById('buyer-form').addEventListener('submit', handleBuyerForm)</script>
+    <script>
+      (function () {
+        function firstOrEmpty(values) {
+          var filtered = (values || []).filter(function (value) { return value !== "All"; });
+          return filtered[0] || "";
+        }
+
+        var cropEl = document.getElementById("ms-crop-buyer");
+        var organicEl = document.getElementById("ms-organic");
+        var goalEl = document.getElementById("ms-goal-buyer");
+        var cropInput = document.getElementById("primary-crop");
+        var organicInput = document.getElementById("buyer-organic-certified");
+        var goalInput = document.getElementById("primary-goal");
+
+        makeMultiSelect(cropEl, [
+          "Almond Orchards",
+          "Walnut Orchards",
+          "Pistachio Orchards",
+          "Grapevine / Vineyards",
+          "Corn",
+          "Wheat",
+          "Rice",
+          "Row Crops",
+          "Pasture",
+          "Forestry"
+        ], "Select crop");
+
+        makeMultiSelect(organicEl, ["Yes", "No", "In Progress"], "Select status");
+        makeMultiSelect(goalEl, [
+          "Improve Water Retention",
+          "Increase Nutrient Holding",
+          "Raise Soil pH",
+          "Reduce Fertilizer Use",
+          "Carbon Sequestration",
+          "Not sure yet"
+        ], "Select goal");
+
+        function syncBuyerMulti() {
+          cropInput.value = firstOrEmpty(cropEl.getValue());
+          organicInput.value = firstOrEmpty(organicEl.getValue());
+          goalInput.value = firstOrEmpty(goalEl.getValue());
+        }
+
+        cropEl.addEventListener("change", syncBuyerMulti);
+        organicEl.addEventListener("change", syncBuyerMulti);
+        goalEl.addEventListener("change", syncBuyerMulti);
+
+        cropEl.setValue(["Almond Orchards"]);
+        organicEl.setValue(["Yes"]);
+        goalEl.setValue(["Improve Water Retention"]);
+        syncBuyerMulti();
+      })();
+
+      document.getElementById('buyer-form').addEventListener('submit', handleBuyerForm)
+    </script>
   </body>
 </html>
