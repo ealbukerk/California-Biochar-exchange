@@ -1,10 +1,10 @@
 const firebaseConfig = {
-  apiKey: "FIREBASE_API_KEY",
-  authDomain: "FIREBASE_AUTH_DOMAIN",
-  projectId: "FIREBASE_PROJECT_ID",
-  storageBucket: "FIREBASE_STORAGE_BUCKET",
-  messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
-  appId: "FIREBASE_APP_ID"
+  apiKey: "AIzaSyB0Be0jhQgbzPgT0bKAHgO-2uFTwe3Lkes",
+  authDomain: "biochar-market.firebaseapp.com",
+  projectId: "biochar-market",
+  storageBucket: "biochar-market.firebasestorage.app",
+  messagingSenderId: "315682754135",
+  appId: "1:315682754135:web:efcb3dde0c01b912091d12",
 }
 firebase.initializeApp(firebaseConfig)
 const auth = firebase.auth()

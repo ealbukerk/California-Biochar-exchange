@@ -8,12 +8,10 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
     />
+    <link rel="stylesheet" href="css/style.css" />
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth-state.js"></script>
-    <link rel="stylesheet" href="css/style.css" />
     <style>
       .hero {
         background: var(--color-bg);
@@ -186,15 +184,12 @@
     <nav>
       <div class="container nav-inner">
         <a class="nav-logo" href="index.html">BM</a>
-        <ul class="nav-links">
-          <li><a href="listings.html">Listings</a></li>
-          <li><a href="match.html">Soil Match</a></li>
-          <li><a href="learn.html">Learn</a></li>
-          <li><a href="producers.html">For Producers</a></li>
-          <li><a href="buyers.html">For Buyers</a></li>
-          <li><a href="admin.html">Dashboard</a></li>
-        </ul>
-        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+        <div style="display: flex; gap: var(--space-3);">
+          <a class="btn btn-secondary" href="buyer.html">I want to buy</a>
+          <a class="btn btn-secondary" href="seller.html">I want to sell</a>
+        </div>
+        <ul class="nav-links"></ul>
+        <a class="nav-cta" href="auth.html">Login</a>
       </div>
     </nav>
 
@@ -208,12 +203,12 @@
           <div class="hero-card-buy">
             <h3>I want to buy biochar</h3>
             <p>Find verified producers and match biochar to your soil.</p>
-            <a class="btn" href="auth.html?role=buyer">Get Started</a>
+            <a class="btn" href="buyer.html">Get Started</a>
           </div>
           <div class="hero-card-sell">
             <h3>I want to sell biochar</h3>
             <p>List your material and reach agricultural buyers across the US.</p>
-            <a class="btn" href="auth.html?role=seller">Apply to List</a>
+            <a class="btn" href="seller.html">Apply to List</a>
           </div>
         </div>
       </div>
@@ -255,5 +250,7 @@
         <span>United States · 2025</span>
       </div>
     </footer>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
   </body>
 </html>

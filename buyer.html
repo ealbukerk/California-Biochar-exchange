@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Biochar.market - Buyer</title>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/listings.css" />
+    <link rel="stylesheet" href="css/match.css" />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <style>
+      .buyer-nav {
+        background: var(--color-surface);
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .buyer-nav-inner {
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .buyer-nav-logo {
+        color: var(--color-accent);
+        font-size: var(--font-size-lg);
+        font-weight: var(--font-weight-bold);
+        text-decoration: none;
+      }
+
+      .buyer-nav-links {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+      }
+
+      .buyer-nav-links a,
+      .buyer-nav-links button {
+        font-size: var(--font-size-sm);
+      }
+
+      .buyer-hero {
+        background: var(--color-accent);
+        padding: var(--space-12) 0;
+        text-align: center;
+      }
+
+      .buyer-hero h1 {
+        color: white;
+        font-size: var(--font-size-3xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .buyer-hero p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: var(--font-size-lg);
+        margin-top: var(--space-4);
+      }
+
+      .hero-cta {
+        display: inline-block;
+        margin-top: var(--space-6);
+        background: white;
+        color: var(--color-accent);
+        text-decoration: none;
+      }
+
+      .matched-section {
+        padding: var(--space-16) 0;
+        background: var(--color-surface);
+      }
+
+      .matched-section h2,
+      .match-section h2,
+      .browse-section h2,
+      .map-section h2,
+      .learn-section h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .matched-section p,
+      .match-section > .container-narrow > p,
+      .browse-section p,
+      .map-section p,
+      .learn-intro {
+        color: var(--color-text-secondary);
+        margin-top: var(--space-2);
+      }
+
+      .match-section {
+        padding: var(--space-16) 0;
+      }
+
+      #match-tool {
+        margin-top: var(--space-8);
+      }
+
+      #match-results {
+        margin-top: var(--space-6);
+      }
+
+      .save-match-wrap {
+        margin-top: var(--space-6);
+      }
+
+      .browse-section {
+        padding: var(--space-16) 0;
+        background: var(--color-surface);
+      }
+
+      #filter-bar {
+        margin-top: var(--space-8);
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .filter-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+      }
+
+      #search,
+      #filter-sort {
+        width: 100%;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-3) var(--space-4);
+        font-family: var(--font-sans);
+        font-size: var(--font-size-sm);
+      }
+
+      .map-section {
+        padding: var(--space-16) 0;
+      }
+
+      #buyer-map {
+        height: 500px;
+        width: 100%;
+        margin-top: var(--space-8);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+      }
+
+      .map-legend {
+        background: rgba(26, 26, 26, 0.82);
+        color: white;
+        border-radius: var(--radius-md);
+        padding: var(--space-2) var(--space-3);
+        display: grid;
+        gap: var(--space-2);
+        font-size: var(--font-size-sm);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+      }
+
+      .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .learn-section {
+        padding: var(--space-16) 0;
+      }
+
+      .guide-grid,
+      .feedstock-grid,
+      .cert-grid {
+        margin-top: var(--space-8);
+        display: grid;
+        gap: var(--space-4);
+      }
+
+      .guide-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .feedstock-grid,
+      .cert-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .guide-card,
+      .feedstock-card,
+      .cert-card {
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+      }
+
+      .guide-card h3,
+      .feedstock-card h3,
+      .cert-card h3 {
+        font-size: var(--font-size-lg);
+      }
+
+      .unit,
+      .source {
+        margin-top: var(--space-1);
+        color: var(--color-text-muted);
+        font-size: var(--font-size-sm);
+      }
+
+      .guide-card p,
+      .feedstock-card p,
+      .cert-card p {
+        margin-top: var(--space-3);
+        color: var(--color-text-secondary);
+      }
+
+      .highlight-line {
+        margin-top: var(--space-4);
+        color: var(--color-accent);
+        font-weight: var(--font-weight-semibold);
+      }
+
+      .compare-bar {
+        margin-top: var(--space-6);
+        background: var(--color-surface);
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-4) var(--space-6);
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        bottom: 0;
+        z-index: 25;
+      }
+
+      #comparison-view {
+        margin-top: var(--space-6);
+      }
+
+      .match-score-bar {
+        margin-top: var(--space-2);
+        height: 8px;
+        border-radius: 999px;
+        background: var(--color-accent-light);
+        overflow: hidden;
+      }
+
+      .match-score-fill {
+        height: 100%;
+        background: var(--color-accent);
+      }
+
+      .site-footer {
+        border-top: 1px solid var(--color-border);
+        padding: var(--space-8) 0;
+      }
+
+      .footer-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: var(--font-size-sm);
+        color: var(--color-text-muted);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 1000px) {
+        .guide-grid,
+        .feedstock-grid,
+        .cert-grid,
+        .filter-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="buyer-nav">
+      <div class="container buyer-nav-inner">
+        <a class="buyer-nav-logo" href="index.html">BM</a>
+        <div class="buyer-nav-links">
+          <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+          <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+          <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
+        </div>
+      </div>
+    </nav>
+
+    <section class="buyer-hero">
+      <div class="container-narrow">
+        <h1>Find the right biochar for your farm</h1>
+        <p>Browse verified producers, match material to your soil, and transact with confidence.</p>
+        <div id="hero-auth-slot"></div>
+      </div>
+    </section>
+
+    <section id="matched-section" class="matched-section hidden">
+      <div class="container">
+        <h2>Your matched listings</h2>
+        <p>Ranked by compatibility with your soil profile and crop types.</p>
+        <div id="matched-grid" class="listings-grid" style="margin-top: var(--space-8);"></div>
+      </div>
+    </section>
+
+    <section class="match-section">
+      <div class="container-narrow">
+        <h2 style="text-align: center;">Match biochar to your soil</h2>
+        <p style="text-align: center;">Answer 4 questions and get ranked recommendations.</p>
+        <div id="match-tool"></div>
+        <div id="match-results"></div>
+      </div>
+    </section>
+
+    <section class="browse-section">
+      <div class="container">
+        <h2>Browse all listings</h2>
+
+        <div id="filter-bar">
+          <input id="search" type="text" placeholder="Search producers, counties..." />
+          <div class="filter-row">
+            <div id="ms-feedstock"></div>
+            <div id="ms-region"></div>
+          </div>
+          <div class="filter-row">
+            <div id="ms-cert"></div>
+            <select id="filter-sort">
+              <option value="price-asc">Sort by: Price (Low–High)</option>
+              <option value="price-desc">Price (High–Low)</option>
+              <option value="carbon-desc">Carbon Content</option>
+              <option value="tonnes-desc">Available Tonnes</option>
+              <option value="rating-desc">Rating</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="listings-grid" class="listings-grid" style="margin-top: var(--space-8);"></div>
+        <div id="comparison-view" class="hidden"></div>
+        <div id="compare-bar" class="compare-bar">
+          <span id="compare-count">0 listings selected</span>
+          <button id="compare-btn" class="btn btn-primary" type="button">Compare Selected</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="map-section">
+      <div class="container">
+        <h2>Producers and buyers across the platform</h2>
+        <p>Green markers are producers. Red markers are buyers.</p>
+        <div id="buyer-map"></div>
+      </div>
+    </section>
+
+    <section class="learn-section">
+      <div class="container-narrow">
+        <h2>Understanding biochar</h2>
+
+        <h3 style="margin-top: var(--space-8);">Reading a lab scorecard</h3>
+        <p class="learn-intro">Every listing on BM includes a standardized lab scorecard. Here is what each field means and what values to look for.</p>
+        <div class="guide-grid">
+          <article class="guide-card">
+            <h3>Carbon Content</h3>
+            <p class="unit">%</p>
+            <p>The percentage of the biochar that is stable carbon. Higher carbon content means more effective long-term sequestration and better soil conditioning.</p>
+            <p class="highlight-line">What to look for: Above 60% for general use. Above 70% for carbon credit qualification.</p>
+          </article>
+          <article class="guide-card">
+            <h3>pH</h3>
+            <p class="unit">pH units</p>
+            <p>The alkalinity or acidity of the biochar. Biochar is typically alkaline and raises soil pH on application — beneficial for acidic soils common in Northern California.</p>
+            <p class="highlight-line">What to look for: Match to your soil need. pH 7–9 is typical. Avoid high pH biochar on already-alkaline soils.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Surface Area</h3>
+            <p class="unit">m²/g</p>
+            <p>The total internal pore surface area per gram. Higher surface area means more capacity to hold water and nutrients in soil.</p>
+            <p class="highlight-line">What to look for: Above 200 m²/g is good. Above 400 m²/g is excellent for water retention.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Particle Size</h3>
+            <p class="unit">mm</p>
+            <p>The size range of biochar particles. Smaller particles integrate more easily and have more surface contact with soil. Larger particles improve drainage and aeration.</p>
+            <p class="highlight-line">What to look for: 1–4mm is versatile for most applications. Finer for vegetable beds, coarser for orchards.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Moisture</h3>
+            <p class="unit">%</p>
+            <p>Water content at time of testing. High moisture adds weight without value and indicates poor storage conditions.</p>
+            <p class="highlight-line">What to look for: Below 15% preferred. Above 25% may indicate storage issues.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Ash Content</h3>
+            <p class="unit">%</p>
+            <p>Mineral residue remaining from the original feedstock. Contains nutrients but high ash content reduces the proportion of stable carbon.</p>
+            <p class="highlight-line">What to look for: Below 20% for high-carbon biochar. Rice husk biochar typically has higher ash than wood-based biochar.</p>
+          </article>
+          <article class="guide-card">
+            <h3>Electrical Conductivity</h3>
+            <p class="unit">dS/m</p>
+            <p>Measures soluble salt concentration. Very high EC can stress salt-sensitive crops.</p>
+            <p class="highlight-line">What to look for: Below 2 dS/m for most crops. Below 1 dS/m for salt-sensitive vegetables.</p>
+          </article>
+        </div>
+
+        <h3 style="margin-top: var(--space-10);">California feedstocks</h3>
+        <p class="learn-intro">The material biochar is made from significantly affects its properties. Here are the main feedstocks available in California.</p>
+        <div class="feedstock-grid">
+          <article class="feedstock-card">
+            <h3>Almond Shell</h3>
+            <p class="source">San Joaquin Valley</p>
+            <p>Produces high-carbon biochar with good surface area and neutral to slightly alkaline pH. Widely available due to California's dominant almond production.</p>
+            <p class="highlight-line">Best suited for: Almond Orchards, Row Crops, Grapevine / Vineyards</p>
+          </article>
+          <article class="feedstock-card">
+            <h3>Rice Husk</h3>
+            <p class="source">Sacramento Valley</p>
+            <p>Higher ash content than wood-based biochar but excellent silica content. Seasonal availability tied to harvest. Well suited for water retention applications.</p>
+            <p class="highlight-line">Best suited for: Rice, Row Crops, Pasture</p>
+          </article>
+          <article class="feedstock-card">
+            <h3>Wood Chip</h3>
+            <p class="source">Northern California, Sierra Foothills</p>
+            <p>Produces the highest surface area of common feedstocks. Very stable carbon, low ash content. The most versatile biochar type.</p>
+            <p class="highlight-line">Best suited for: All crop types, especially water retention applications</p>
+          </article>
+          <article class="feedstock-card">
+            <h3>Vine Pruning</h3>
+            <p class="source">Napa, Sonoma, Central Coast</p>
+            <p>Produced from wine grape cuttings post-harvest. Moderate carbon content, good pH range. Provenance is highly valued by organic and biodynamic vineyards.</p>
+            <p class="highlight-line">Best suited for: Grapevine / Vineyards, Row Crops</p>
+          </article>
+          <article class="feedstock-card">
+            <h3>Walnut Shell</h3>
+            <p class="source">San Joaquin Valley</p>
+            <p>Dense feedstock producing hard, stable biochar with high carbon content and low moisture. Similar properties to almond shell with slightly higher surface area.</p>
+            <p class="highlight-line">Best suited for: Walnut Orchards, Grapevine / Vineyards, Row Crops</p>
+          </article>
+        </div>
+
+        <h3 style="margin-top: var(--space-10);">What certifications mean</h3>
+        <div class="cert-grid">
+          <article class="cert-card">
+            <h3>OMRI Listed</h3>
+            <p>The Organic Materials Review Institute independently reviews and lists products approved for use in organic production. OMRI Listed biochar can be used on certified organic farms without risking certification status.</p>
+            <p class="highlight-line">Who needs it: Any buyer with USDA organic certification.</p>
+          </article>
+          <article class="cert-card">
+            <h3>IBI Certified</h3>
+            <p>The International Biochar Initiative certification verifies that biochar meets minimum quality and safety standards. Covers carbon content, pH, surface area, and contaminant limits.</p>
+            <p class="highlight-line">Who needs it: Buyers who want independently verified quality claims.</p>
+          </article>
+          <article class="cert-card">
+            <h3>California Organic</h3>
+            <p>California Department of Food and Agriculture organic certification, aligned with USDA NOP standards but administered at state level.</p>
+            <p class="highlight-line">Who needs it: California farms selling organic produce in-state.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <div class="container footer-inner">
+        <span>© 2025 Biochar.market</span>
+        <span>United States · 2025</span>
+      </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/auth-state.js"></script>
+    <script src="js/multiselect.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/commission.js"></script>
+    <script src="js/buyer.js"></script>
+  </body>
+</html>
