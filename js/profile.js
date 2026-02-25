@@ -167,10 +167,37 @@
     el.className = "status-message " + (isError ? "status-error" : "status-success");
   }
 
+  function getVerificationProgressText(profile) {
+    var stats = (profile && profile.verifiedStats) || {};
+    var total = Number(stats.totalTransactions || 0);
+    var confirmationRate = Number(stats.confirmationRate || 0);
+    var averageRating = Number(stats.averageRating || 0);
+
+    if (profile && profile.verified === true) {
+      return confirmationRate + "% delivery confirmation · " + averageRating.toFixed(1) + " avg rating · " + total + " transactions";
+    }
+
+    if (total < 3) {
+      return "Verified status: " + total + "/3 transactions completed";
+    }
+    if (confirmationRate < 90) {
+      return "Verified status: Delivery confirmation rate below 90%";
+    }
+    if (averageRating < 4) {
+      return "Verified status: Average rating below 4.0";
+    }
+    return "Verified status: Requirements in progress";
+  }
+
   function renderAccountInfo() {
     var profile = state.profile || {};
     var grid = document.getElementById("account-info-grid");
     var editing = state.editingAccount;
+    var isVerified = window.userVerified === true || profile.verified === true;
+    var verifiedBadge = isVerified && typeof window.renderVerifiedBadge === "function"
+      ? window.renderVerifiedBadge()
+      : "";
+    var verificationText = getVerificationProgressText(profile);
 
     grid.innerHTML =
       '<div class="info-item"><label>Full Name</label>' +
@@ -180,8 +207,12 @@
       '</div>' +
       '<div class="info-item"><label>Business Name</label>' +
       (editing
-        ? '<input id="profile-business" value="' + (profile.businessName || "") + '">' 
+        ? '<input id="profile-business" value="' + (profile.businessName || "") + '">'
         : '<span>' + (profile.businessName || "-") + '</span>') +
+      '<div style="margin-top:var(--space-2);display:flex;align-items:center;gap:var(--space-2);flex-wrap:wrap;">' +
+      verifiedBadge +
+      '</div>' +
+      '<p style="margin-top:var(--space-2);color:var(--color-text-muted);font-size:var(--font-size-sm);">' + htmlEscape(verificationText) + "</p>" +
       '</div>' +
       '<div class="info-item"><label>Email</label><span>' + (profile.email || state.user.email || "-") + '</span></div>' +
       '<div class="info-item"><label>Role</label><span class="role-badge">' + ((profile.role || "").toLowerCase() === "seller" ? "Seller" : "Buyer") + '</span></div>' +

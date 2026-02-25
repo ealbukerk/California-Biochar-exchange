@@ -488,16 +488,41 @@
         '">' +
         leadTime.text +
         "</p>" +
-        '<div class="scorecard-mini">' +
-        '<span class="score-item">C: ' +
+        '<div class="scorecard-inline">' +
+        '<span class="scorecard-badge">' +
         listing.scorecard.carbonContent.toFixed(1) +
-        '%</span>' +
-        '<span class="score-item">pH: ' +
+        "% C</span>" +
+        '<span class="scorecard-badge">pH ' +
         listing.scorecard.pH.toFixed(1) +
         "</span>" +
-        '<span class="score-item">' +
+        '<span class="scorecard-badge">' +
         listing.scorecard.surfaceArea +
         " m²/g</span>" +
+        "</div>" +
+        '<a class="scorecard-toggle" href="#" data-action="expand-scorecard">Full scorecard ↓</a>' +
+        '<div class="scorecard-expanded">' +
+        '<div class="scorecard-row"><span class="field-name">Carbon Content</span><span class="field-value">' +
+        listing.scorecard.carbonContent.toFixed(1) +
+        "%</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">pH</span><span class="field-value">' +
+        listing.scorecard.pH.toFixed(1) +
+        "</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">Surface Area</span><span class="field-value">' +
+        listing.scorecard.surfaceArea +
+        " m²/g</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">Particle Size</span><span class="field-value">' +
+        listing.scorecard.particleSize +
+        "</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">Moisture</span><span class="field-value">' +
+        listing.scorecard.moisture.toFixed(1) +
+        "%</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">Ash Content</span><span class="field-value">' +
+        listing.scorecard.ashContent.toFixed(1) +
+        "%</span></div>" +
+        '<div class="scorecard-row"><span class="field-name">Electrical Conductivity</span><span class="field-value">' +
+        listing.scorecard.electricalConductivity.toFixed(1) +
+        " dS/m</span></div>" +
+        '<a class="scorecard-hide" href="#" data-action="collapse-scorecard">Hide ↑</a>' +
         "</div>" +
         '<div class="badge-row">' +
         certBadges +
@@ -610,6 +635,35 @@
       }
 
       updateCompareBar();
+    });
+
+    grid.addEventListener("click", function (event) {
+      var target = event.target;
+      if (!target || !target.getAttribute) {
+        return;
+      }
+
+      var action = target.getAttribute("data-action");
+      if (action !== "expand-scorecard" && action !== "collapse-scorecard") {
+        return;
+      }
+
+      event.preventDefault();
+      var card = target.closest(".listing-card");
+      if (!card) {
+        return;
+      }
+
+      var expanded = card.querySelector(".scorecard-expanded");
+      if (!expanded) {
+        return;
+      }
+
+      if (action === "expand-scorecard") {
+        expanded.classList.add("open");
+      } else {
+        expanded.classList.remove("open");
+      }
     });
 
     if (compareBtn) {
