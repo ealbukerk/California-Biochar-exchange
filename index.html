@@ -240,6 +240,7 @@
         <div style="display: flex; gap: var(--space-3); align-items: center;">
           <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
           <a id="nav-profile" class="btn btn-secondary" href="profile.html" style="display: none;">Profile</a>
+          <button id="nav-logout" class="btn btn-primary" type="button" style="display: none;">Log out</button>
         </div>
       </div>
     </nav>
@@ -272,9 +273,9 @@
           <div class="stat-label">Verified producers</div>
         </div>
         <div class="stat">
-          <a class="stat-link" href="crops.html">
+          <a class="stat-link" href="crops.html" style="border-bottom: 1px dashed var(--color-accent); padding-bottom: 2px;">
             <div class="stat-number">9</div>
-            <div class="stat-label">Supported crop types</div>
+            <div class="stat-label">Supported crop types <span style="color: var(--color-accent); font-size: var(--font-size-xs); margin-left: var(--space-1);">↗</span></div>
           </a>
         </div>
         <div class="stat">
@@ -341,14 +342,20 @@
       auth.onAuthStateChanged(function (user) {
         var login = document.getElementById('nav-login')
         var profile = document.getElementById('nav-profile')
-        if (!login || !profile) return
+        var logout = document.getElementById('nav-logout')
+        if (!login || !profile || !logout) return
         if (user) {
           login.style.display = 'none'
           profile.style.display = 'inline-flex'
+          logout.style.display = 'inline-flex'
         } else {
           login.style.display = 'inline-flex'
           profile.style.display = 'none'
+          logout.style.display = 'none'
         }
+      })
+      document.getElementById('nav-logout').addEventListener('click', function () {
+        auth.signOut()
       })
     </script>
   </body>

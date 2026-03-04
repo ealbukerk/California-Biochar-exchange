@@ -105,11 +105,14 @@
           profile = null;
         }
 
-        window.userProfile = profile;
-        updateNavForState(true, profile);
+        var userProfile = profile;
+        window.userProfile = userProfile;
+        window.userVerified = userProfile && userProfile.verified === true;
+        updateNavForState(true, userProfile);
       } else {
         window.currentUser = null;
         window.userProfile = null;
+        window.userVerified = false;
         updateNavForState(false, null);
       }
     });

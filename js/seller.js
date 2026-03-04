@@ -178,6 +178,34 @@
       });
   }
 
+  async function plotBuyerMarkers(map) {
+    const buyersSnap = await db.collection('users').where('role', '==', 'buyer').get()
+    buyersSnap.forEach(async function (doc) {
+      const buyer = doc.data()
+      if (!buyer.state) return
+      const query = encodeURIComponent(buyer.zipcode ? buyer.zipcode + ' USA' : buyer.state + ' USA')
+      try {
+        const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + query)
+        const data = await res.json()
+        if (!data || !data[0]) return
+        const lat = parseFloat(data[0].lat)
+        const lng = parseFloat(data[0].lon)
+        L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: '#B87333',
+          color: '#fff',
+          weight: 1,
+          fillOpacity: 0.85
+        }).bindPopup(
+          '<strong>' + (buyer.businessName || 'Buyer') + '</strong><br>' +
+          (buyer.cropTypes ? buyer.cropTypes.join(', ') : '') + '<br>' +
+          (buyer.state || '') +
+          (buyer.zipcode ? ' ' + buyer.zipcode : '')
+        ).addTo(map)
+      } catch(e) {}
+    })
+  }
+
   function initMap() {
     var mapEl = document.getElementById("seller-map");
     if (!mapEl || typeof L === "undefined") return;
@@ -216,43 +244,9 @@
         return null;
       });
 
-    db.collection("users")
-      .where("role", "==", "buyer")
-      .get()
-      .then(function (snapshot) {
-        var tasks = [];
-
-        snapshot.forEach(function (doc) {
-          var user = doc.data() || {};
-          if (!user.county || !user.state) return;
-
-          tasks.push(
-            geocodeLocation(user.county, user.state).then(function (coords) {
-              if (!coords) return;
-
-              L.circleMarker(coords, {
-                radius: 8,
-                color: "#B87333",
-                fillColor: "#B87333",
-                fillOpacity: 0.95,
-                weight: 2
-              })
-                .addTo(map)
-                .bindPopup(
-                  "<strong>Business Name:</strong> " + htmlEscape(user.businessName || "-") + "<br>" +
-                  "<strong>Crop Types:</strong> " + htmlEscape(Array.isArray(user.cropTypes) ? user.cropTypes.join(", ") : "") + "<br>" +
-                  "<strong>County:</strong> " + htmlEscape(user.county || "") + "<br>" +
-                  "<strong>State:</strong> " + htmlEscape(user.state || "")
-                );
-            })
-          );
-        });
-
-        return Promise.all(tasks);
-      })
-      .catch(function () {
-        return null;
-      });
+    plotBuyerMarkers(map).catch(function () {
+      return null;
+    });
 
     var legend = L.control({ position: "bottomleft" });
     legend.onAdd = function () {

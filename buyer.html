@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/states.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
     <style>
       .buyer-nav {
@@ -267,6 +268,7 @@
         <div class="buyer-nav-links">
           <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
           <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+          <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
         </div>
       </div>
     </nav>
@@ -291,10 +293,14 @@
         <h2>All listings</h2>
 
         <div id="filter-bar">
-          <input id="search" type="text" placeholder="Search producers, counties..." />
+          <input id="search" type="text" placeholder="Search producers, states..." />
           <div class="filter-row">
             <div id="ms-feedstock"></div>
-            <div id="ms-region"></div>
+            <div id="ms-region" hidden></div>
+            <select id="filter-state">
+              <option value="">All States</option>
+            </select>
+            <script>buildStateSelect(document.getElementById('filter-state'), false)</script>
           </div>
           <div class="filter-row">
             <div id="ms-cert"></div>
@@ -305,6 +311,7 @@
               <option value="tonnes-desc">Available Tonnes</option>
               <option value="rating-desc">Rating</option>
             </select>
+            <button id="reset-filters" class="btn-secondary" style="white-space:nowrap">Reset all</button>
           </div>
         </div>
 
@@ -341,7 +348,7 @@
           <article class="guide-card">
             <h3>pH</h3>
             <p class="unit">pH units</p>
-            <p>The alkalinity or acidity of the biochar. Biochar is typically alkaline and raises soil pH on application — beneficial for acidic soils common in Northern California.</p>
+            <p>The alkalinity or acidity of the biochar. Biochar is typically alkaline and raises soil pH on application — beneficial for acidic soils common in Northern United States.</p>
             <p class="highlight-line">What to look for: Match to your soil need. pH 7–9 is typical. Avoid high pH biochar on already-alkaline soils.</p>
           </article>
           <article class="guide-card">
@@ -376,41 +383,6 @@
           </article>
         </div>
 
-        <h3 style="margin-top: var(--space-10);">California feedstocks</h3>
-        <p class="learn-intro">The material biochar is made from significantly affects its properties. Here are the main feedstocks available in California.</p>
-        <div class="feedstock-grid">
-          <article class="feedstock-card">
-            <h3>Almond Shell</h3>
-            <p class="source">San Joaquin Valley</p>
-            <p>Produces high-carbon biochar with good surface area and neutral to slightly alkaline pH. Widely available due to California's dominant almond production.</p>
-            <p class="highlight-line">Best suited for: Almond Orchards, Row Crops, Grapevine / Vineyards</p>
-          </article>
-          <article class="feedstock-card">
-            <h3>Rice Husk</h3>
-            <p class="source">Sacramento Valley</p>
-            <p>Higher ash content than wood-based biochar but excellent silica content. Seasonal availability tied to harvest. Well suited for water retention applications.</p>
-            <p class="highlight-line">Best suited for: Rice, Row Crops, Pasture</p>
-          </article>
-          <article class="feedstock-card">
-            <h3>Wood Chip</h3>
-            <p class="source">Northern California, Sierra Foothills</p>
-            <p>Produces the highest surface area of common feedstocks. Very stable carbon, low ash content. The most versatile biochar type.</p>
-            <p class="highlight-line">Best suited for: All crop types, especially water retention applications</p>
-          </article>
-          <article class="feedstock-card">
-            <h3>Vine Pruning</h3>
-            <p class="source">Napa, Sonoma, Central Coast</p>
-            <p>Produced from wine grape cuttings post-harvest. Moderate carbon content, good pH range. Provenance is highly valued by organic and biodynamic vineyards.</p>
-            <p class="highlight-line">Best suited for: Grapevine / Vineyards, Row Crops</p>
-          </article>
-          <article class="feedstock-card">
-            <h3>Walnut Shell</h3>
-            <p class="source">San Joaquin Valley</p>
-            <p>Dense feedstock producing hard, stable biochar with high carbon content and low moisture. Similar properties to almond shell with slightly higher surface area.</p>
-            <p class="highlight-line">Best suited for: Walnut Orchards, Grapevine / Vineyards, Row Crops</p>
-          </article>
-        </div>
-
         <h3 style="margin-top: var(--space-10);">What certifications mean</h3>
         <div class="cert-grid">
           <article class="cert-card">
@@ -424,9 +396,9 @@
             <p class="highlight-line">Who needs it: Buyers who want independently verified quality claims.</p>
           </article>
           <article class="cert-card">
-            <h3>California Organic</h3>
-            <p>California Department of Food and Agriculture organic certification, aligned with USDA NOP standards but administered at state level.</p>
-            <p class="highlight-line">Who needs it: California farms selling organic produce in-state.</p>
+            <h3>United States Organic</h3>
+            <p>United States Department of Food and Agriculture organic certification, aligned with USDA NOP standards but administered at state level.</p>
+            <p class="highlight-line">Who needs it: US farms selling organic produce in-state.</p>
           </article>
         </div>
       </div>
@@ -441,6 +413,7 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/verified.js"></script>
     <script src="js/auth-state.js"></script>
     <script src="js/multiselect.js"></script>
     <script src="js/data.js"></script>

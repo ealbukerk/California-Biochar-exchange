@@ -234,6 +234,9 @@
     var ratingText = listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1);
     var stars = renderStars(listing.averageRating);
     var lead = getLeadTimeDisplay(listing.leadTimeDays);
+    var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
+      ? window.renderVerifiedBadge()
+      : "";
 
     return (
       '<article class="listing-card" id="listing-' +
@@ -248,6 +251,7 @@
       " />+ Compare</label></div>" +
       "<h3>" +
       htmlEscape(listing.producerName) +
+      (verifiedBadge ? verifiedBadge : "") +
       "</h3>" +
       '<p class="listing-meta">' +
       htmlEscape(listing.county) +
@@ -391,15 +395,18 @@
   function updateTopNav() {
     var login = document.getElementById("nav-login");
     var profile = document.getElementById("nav-profile");
+    var logout = document.getElementById("nav-logout");
 
-    if (!login || !profile) return;
+    if (!login || !profile || !logout) return;
 
     if (state.user) {
       login.classList.add("hidden");
       profile.classList.remove("hidden");
+      logout.classList.remove("hidden");
     } else {
       login.classList.remove("hidden");
       profile.classList.add("hidden");
+      logout.classList.add("hidden");
     }
   }
 
@@ -415,6 +422,7 @@
     var feedstock = getMultiSelectValues("ms-feedstock");
     var region = getMultiSelectValues("ms-region");
     var cert = getMultiSelectValues("ms-cert");
+    var stateValue = (document.getElementById("filter-state") ? document.getElementById("filter-state").value : "").trim();
     var sort = document.getElementById("filter-sort").value;
 
     var filtered = listings.filter(function (listing) {
@@ -426,6 +434,7 @@
       var feedstockActive = feedstock.length && feedstock.indexOf("All") === -1;
       var regionActive = region.length && region.indexOf("All") === -1;
       var certActive = cert.length && cert.indexOf("All") === -1;
+      var stateActive = !!stateValue && stateValue !== "All States";
 
       var matchesFeedstock = !feedstockActive || feedstock.indexOf(listing.feedstock) !== -1;
       var matchesRegion = !regionActive || region.indexOf(listing.region) !== -1;
@@ -434,8 +443,15 @@
         listing.certifications.some(function (item) {
           return cert.indexOf(item) !== -1;
         });
+      var listingState = String(listing.state || "").toLowerCase();
+      var listingRegion = String(listing.region || "").toLowerCase();
+      var stateNeedle = stateValue.toLowerCase();
+      var matchesState =
+        !stateActive ||
+        listingState.indexOf(stateNeedle) !== -1 ||
+        listingRegion.indexOf(stateNeedle) !== -1;
 
-      return matchesSearch && matchesFeedstock && matchesRegion && matchesCert;
+      return matchesSearch && matchesFeedstock && matchesRegion && matchesCert && matchesState;
     });
 
     filtered.sort(function (a, b) {
@@ -681,6 +697,10 @@
     };
   }
 
+  function renderListings() {
+    renderBrowseListings();
+  }
+
   function initBrowseFilters() {
     makeMultiSelect(
       document.getElementById("ms-feedstock"),
@@ -698,10 +718,34 @@
 
     document.getElementById("search").addEventListener("input", renderBrowseListings);
     document.getElementById("filter-sort").addEventListener("change", renderBrowseListings);
+    var stateSelect = document.getElementById("filter-state");
+    if (stateSelect) {
+      stateSelect.addEventListener("change", renderBrowseListings);
+    }
     ["ms-feedstock", "ms-region", "ms-cert"].forEach(function (id) {
       var el = document.getElementById(id);
       el.addEventListener("change", renderBrowseListings);
     });
+
+    var resetBtn = document.getElementById("reset-filters");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", function() {
+        document.getElementById('search').value = ''
+        document.getElementById('filter-sort').value = document.getElementById('filter-sort').options[0].value
+        document.querySelectorAll('.filter-pill-group input[type=checkbox]').forEach(function (cb) { cb.checked = false })
+        const allBoxes = document.querySelectorAll('.filter-pill-group input[value="All"]')
+        allBoxes.forEach(function (cb) { cb.checked = true })
+        var feedstockEl = document.getElementById("ms-feedstock");
+        var regionEl = document.getElementById("ms-region");
+        var certEl = document.getElementById("ms-cert");
+        if (feedstockEl && typeof feedstockEl.setValue === "function") feedstockEl.setValue(["All"]);
+        if (regionEl && typeof regionEl.setValue === "function") regionEl.setValue(["All"]);
+        if (certEl && typeof certEl.setValue === "function") certEl.setValue(["All"]);
+        var stateFilter = document.getElementById("filter-state");
+        if (stateFilter) stateFilter.value = "";
+        renderListings()
+      })
+    }
 
     renderBrowseListings();
   }
@@ -738,6 +782,34 @@
       });
   }
 
+  async function plotBuyerMarkers(map) {
+    const buyersSnap = await db.collection('users').where('role', '==', 'buyer').get()
+    buyersSnap.forEach(async function (doc) {
+      const buyer = doc.data()
+      if (!buyer.state) return
+      const query = encodeURIComponent(buyer.zipcode ? buyer.zipcode + ' USA' : buyer.state + ' USA')
+      try {
+        const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + query)
+        const data = await res.json()
+        if (!data || !data[0]) return
+        const lat = parseFloat(data[0].lat)
+        const lng = parseFloat(data[0].lon)
+        L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: '#B87333',
+          color: '#fff',
+          weight: 1,
+          fillOpacity: 0.85
+        }).bindPopup(
+          '<strong>' + (buyer.businessName || 'Buyer') + '</strong><br>' +
+          (buyer.cropTypes ? buyer.cropTypes.join(', ') : '') + '<br>' +
+          (buyer.state || '') +
+          (buyer.zipcode ? ' ' + buyer.zipcode : '')
+        ).addTo(map)
+      } catch(e) {}
+    })
+  }
+
   function initMap() {
     var mapEl = document.getElementById("buyer-map");
     if (!mapEl || typeof L === "undefined") return;
@@ -768,40 +840,9 @@
         );
     });
 
-    db.collection("users")
-      .where("role", "==", "buyer")
-      .get()
-      .then(function (snapshot) {
-        var tasks = [];
-        snapshot.forEach(function (doc) {
-          var data = doc.data() || {};
-          if (!data.county || !data.state) return;
-          tasks.push(
-            geocodeLocation(data.county, data.state).then(function (coords) {
-              if (!coords) return;
-              L.circleMarker(coords, {
-                radius: 8,
-                color: "#B87333",
-                fillColor: "#B87333",
-                fillOpacity: 0.95,
-                weight: 2
-              })
-                .addTo(map)
-                .bindPopup(
-                  "<strong>Business Name:</strong> " + htmlEscape(data.businessName || "-") + "<br>" +
-                  "<strong>Crop Types:</strong> " + htmlEscape(Array.isArray(data.cropTypes) ? data.cropTypes.join(", ") : "") + "<br>" +
-                  "<strong>County:</strong> " + htmlEscape(data.county || "") + "<br>" +
-                  "<strong>State:</strong> " + htmlEscape(data.state || "")
-                );
-            })
-          );
-        });
-
-        return Promise.all(tasks);
-      })
-      .catch(function () {
-        return null;
-      });
+    plotBuyerMarkers(map).catch(function () {
+      return null;
+    });
 
     var legend = L.control({ position: "bottomleft" });
     legend.onAdd = function () {
@@ -848,6 +889,14 @@
     initAuthState();
     initBrowseFilters();
     initMap();
+    var logoutBtn = document.getElementById("nav-logout");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", function () {
+        auth.signOut().then(function () {
+          window.location.href = "index.html";
+        });
+      });
+    }
     document.addEventListener("click", function (event) {
       var target = event.target;
       if (!target || !target.classList || !target.classList.contains("buy-now-card-btn")) {

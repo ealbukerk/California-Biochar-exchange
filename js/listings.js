@@ -47,12 +47,14 @@
   function readFiltersForUrl() {
     var searchInput = document.getElementById("search");
     var sortSelect = document.getElementById("filter-sort");
+    var stateSelect = document.getElementById("filter-state");
 
     return {
       search: searchInput ? searchInput.value.trim() : "",
       feedstock: getMultiSelectValues("ms-feedstock"),
       region: getMultiSelectValues("ms-region"),
       cert: getMultiSelectValues("ms-cert"),
+      state: stateSelect ? stateSelect.value : "",
       sort: sortSelect ? sortSelect.value : ""
     };
   }
@@ -63,6 +65,7 @@
       feedstock: [],
       region: [],
       cert: [],
+      state: "",
       sort: "price-asc"
     };
 
@@ -96,6 +99,7 @@
     var params = new URLSearchParams(window.location.search);
     var searchInput = document.getElementById("search");
     var sortSelect = document.getElementById("filter-sort");
+    var stateSelect = document.getElementById("filter-state");
 
     if (searchInput && params.has("search")) {
       searchInput.value = params.get("search");
@@ -103,6 +107,9 @@
     hydrateMultiSelectFromParam("ms-feedstock", params.get("feedstock"));
     hydrateMultiSelectFromParam("ms-region", params.get("region"));
     hydrateMultiSelectFromParam("ms-cert", params.get("cert"));
+    if (stateSelect && params.has("state")) {
+      stateSelect.value = params.get("state");
+    }
     if (sortSelect && params.has("sort")) {
       sortSelect.value = params.get("sort");
     }
@@ -346,6 +353,8 @@
       var feedstockFilterActive = filters.feedstock.length > 0 && filters.feedstock.indexOf("All") === -1;
       var regionFilterActive = filters.region.length > 0 && filters.region.indexOf("All") === -1;
       var certFilterActive = filters.cert.length > 0 && filters.cert.indexOf("All") === -1;
+      var stateFilterValue = (filters.state || "").trim();
+      var stateFilterActive = !!stateFilterValue && stateFilterValue !== "All States";
 
       var matchesFeedstock = !feedstockFilterActive || filters.feedstock.indexOf(listing.feedstock) !== -1;
       var matchesRegion = !regionFilterActive || filters.region.indexOf(listing.region) !== -1;
@@ -354,8 +363,15 @@
         listing.certifications.some(function (cert) {
           return filters.cert.indexOf(cert) !== -1;
         });
+      var listingState = String(listing.state || "").toLowerCase();
+      var listingRegion = String(listing.region || "").toLowerCase();
+      var stateNeedle = stateFilterValue.toLowerCase();
+      var matchesState =
+        !stateFilterActive ||
+        listingState.indexOf(stateNeedle) !== -1 ||
+        listingRegion.indexOf(stateNeedle) !== -1;
 
-      return matchesSearch && matchesFeedstock && matchesRegion && matchesCert;
+      return matchesSearch && matchesFeedstock && matchesRegion && matchesCert && matchesState;
     });
 
     filtered.sort(function (a, b) {
@@ -408,12 +424,14 @@
 
     var searchInput = document.getElementById("search");
     var sortSelect = document.getElementById("filter-sort");
+    var stateSelect = document.getElementById("filter-state");
 
     var filters = {
       search: searchInput.value.trim().toLowerCase(),
       feedstock: getMultiSelectValues("ms-feedstock"),
       region: getMultiSelectValues("ms-region"),
       cert: getMultiSelectValues("ms-cert"),
+      state: stateSelect ? stateSelect.value : "",
       sort: sortSelect.value
     };
 
@@ -545,6 +563,7 @@
     var certEl = document.getElementById("ms-cert");
     var searchElement = document.getElementById("search");
     var sortElement = document.getElementById("filter-sort");
+    var stateElement = document.getElementById("filter-state");
 
     if (feedstockEl) {
       makeMultiSelect(
@@ -572,6 +591,10 @@
 
     if (sortElement) {
       sortElement.addEventListener("change", update);
+    }
+
+    if (stateElement) {
+      stateElement.addEventListener("change", update);
     }
 
     [feedstockEl, regionEl, certEl].forEach(function (el) {

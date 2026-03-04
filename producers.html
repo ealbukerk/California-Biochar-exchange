@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/states.js"></script>
     <script src="js/auth-state.js"></script>
     <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
@@ -342,8 +343,25 @@
             </div>
 
             <div class="form-group">
-              <label for="county-operation">County of operation</label>
-              <input id="county-operation" name="county" type="text" required />
+              <label for="state-producer">State of operation</label>
+              <select name="state" id="state-producer" required></select>
+              <script>buildStateSelect(document.getElementById('state-producer'), true)</script>
+            </div>
+
+            <div class="form-group">
+              <label for="producer-zipcode">ZIP code</label>
+              <input id="producer-zipcode" name="zipcode" type="text" pattern="[0-9]{5}" maxlength="5" placeholder="e.g. 94103" required />
+            </div>
+
+            <div class="form-group">
+              <label for="producer-ein">Business EIN</label>
+              <p class="field-note">Required for seller verification. Format: XX-XXXXXXX</p>
+              <input id="producer-ein" name="ein" type="text" placeholder="XX-XXXXXXX" />
+            </div>
+
+            <div class="form-group">
+              <label for="producer-business-website">Business website</label>
+              <input id="producer-business-website" name="businessWebsite" type="url" placeholder="https://yourcompany.com" />
             </div>
 
             <div class="form-group">
@@ -369,8 +387,10 @@
 
             <div class="form-group">
               <label>Certifications held</label>
-              <div id="ms-certs-producer"></div>
-              <input id="producer-certs" type="hidden" name="certifications" />
+              <div class="checkbox-group">
+                <div id="ms-certs-producer"></div>
+                <input id="producer-certs" type="hidden" name="certifications" />
+              </div>
             </div>
 
             <div class="form-group">

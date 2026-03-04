@@ -87,9 +87,13 @@
         <div style="display: flex; gap: var(--space-3); align-items: center;">
           <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
           <a id="nav-profile" class="btn btn-secondary" href="profile.html" style="display: none;">Profile</a>
+          <button id="nav-logout" class="btn btn-primary" type="button" style="display: none;">Log out</button>
         </div>
       </div>
     </nav>
+    <div class="back-bar">
+      <a class="back-btn" onclick="window.history.back(); return false;" href="#">← Back</a>
+    </div>
 
     <main class="crops-page">
       <div class="container">
@@ -102,63 +106,63 @@
           <div class="crops-grid">
             <article class="crop-card">
               <h3>Almond Orchards</h3>
-              <p class="crop-region">San Joaquin Valley, California</p>
+              <p class="crop-region">San Joaquin Valley, United States</p>
               <p class="crop-description">Almond trees are highly sensitive to water stress and benefit significantly from biochar's water retention properties. Incorporating biochar improves the soil's ability to hold moisture between irrigation cycles, reducing water use by up to 20% in sandy soils common to the San Joaquin Valley.</p>
               <p class="crop-look">High surface area (300+ m²/g), neutral to alkaline pH (7–8.5), low moisture content. Almond shell biochar is particularly well matched due to shared feedstock provenance.</p>
             </article>
 
             <article class="crop-card">
               <h3>Walnut Orchards</h3>
-              <p class="crop-region">San Joaquin Valley and Sacramento Valley, California</p>
+              <p class="crop-region">San Joaquin Valley and Sacramento Valley, United States</p>
               <p class="crop-description">Walnuts require deep, well-drained soils with consistent moisture. Biochar improves both drainage in heavy clay soils and moisture retention in sandy soils simultaneously. It also improves microbial activity which supports walnut root health.</p>
               <p class="crop-look">Good surface area, pH 7–9, IBI certified preferred. Walnut shell or wood chip biochar works well.</p>
             </article>
 
             <article class="crop-card">
               <h3>Pistachio Orchards</h3>
-              <p class="crop-region">San Joaquin Valley, California</p>
+              <p class="crop-region">San Joaquin Valley, United States</p>
               <p class="crop-description">Pistachios are drought-tolerant but respond well to improved nutrient retention. Biochar reduces the leaching of nitrogen and potassium from irrigation, lowering fertilizer requirements over time while maintaining yields.</p>
               <p class="crop-look">High carbon content (65%+), low electrical conductivity (below 1.5 dS/m) to avoid salt stress, pH 7–8.5.</p>
             </article>
 
             <article class="crop-card">
               <h3>Grapevine / Vineyards</h3>
-              <p class="crop-region">Napa, Sonoma, Paso Robles, Central Coast, California</p>
+              <p class="crop-region">Napa, Sonoma, Paso Robles, Central Coast, United States</p>
               <p class="crop-description">Vineyards face increasing pressure to reduce water use and demonstrate sustainability credentials. Biochar improves water efficiency and can reduce irrigation demand meaningfully. Organic and biodynamic vineyards value biochar's provenance transparency and OMRI certification.</p>
               <p class="crop-look">OMRI Listed if organic certified. Vine pruning biochar is highly valued for provenance alignment. pH 6.5–8, good surface area.</p>
             </article>
 
             <article class="crop-card">
               <h3>Corn</h3>
-              <p class="crop-region">Central Valley California, Midwest</p>
+              <p class="crop-region">Central Valley United States, Midwest</p>
               <p class="crop-description">Corn is a heavy feeder requiring consistent nitrogen availability. Biochar improves nitrogen retention in soil, reducing leaching losses and lowering fertilizer inputs over multiple seasons. Effects compound over time as biochar stabilizes.</p>
               <p class="crop-look">High surface area for maximum nutrient retention, pH 6.5–7.5, high carbon content. Wood chip or corn stover biochar works well.</p>
             </article>
 
             <article class="crop-card">
               <h3>Wheat</h3>
-              <p class="crop-region">Central Valley California, Great Plains</p>
+              <p class="crop-region">Central Valley United States, Great Plains</p>
               <p class="crop-description">Wheat grown in drier regions benefits from biochar's water retention properties. In higher rainfall areas biochar improves drainage and aeration. Particularly valuable for reducing fertilizer dependence on organic wheat operations.</p>
               <p class="crop-look">Moderate surface area, pH 6.5–8, OMRI Listed if organic. Wheat straw biochar has good compatibility.</p>
             </article>
 
             <article class="crop-card">
               <h3>Rice</h3>
-              <p class="crop-region">Sacramento Valley, California</p>
+              <p class="crop-region">Sacramento Valley, United States</p>
               <p class="crop-description">Rice paddies in flooded conditions benefit from biochar's ability to reduce methane emissions from anaerobic decomposition — a meaningful greenhouse gas benefit. Biochar also improves phosphorus availability in paddy soils.</p>
               <p class="crop-look">Rice husk biochar is the natural match. pH 6–7.5, moderate ash content is acceptable for rice applications.</p>
             </article>
 
             <article class="crop-card">
               <h3>Row Crops</h3>
-              <p class="crop-region">Central Valley California, nationwide</p>
+              <p class="crop-region">Central Valley United States, nationwide</p>
               <p class="crop-description">Row crops including tomatoes, peppers, melons, and leafy greens benefit from improved water retention and reduced fertilizer inputs. Organic row crop operations find biochar particularly valuable as a compliant soil amendment.</p>
               <p class="crop-look">OMRI Listed essential for organic operations. Fine particle size (under 3mm) for vegetable beds. pH 6.5–8, high surface area.</p>
             </article>
 
             <article class="crop-card">
               <h3>Forestry</h3>
-              <p class="crop-region">Sierra Nevada, Northern California, Pacific Northwest</p>
+              <p class="crop-region">Sierra Nevada, Northern United States, Pacific Northwest</p>
               <p class="crop-description">Forest restoration and reforestation projects benefit from biochar's ability to improve soil conditions in degraded or recently burned areas. Forest thinning biochar closes the loop on prescribed burn programs by converting woody waste into a productive soil input.</p>
               <p class="crop-look">Forest thinning or wood chip biochar for provenance alignment. High carbon content, good surface area, pH 6.5–8.5.</p>
             </article>
@@ -174,6 +178,25 @@
       </div>
     </footer>
 
-    <script src="js/auth-state.js"></script>
+    <script>
+      auth.onAuthStateChanged(function (user) {
+        var login = document.getElementById('nav-login')
+        var profile = document.getElementById('nav-profile')
+        var logout = document.getElementById('nav-logout')
+        if (!login || !profile || !logout) return
+        if (user) {
+          login.style.display = 'none'
+          profile.style.display = 'inline-flex'
+          logout.style.display = 'inline-flex'
+        } else {
+          login.style.display = 'inline-flex'
+          profile.style.display = 'none'
+          logout.style.display = 'none'
+        }
+      })
+      document.getElementById('nav-logout').addEventListener('click', function () {
+        auth.signOut()
+      })
+    </script>
   </body>
 </html>

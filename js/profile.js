@@ -171,6 +171,14 @@
     var profile = state.profile || {};
     var grid = document.getElementById("account-info-grid");
     var editing = state.editingAccount;
+    var isSeller = (profile.role || "").toLowerCase() === "seller";
+    var websiteValue = profile.businessWebsite || "";
+    var websiteDisplay = websiteValue
+      ? '<a href="' + htmlEscape(websiteValue) + '" target="_blank" rel="noopener noreferrer">' + htmlEscape(websiteValue) + "</a>"
+      : "-";
+    var einDisplay = isSeller && profile.ein
+      ? '<div style="color: var(--color-text-muted); font-size: var(--font-size-sm); margin-top: var(--space-2);">EIN: ' + htmlEscape(profile.ein) + "</div>"
+      : "";
 
     grid.innerHTML =
       '<div class="info-item"><label>Full Name</label>' +
@@ -185,16 +193,62 @@
       '</div>' +
       '<div class="info-item"><label>Email</label><span>' + (profile.email || state.user.email || "-") + '</span></div>' +
       '<div class="info-item"><label>Role</label><span class="role-badge">' + ((profile.role || "").toLowerCase() === "seller" ? "Seller" : "Buyer") + '</span></div>' +
-      '<div class="info-item"><label>County</label>' +
-      (editing
-        ? '<input id="profile-county" value="' + (profile.county || "") + '">' 
-        : '<span>' + (profile.county || "-") + '</span>') +
-      '</div>' +
       '<div class="info-item"><label>State</label>' +
       (editing
         ? '<input id="profile-state" value="' + (profile.state || "") + '">' 
         : '<span>' + (profile.state || "-") + '</span>') +
+      '</div>' +
+      '<div class="info-item"><label>ZIP Code</label>' +
+      (editing
+        ? '<input id="profile-zipcode" value="' + (profile.zipcode || "") + '">' 
+        : '<span>' + (profile.zipcode || "-") + '</span>') +
+      '</div>' +
+      '<div class="info-item"><label>Business Website</label>' +
+      (editing
+        ? '<input id="profile-business-website" type="url" value="' + (profile.businessWebsite || "") + '">' 
+        : '<div>' + websiteDisplay + einDisplay + '</div>') +
+      '</div>' +
+      '<div class="info-item"><label>Business EIN</label>' +
+      (editing
+        ? '<input id="profile-ein" value="' + (profile.ein || "") + '">' 
+        : '<span style="color: var(--color-text-muted);">' + (isSeller ? (profile.ein || "-") : "-") + '</span>') +
       '</div>';
+
+    if (window.userVerified) {
+      var profileNameEl = document.getElementById('profile-name');
+      if (profileNameEl && typeof window.renderVerifiedBadge === "function") {
+        profileNameEl.insertAdjacentHTML('afterend', window.renderVerifiedBadge());
+      }
+    }
+
+    var verifiedStatsEl = document.createElement("div");
+    verifiedStatsEl.id = "verified-stats";
+    verifiedStatsEl.style.color = "var(--color-text-muted)";
+    verifiedStatsEl.style.fontSize = "var(--font-size-sm)";
+
+    var userProfile = window.userProfile || profile || {};
+    if (userProfile.verifiedStats) {
+      verifiedStatsEl.textContent =
+        userProfile.verifiedStats.confirmationRate +
+        "% delivery confirmation · " +
+        userProfile.verifiedStats.averageRating +
+        " avg rating · " +
+        userProfile.verifiedStats.totalTransactions +
+        " transactions";
+    } else {
+      verifiedStatsEl.textContent =
+        "Verified status requires 3+ completed transactions, 90%+ delivery confirmation, and 4.0+ average rating.";
+    }
+
+    var businessInput = document.getElementById("profile-business");
+    if (businessInput && businessInput.parentNode) {
+      businessInput.parentNode.appendChild(verifiedStatsEl);
+    } else {
+      var infoItems = grid.querySelectorAll(".info-item");
+      if (infoItems.length > 1) {
+        infoItems[1].appendChild(verifiedStatsEl);
+      }
+    }
 
     document.getElementById("edit-account-btn").hidden = editing;
     document.getElementById("save-account-btn").hidden = !editing;
@@ -204,8 +258,10 @@
     var updates = {
       name: document.getElementById("profile-name").value.trim(),
       businessName: document.getElementById("profile-business").value.trim(),
-      county: document.getElementById("profile-county").value.trim(),
-      state: document.getElementById("profile-state").value.trim()
+      state: document.getElementById("profile-state").value.trim(),
+      zipcode: document.getElementById("profile-zipcode").value.trim(),
+      businessWebsite: document.getElementById("profile-business-website").value.trim(),
+      ein: document.getElementById("profile-ein").value.trim()
     };
 
     try {
@@ -504,6 +560,15 @@
 
     if (!state.profile.email) {
       state.profile.email = user.email;
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.profile, "zipcode")) {
+      state.profile.zipcode = "";
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.profile, "ein")) {
+      state.profile.ein = "";
+    }
+    if (!Object.prototype.hasOwnProperty.call(state.profile, "businessWebsite")) {
+      state.profile.businessWebsite = "";
     }
 
     renderAccountInfo();

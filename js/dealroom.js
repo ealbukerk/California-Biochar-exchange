@@ -308,3 +308,46 @@ async function respondToExtension(dealId, responderUID, accept) {
     })
   }
 }
+
+window.confirmDealDelivery = async function(transactionId, confirmerUID) {
+  const txRef = db.collection('transactions').doc(transactionId)
+  const txSnap = await txRef.get()
+  if (!txSnap.exists) throw new Error('Transaction not found')
+  const tx = txSnap.data()
+
+  const updates = {}
+  if (tx.buyerUID === confirmerUID) updates.confirmedByBuyer = true
+  if (tx.producerUID === confirmerUID) updates.confirmedByProducer = true
+  if (Object.keys(updates).length === 0) throw new Error('User is not part of this transaction')
+
+  await txRef.update(updates)
+  const updatedSnap = await txRef.get()
+  const updated = updatedSnap.data()
+
+  if (updated.confirmedByBuyer === true && updated.confirmedByProducer === true) {
+    const dealSnap = await db.collection('deals').doc(updated.dealId).get()
+    if (dealSnap.exists) {
+      const deal = dealSnap.data()
+      if (window.updateVerifiedStatus) {
+        if (deal.buyerUID) await window.updateVerifiedStatus(deal.buyerUID)
+        if (deal.producerUID) await window.updateVerifiedStatus(deal.producerUID)
+      }
+    }
+  }
+
+  return updated
+}
+
+window.getDealHeaderDisplay = function(deal) {
+  const producerBadge = deal && deal.producerVerified && typeof window.renderVerifiedBadge === 'function'
+    ? window.renderVerifiedBadge()
+    : ''
+  const buyerBadge = deal && deal.buyerVerified && typeof window.renderVerifiedBadge === 'function'
+    ? window.renderVerifiedBadge()
+    : ''
+
+  return {
+    producerNameHtml: (deal && deal.producerName ? deal.producerName : '') + producerBadge,
+    buyerNameHtml: (deal && deal.buyerName ? deal.buyerName : '') + buyerBadge
+  }
+}

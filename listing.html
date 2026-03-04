@@ -12,7 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
-    <script src="js/auth-state.js"></script>
     <script src="js/commission.js"></script>
     <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
@@ -272,17 +271,16 @@
     <nav>
       <div class="container nav-inner">
         <a class="nav-logo" href="index.html">BM</a>
-        <ul class="nav-links">
-          <li><a href="listings.html">Listings</a></li>
-          <li><a href="match.html">Soil Match</a></li>
-          <li><a href="learn.html">Learn</a></li>
-          <li><a href="producers.html">For Producers</a></li>
-          <li><a href="buyers.html">For Buyers</a></li>
-          <li><a href="admin.html">Dashboard</a></li>
-        </ul>
-        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+        <div style="display: flex; gap: var(--space-3); align-items: center;">
+          <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+          <a id="nav-profile" class="btn btn-secondary" href="profile.html" style="display: none;">Profile</a>
+          <button id="nav-logout" class="btn btn-primary" type="button" style="display: none;">Log out</button>
+        </div>
       </div>
     </nav>
+    <div class="back-bar">
+      <a class="back-btn" onclick="window.history.back(); return false;" href="#">← Back</a>
+    </div>
 
     <main class="listing-page">
       <div class="container">
@@ -298,5 +296,33 @@
     </footer>
 
     <script src="js/data.js"></script>
+    <script>
+      auth.onAuthStateChanged(function (user) {
+        var login = document.getElementById('nav-login')
+        var profile = document.getElementById('nav-profile')
+        var logout = document.getElementById('nav-logout')
+        if (!login || !profile || !logout) return
+        if (user) {
+          window.currentUser = user
+          db.collection('users').doc(user.uid).get().then(function (doc) {
+            window.userProfile = doc.exists ? doc.data() : null
+          }).catch(function () {
+            window.userProfile = null
+          })
+          login.style.display = 'none'
+          profile.style.display = 'inline-flex'
+          logout.style.display = 'inline-flex'
+        } else {
+          window.currentUser = null
+          window.userProfile = null
+          login.style.display = 'inline-flex'
+          profile.style.display = 'none'
+          logout.style.display = 'none'
+        }
+      })
+      document.getElementById('nav-logout').addEventListener('click', function () {
+        auth.signOut()
+      })
+    </script>
   </body>
 </html>
