@@ -67,6 +67,47 @@
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
+section,
+.section {
+  padding: var(--space-12) 0;
+}
+
+.form-group {
+  margin-bottom: var(--space-4);
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: var(--space-2);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.form-group p.field-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+}
+
+h3 {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-tight);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -181,7 +222,7 @@ nav {
 
 .ms-wrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
 }
 
@@ -197,12 +238,14 @@ nav {
   font-size: var(--font-size-sm);
   min-height: 42px;
   user-select: none;
+  color: var(--color-text-primary);
 }
 
 .ms-box:after {
   content: "▾";
   color: var(--color-text-muted);
   margin-left: var(--space-2);
+  flex-shrink: 0;
 }
 
 .ms-box.open {
@@ -217,9 +260,11 @@ nav {
   box-shadow: var(--shadow-md);
   z-index: 200;
   min-width: 100%;
-  max-height: 260px;
+  max-height: 240px;
   overflow-y: auto;
   padding: var(--space-2) 0;
+  top: calc(100% + 4px);
+  left: 0;
 }
 
 .ms-hint {
@@ -237,15 +282,20 @@ nav {
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
   font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
 }
 
 .ms-option:hover {
   background: var(--color-accent-light);
 }
 
-.ms-option input {
-  cursor: pointer;
+.ms-option input[type="checkbox"] {
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
   accent-color: var(--color-accent);
+  cursor: pointer;
+  margin: 0;
 }
 
 .verified-badge {

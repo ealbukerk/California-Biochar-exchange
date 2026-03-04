@@ -153,6 +153,18 @@
       return;
     }
 
+    bar.style.position = "fixed";
+    bar.style.bottom = "0";
+    bar.style.left = "0";
+    bar.style.right = "0";
+    bar.style.background = "var(--color-surface)";
+    bar.style.borderTop = "2px solid var(--color-accent)";
+    bar.style.padding = "var(--space-4) var(--space-8)";
+    bar.style.alignItems = "center";
+    bar.style.justifyContent = "space-between";
+    bar.style.zIndex = "300";
+    bar.style.boxShadow = "0 -4px 12px rgba(0,0,0,0.08)";
+
     count.textContent = compareList.length + " listings selected";
     bar.style.display = compareList.length >= 2 ? "flex" : "none";
   }
@@ -445,6 +457,15 @@
     var cards = filtered.map(function (listing) {
       var visibleSuitable = listing.suitableFor.slice(0, 3);
       var hiddenCount = Math.max(0, listing.suitableFor.length - 3);
+      var detailId = "details-" + listing.id;
+      var scoreId = "scorecard-" + listing.id;
+      var ratingText = listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1);
+      var stars = renderStars(listing.averageRating);
+      var ratingStarsHtml = stars ? '<span class="star-rating" aria-label="Rated ' + ratingText + ' out of 5">' + stars + "</span>" : "";
+      var leadTime = getLeadTimeDisplay(listing.leadTimeDays);
+      var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
+        ? window.renderVerifiedBadge()
+        : "";
 
       var certBadges = listing.certifications
         .map(function (cert) {
@@ -456,83 +477,51 @@
         .map(function (item) {
           return '<span class="suitable-tag">' + item + "</span>";
         })
-        .join("");
-
-      if (hiddenCount > 0) {
-        suitableTags += '<span class="suitable-more">+' + hiddenCount + " more</span>";
-      }
-
-      var ratingText = listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1);
-      var stars = renderStars(listing.averageRating);
-      var ratingStarsHtml = stars ? '<span class="star-rating" aria-label="Rated ' + ratingText + ' out of 5">' + stars + "</span>" : "";
-      var leadTime = getLeadTimeDisplay(listing.leadTimeDays);
+        .join("") + (hiddenCount > 0 ? '<span class="suitable-more">+' + hiddenCount + " more</span>" : "");
 
       return (
-        '<article class="listing-card" id="listing-' +
-        listing.id +
-        '" style="position: relative;">' +
-        '<div style="position:absolute;top:12px;right:12px;">' +
-        '<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--font-size-sm);color:var(--color-text-secondary);">' +
-        '<input class="compare-check" type="checkbox" data-id="' +
-        listing.id +
-        '"' +
-        (compareList.includes(listing.id) ? " checked" : "") +
-        " />+ Compare</label></div>" +
-        "<h3>" +
-        listing.producerName +
-        "</h3>" +
-        '<p class="listing-meta">' +
-        listing.county +
-        " County · " +
-        listing.region +
-        "</p>" +
-        '<span class="feedstock-tag">' +
-        listing.feedstock +
-        "</span>" +
-        '<div class="price-row"><span class="price-value">$' +
-        listing.pricePerTonne +
-        '</span><span class="price-unit">/tonne</span></div>' +
-        '<p class="card-detail">Available: ' +
-        listing.availableTonnes +
-        " tonnes</p>" +
-        '<p class="card-detail">Availability: ' +
-        formatDateRange(listing.availableFrom, listing.availableUntil) +
-        "</p>" +
-        '<p class="card-detail">Min order: ' +
-        listing.minOrderTonnes +
-        " tonnes</p>" +
-        '<p class="card-detail ' +
-        leadTime.className +
-        '">' +
-        leadTime.text +
-        "</p>" +
-        '<div class="scorecard-mini">' +
-        '<span class="score-item">C: ' +
-        listing.scorecard.carbonContent.toFixed(1) +
-        '%</span>' +
-        '<span class="score-item">pH: ' +
-        listing.scorecard.pH.toFixed(1) +
-        "</span>" +
-        '<span class="score-item">' +
-        listing.scorecard.surfaceArea +
-        " m²/g</span>" +
+        '<article class="listing-card" id="listing-' + listing.id + '">' +
+        '<div class="listing-top-row"><h3 style="margin:0;">' + listing.producerName + '</h3>' + verifiedBadge + "</div>" +
+        '<div class="listing-subtitle">' + (listing.region || listing.state || "") + "</div>" +
+        '<span class="feedstock-tag">' + listing.feedstock + "</span>" +
+        '<div class="listing-summary-price">' +
+        '<div class="price-row"><span class="price-value">$' + listing.pricePerTonne + '</span><span class="price-unit">/tonne</span></div>' +
+        '<span class="card-detail">Available: ' + listing.availableTonnes + " tonnes</span>" +
         "</div>" +
-        '<div class="badge-row">' +
-        certBadges +
+        '<a href="#" class="card-toggle" data-target="' + detailId + '">Show details ↓</a>' +
+        '<div class="card-details" id="' + detailId + '">' +
+        '<div class="scorecard-inline">' +
+        '<span class="scorecard-badge">' + listing.scorecard.carbonContent + '% C</span>' +
+        '<span class="scorecard-badge">pH ' + listing.scorecard.pH + "</span>" +
+        '<span class="scorecard-badge">' + listing.scorecard.surfaceArea + ' m²/g</span>' +
+        '<button class="scorecard-toggle" type="button" data-target="' + scoreId + '">Full scorecard ↓</button>' +
         "</div>" +
-        '<div class="suitable-row">' +
-        suitableTags +
+        '<div class="scorecard-expanded" id="' + scoreId + '">' +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Carbon Content</span><span class="scorecard-field-value">' + listing.scorecard.carbonContent + "%</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">pH</span><span class="scorecard-field-value">' + listing.scorecard.pH + "</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Surface Area</span><span class="scorecard-field-value">' + listing.scorecard.surfaceArea + " m²/g</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Particle Size</span><span class="scorecard-field-value">' + listing.scorecard.particleSize + "</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Moisture</span><span class="scorecard-field-value">' + listing.scorecard.moisture + "%</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Ash Content</span><span class="scorecard-field-value">' + listing.scorecard.ashContent + "%</span></div>" +
+        '<div class="scorecard-field"><span class="scorecard-field-name">Electrical Conductivity</span><span class="scorecard-field-value">' + listing.scorecard.electricalConductivity + " dS/m</span></div>" +
         "</div>" +
-        '<div class="rating-row"><span>' +
-        listing.transactionsCompleted +
-        " transactions</span><span>·</span><span>" +
-        ratingText +
-        "</span>" +
-        ratingStarsHtml +
+        '<div class="badge-row" style="margin-top:var(--space-3);">' + certBadges + "</div>" +
+        '<div class="suitable-row" style="margin-top:var(--space-3);">' + suitableTags + "</div>" +
+        '<p class="card-detail">Availability: ' + formatDateRange(listing.availableFrom, listing.availableUntil) + "</p>" +
+        '<p class="card-detail">Min order: ' + listing.minOrderTonnes + " tonnes</p>" +
+        '<p class="card-detail ' + leadTime.className + '">' + leadTime.text + "</p>" +
+        '<div class="rating-row"><span>' + listing.transactionsCompleted + " transactions</span><span>·</span><span>" + ratingText + "</span>" + ratingStarsHtml + "</div>" +
+        '<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-3);">' +
+        '<input class="compare-check" type="checkbox" data-id="' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + " />+ Compare</label>" +
+        '<div class="listing-actions" style="display:flex;gap:var(--space-2);margin-top:var(--space-3);flex-wrap:wrap;">' +
+        '<a class="btn btn-primary" href="listing.html?id=' + listing.id + '">Make an offer</a>' +
+        '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + listing.id + '">Buy now</button>' +
         "</div>" +
-        '<div class="listing-actions"><a class="btn btn-primary" href="listing.html?id=' +
-        listing.id +
-        '">View &amp; Inquire</a></div>' +
+        '<div class="buy-now-inline hidden" id="buy-inline-' + listing.id + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
+        '<input type="number" min="' + listing.minOrderTonnes + '" value="' + listing.minOrderTonnes + '" style="max-width:130px;" />' +
+        '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + listing.id + '">Confirm purchase</button>' +
+        "</div>" +
+        "</div>" +
         "</article>"
       );
     });
@@ -633,6 +622,61 @@
       }
 
       updateCompareBar();
+    });
+
+    grid.addEventListener("click", function (event) {
+      var toggle = event.target.closest(".card-toggle");
+      if (toggle) {
+        event.preventDefault();
+        var targetId = toggle.getAttribute("data-target");
+        var panel = document.getElementById(targetId);
+        if (!panel) return;
+        var open = panel.classList.contains("open");
+        if (open) {
+          panel.classList.remove("open");
+          toggle.textContent = "Show details ↓";
+        } else {
+          panel.classList.add("open");
+          toggle.textContent = "Hide details ↑";
+        }
+        return;
+      }
+
+      var scoreToggle = event.target.closest(".scorecard-toggle");
+      if (scoreToggle) {
+        event.preventDefault();
+        var scoreTargetId = scoreToggle.getAttribute("data-target");
+        var scorePanel = document.getElementById(scoreTargetId);
+        if (!scorePanel) return;
+        var scoreOpen = scorePanel.classList.contains("open");
+        if (scoreOpen) {
+          scorePanel.classList.remove("open");
+          scoreToggle.textContent = "Full scorecard ↓";
+        } else {
+          scorePanel.classList.add("open");
+          scoreToggle.textContent = "Hide ↑";
+        }
+        return;
+      }
+
+      var buyToggle = event.target.closest(".buy-now-toggle-btn");
+      if (buyToggle) {
+        event.preventDefault();
+        var buyId = buyToggle.getAttribute("data-id");
+        var inlineEl = document.getElementById("buy-inline-" + buyId);
+        if (!inlineEl) return;
+        inlineEl.style.display = inlineEl.style.display === "none" || inlineEl.style.display === "" ? "flex" : "none";
+        return;
+      }
+
+      var buyConfirm = event.target.closest(".buy-now-confirm-btn");
+      if (buyConfirm) {
+        event.preventDefault();
+        var listingId = buyConfirm.getAttribute("data-id");
+        if (listingId) {
+          window.location.href = "listing.html?id=" + listingId;
+        }
+      }
     });
 
     if (compareBtn) {
