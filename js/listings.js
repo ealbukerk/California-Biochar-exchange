@@ -448,8 +448,6 @@
     var cards = filtered.map(function (listing) {
       var visibleSuitable = listing.suitableFor.slice(0, 3);
       var hiddenCount = Math.max(0, listing.suitableFor.length - 3);
-      var detailId = "details-" + listing.id;
-      var scoreId = "scorecard-" + listing.id;
       var ratingText = listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1);
       var stars = renderStars(listing.averageRating);
       var ratingStarsHtml = stars ? '<span class="star-rating" aria-label="Rated ' + ratingText + ' out of 5">' + stars + "</span>" : "";
@@ -471,7 +469,7 @@
         .join("") + (hiddenCount > 0 ? '<span class="suitable-more">+' + hiddenCount + " more</span>" : "");
 
       return (
-        '<article class="listing-card" id="listing-' + listing.id + '">' +
+        '<a href="listing.html?id=' + listing.id + '" class="listing-card" id="listing-' + listing.id + '" style="text-decoration:none;color:inherit;display:block">' +
         '<div class="compare-corner">' +
         '<input type="checkbox" class="compare-check" data-id="' + listing.id + '" id="compare-' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + ">" +
         '<label for="compare-' + listing.id + '" class="compare-label">Compare</label>' +
@@ -483,22 +481,10 @@
         '<div class="price-row"><span class="price-value">$' + listing.pricePerTonne + '</span><span class="price-unit">/tonne</span></div>' +
         '<span class="card-detail">Available: ' + listing.availableTonnes + " tonnes</span>" +
         "</div>" +
-        '<a href="#" class="card-toggle details-toggle" data-target="' + detailId + '">Show details ↓</a>' +
-        '<div class="card-details" id="' + detailId + '">' +
         '<div class="scorecard-inline">' +
         '<span class="scorecard-badge">' + listing.scorecard.carbonContent + '% C</span>' +
         '<span class="scorecard-badge">pH ' + listing.scorecard.pH + "</span>" +
         '<span class="scorecard-badge">' + listing.scorecard.surfaceArea + ' m²/g</span>' +
-        '<button class="scorecard-toggle" type="button" data-target="' + scoreId + '">Full scorecard ↓</button>' +
-        "</div>" +
-        '<div class="scorecard-expanded" id="' + scoreId + '">' +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Carbon Content</span><span class="scorecard-field-value">' + listing.scorecard.carbonContent + "%</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">pH</span><span class="scorecard-field-value">' + listing.scorecard.pH + "</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Surface Area</span><span class="scorecard-field-value">' + listing.scorecard.surfaceArea + " m²/g</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Particle Size</span><span class="scorecard-field-value">' + listing.scorecard.particleSize + "</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Moisture</span><span class="scorecard-field-value">' + listing.scorecard.moisture + "%</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Ash Content</span><span class="scorecard-field-value">' + listing.scorecard.ashContent + "%</span></div>" +
-        '<div class="scorecard-field"><span class="scorecard-field-name">Electrical Conductivity</span><span class="scorecard-field-value">' + listing.scorecard.electricalConductivity + " dS/m</span></div>" +
         "</div>" +
         '<div class="badge-row" style="margin-top:var(--space-3);">' + certBadges + "</div>" +
         '<div class="suitable-row" style="margin-top:var(--space-3);">' + suitableTags + "</div>" +
@@ -507,56 +493,18 @@
         '<p class="card-detail ' + leadTime.className + '">' + leadTime.text + "</p>" +
         '<div class="rating-row"><span>' + listing.transactionsCompleted + " transactions</span><span>·</span><span>" + ratingText + "</span>" + ratingStarsHtml + "</div>" +
         '<div class="listing-actions" style="display:flex;gap:var(--space-2);margin-top:var(--space-3);flex-wrap:wrap;">' +
-        '<a class="btn btn-primary" href="listing.html?id=' + listing.id + '">Make an offer</a>' +
+        '<span class="btn btn-primary">Make an offer</span>' +
         '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + listing.id + '">Buy now</button>' +
         "</div>" +
         '<div class="buy-now-inline hidden" id="buy-inline-' + listing.id + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
         '<input type="number" min="' + listing.minOrderTonnes + '" value="' + listing.minOrderTonnes + '" style="max-width:130px;" />' +
         '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + listing.id + '">Confirm purchase</button>' +
         "</div>" +
-        "</div>" +
-        "</article>"
+        "</a>"
       );
     });
 
     grid.innerHTML = cards.join("");
-
-    if (!grid.dataset.toggleDelegationBound) {
-      grid.addEventListener("click", function (event) {
-        var target = event.target;
-        if (target.classList.contains("scorecard-toggle")) {
-          event.stopPropagation();
-          var detailsWrap = target.closest(".card-details");
-          if (!detailsWrap) return;
-          var expanded = detailsWrap.querySelector(".scorecard-expanded");
-          if (!expanded) return;
-          if (expanded.classList.contains("open")) {
-            expanded.classList.remove("open");
-            target.textContent = "Full scorecard ↓";
-          } else {
-            expanded.classList.add("open");
-            target.textContent = "Hide scorecard ↑";
-          }
-        }
-
-        if (target.classList.contains("details-toggle")) {
-          event.preventDefault();
-          event.stopPropagation();
-          var card = target.closest(".listing-card");
-          if (!card) return;
-          var details = card.querySelector(".card-details");
-          if (!details) return;
-          if (details.classList.contains("open")) {
-            details.classList.remove("open");
-            target.textContent = "Show details ↓";
-          } else {
-            details.classList.add("open");
-            target.textContent = "Hide details ↑";
-          }
-        }
-      });
-      grid.dataset.toggleDelegationBound = "true";
-    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -627,6 +575,7 @@
         if (!target.classList.contains("compare-check")) {
           return;
         }
+        event.stopPropagation();
         var listingId = target.dataset.id;
         if (!listingId) {
           return;
@@ -656,26 +605,47 @@
       document.body.dataset.compareDelegationBoundListings = "true";
     }
 
-    grid.addEventListener("click", function (event) {
-      var buyToggle = event.target.closest(".buy-now-toggle-btn");
-      if (buyToggle) {
-        event.preventDefault();
-        var buyId = buyToggle.getAttribute("data-id");
-        var inlineEl = document.getElementById("buy-inline-" + buyId);
-        if (!inlineEl) return;
-        inlineEl.style.display = inlineEl.style.display === "none" || inlineEl.style.display === "" ? "flex" : "none";
-        return;
-      }
-
-      var buyConfirm = event.target.closest(".buy-now-confirm-btn");
-      if (buyConfirm) {
-        event.preventDefault();
-        var listingId = buyConfirm.getAttribute("data-id");
-        if (listingId) {
-          window.location.href = "listing.html?id=" + listingId;
+    if (!document.body.dataset.cardClickDelegationBoundListings) {
+      document.addEventListener("click", function (event) {
+        if (event.target.closest(".compare-corner")) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
         }
-      }
-    });
+
+        if (event.target.classList.contains("buynow-quick-btn")) {
+          event.preventDefault();
+          event.stopPropagation();
+          var quickListingId = event.target.dataset.id;
+          if (quickListingId) {
+            window.location.href = "listing.html?id=" + quickListingId;
+          }
+          return;
+        }
+
+        var buyToggle = event.target.closest(".buy-now-toggle-btn");
+        if (buyToggle) {
+          event.preventDefault();
+          event.stopPropagation();
+          var buyId = buyToggle.getAttribute("data-id");
+          var inlineEl = document.getElementById("buy-inline-" + buyId);
+          if (!inlineEl) return;
+          inlineEl.style.display = inlineEl.style.display === "none" || inlineEl.style.display === "" ? "flex" : "none";
+          return;
+        }
+
+        var buyConfirm = event.target.closest(".buy-now-confirm-btn");
+        if (buyConfirm) {
+          event.preventDefault();
+          event.stopPropagation();
+          var listingId = buyConfirm.getAttribute("data-id");
+          if (listingId) {
+            window.location.href = "listing.html?id=" + listingId;
+          }
+        }
+      });
+      document.body.dataset.cardClickDelegationBoundListings = "true";
+    }
 
     function runComparison() {
       if (compareList.length < 2) {

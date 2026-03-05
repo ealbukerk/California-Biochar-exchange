@@ -91,26 +91,51 @@
         background: var(--color-surface);
       }
 
-      #filter-bar {
-        margin-top: var(--space-6);
-        display: grid;
-        gap: var(--space-4);
+      .filter-bar {
+        padding: var(--space-5) 0;
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: var(--space-6);
       }
 
-      .filter-row {
+      .filter-search-row {
+        margin-bottom: var(--space-4);
+      }
+
+      .filter-search-row input {
+        width: 100%;
+      }
+
+      .filter-grid {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: var(--space-4);
+        gap: var(--space-3);
+        align-items: start;
       }
 
-      #search,
-      #filter-sort {
+      .filter-grid > * {
         width: 100%;
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        padding: var(--space-3) var(--space-4);
-        font-family: var(--font-sans);
+        min-width: 0;
+      }
+
+      #reset-filters {
+        height: 42px;
         font-size: var(--font-size-sm);
+        background: var(--color-bg);
+        border: 1px dashed var(--color-border);
+        color: var(--color-text-muted);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        width: 100%;
+      }
+
+      #reset-filters:hover {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .filter-grid .ms-wrapper {
+        z-index: 300;
+        overflow: visible;
       }
 
       .map-section {
@@ -255,7 +280,7 @@
         .guide-grid,
         .feedstock-grid,
         .cert-grid,
-        .filter-row {
+        .filter-grid {
           grid-template-columns: 1fr;
         }
       }
@@ -292,18 +317,16 @@
 
         <h2>All listings</h2>
 
-        <div id="filter-bar">
-          <input id="search" type="text" placeholder="Search producers, states..." />
-          <div class="filter-row">
+        <div id="filter-bar" class="filter-bar">
+          <div class="filter-search-row">
+            <input id="search" type="text" placeholder="Search producers, states..." />
+          </div>
+          <div class="filter-grid">
             <div id="ms-feedstock"></div>
-            <div id="ms-region" hidden></div>
+            <div id="ms-region"></div>
             <select id="filter-state">
               <option value="">All States</option>
             </select>
-            <script>buildStateSelect(document.getElementById('filter-state'), false)</script>
-          </div>
-          <div class="filter-row">
-            <div id="ms-cert"></div>
             <select id="filter-sort">
               <option value="price-asc">Sort by: Price (Low–High)</option>
               <option value="price-desc">Price (High–Low)</option>
@@ -311,8 +334,10 @@
               <option value="tonnes-desc">Available Tonnes</option>
               <option value="rating-desc">Rating</option>
             </select>
-            <button id="reset-filters" class="btn-secondary" style="white-space:nowrap">Reset all</button>
+            <div id="ms-cert"></div>
+            <button id="reset-filters" class="btn-secondary">Reset all</button>
           </div>
+          <script>buildStateSelect(document.getElementById('filter-state'), false)</script>
         </div>
 
         <div id="listings-grid" class="listings-grid" style="margin-top: var(--space-8);"></div>

@@ -178,50 +178,69 @@
       });
   }
 
+  function waitForLeaflet(callback) {
+    if (typeof L !== 'undefined') {
+      callback()
+    } else {
+      setTimeout(function() { waitForLeaflet(callback) }, 100)
+    }
+  }
+
   async function initSellerMap() {
+    const mapEl = document.getElementById('seller-map')
+    if (!mapEl) return
+
+    mapEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#9A9A9A;font-size:14px">Loading map...</div>'
+
+    await new Promise(resolve => setTimeout(resolve, 100))
+
+    mapEl.innerHTML = ''
+
     const map = L.map('seller-map').setView([39.5, -98.35], 4)
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors'
+      attribution: '© OpenStreetMap contributors',
+      maxZoom: 18
     }).addTo(map)
 
-    if (window.LISTINGS) {
-      const countyCoords = {
-        'Butte': [39.6, -121.6],
-        'Colusa': [39.2, -122.0],
-        'Fresno': [36.7, -119.7],
-        'Glenn': [39.6, -122.4],
-        'Kern': [35.3, -118.7],
-        'Kings': [36.1, -119.8],
-        'Madera': [37.2, -119.7],
-        'Mendocino': [39.3, -123.3],
-        'Merced': [37.2, -120.7],
-        'Monterey': [36.2, -121.0],
-        'Napa': [38.5, -122.3],
-        'Nevada': [39.3, -120.8],
-        'Sacramento': [38.5, -121.5],
-        'San Joaquin': [37.9, -121.3],
-        'San Luis Obispo': [35.3, -120.4],
-        'Santa Barbara': [34.7, -119.7],
-        'Santa Cruz': [37.0, -122.0],
-        'Shasta': [40.8, -122.0],
-        'Solano': [38.3, -121.9],
-        'Sonoma': [38.3, -122.7],
-        'Stanislaus': [37.5, -120.9],
-        'Sutter': [39.0, -121.7],
-        'Tehama': [40.1, -122.2],
-        'Tulare': [36.2, -119.0],
-        'Ventura': [34.4, -119.1],
-        'Yolo': [38.7, -121.9],
-        'Yuba': [39.2, -121.4]
-      }
+    const countyCoords = {
+      'Butte': [39.6, -121.6],
+      'Colusa': [39.2, -122.0],
+      'Fresno': [36.7, -119.7],
+      'Glenn': [39.6, -122.4],
+      'Kern': [35.3, -118.7],
+      'Kings': [36.1, -119.8],
+      'Madera': [37.2, -119.7],
+      'Mendocino': [39.3, -123.3],
+      'Merced': [37.2, -120.7],
+      'Monterey': [36.2, -121.0],
+      'Napa': [38.5, -122.3],
+      'Nevada': [39.3, -120.8],
+      'Sacramento': [38.5, -121.5],
+      'San Joaquin': [37.9, -121.3],
+      'San Luis Obispo': [35.3, -120.4],
+      'Santa Barbara': [34.7, -119.7],
+      'Santa Cruz': [37.0, -122.0],
+      'Shasta': [40.8, -122.0],
+      'Solano': [38.3, -121.9],
+      'Sonoma': [38.3, -122.7],
+      'Stanislaus': [37.5, -120.9],
+      'Sutter': [39.0, -121.7],
+      'Tehama': [40.1, -122.2],
+      'Tulare': [36.2, -119.0],
+      'Ventura': [34.4, -119.1],
+      'Yolo': [38.7, -121.9],
+      'Yuba': [39.2, -121.4]
+    }
 
-      window.LISTINGS.forEach(listing => {
+    if (window.LISTINGS && window.LISTINGS.length > 0) {
+      window.LISTINGS.forEach(function(listing) {
         const coords = countyCoords[listing.county]
         if (!coords) return
         L.circleMarker(coords, {
           radius: 12,
           fillColor: '#3D6B45',
-          color: '#fff',
+          color: '#ffffff',
           weight: 2,
           fillOpacity: 0.9
         }).bindPopup(
@@ -234,40 +253,46 @@
       })
     }
 
-    const buyersSnap = await db.collection('users').where('role', '==', 'buyer').get()
-    buyersSnap.forEach(async doc => {
-      const buyer = doc.data()
-      if (!buyer.state && !buyer.zipcode) return
-      const query = encodeURIComponent((buyer.zipcode || buyer.state) + ' USA')
-      try {
-        const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + query)
-        const data = await res.json()
-        if (!data || !data[0]) return
-        L.circleMarker([parseFloat(data[0].lat), parseFloat(data[0].lon)], {
-          radius: 8,
-          fillColor: '#B87333',
-          color: '#fff',
-          weight: 1,
-          fillOpacity: 0.85
-        }).bindPopup(
-          '<strong>' + (buyer.businessName || 'Buyer') + '</strong><br>' +
-          (buyer.cropTypes ? buyer.cropTypes.join(', ') : '') + '<br>' +
-          (buyer.state || '')
-        ).addTo(map)
-      } catch(e) {}
-    })
+    try {
+      const buyersSnap = await db.collection('users').where('role', '==', 'buyer').get()
+      buyersSnap.forEach(async function(doc) {
+        const buyer = doc.data()
+        if (!buyer.state && !buyer.zipcode) return
+        const query = encodeURIComponent((buyer.zipcode || buyer.state) + ' USA')
+        try {
+          const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + query)
+          const data = await res.json()
+          if (!data || !data[0]) return
+          L.circleMarker([parseFloat(data[0].lat), parseFloat(data[0].lon)], {
+            radius: 8,
+            fillColor: '#B87333',
+            color: '#ffffff',
+            weight: 1,
+            fillOpacity: 0.85
+          }).bindPopup(
+            '<strong>' + (buyer.businessName || 'Buyer') + '</strong><br>' +
+            (buyer.cropTypes ? buyer.cropTypes.join(', ') : '') + '<br>' +
+            (buyer.state || '') +
+            (buyer.zipcode ? ' ' + buyer.zipcode : '')
+          ).addTo(map)
+        } catch(e) {}
+      })
+    } catch(e) {
+      console.log('Could not load buyer markers:', e)
+    }
 
     const legend = L.control({ position: 'bottomleft' })
     legend.onAdd = function() {
-      const div = L.DomUtil.create('div', 'map-legend')
+      const div = L.DomUtil.create('div')
+      div.style.cssText = 'background:rgba(26,26,26,0.85);color:white;padding:10px 14px;border-radius:8px;font-size:12px'
       div.innerHTML =
-        '<div style="background:rgba(26,26,26,0.85);color:white;padding:10px 14px;border-radius:8px;font-size:12px">' +
-        '<div style="margin-bottom:6px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#3D6B45;margin-right:6px"></span>Producer</div>' +
-        '<div><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B87333;margin-right:6px"></span>Buyer</div>' +
-        '</div>'
+        '<div style="margin-bottom:6px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#3D6B45;margin-right:6px;vertical-align:middle"></span>Producer</div>' +
+        '<div><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B87333;margin-right:6px;vertical-align:middle"></span>Buyer</div>'
       return div
     }
     legend.addTo(map)
+
+    setTimeout(function() { map.invalidateSize() }, 200)
   }
 
   function renderListingStatusSection() {
@@ -614,7 +639,79 @@
     certsEl.setValue(["None Yet"]);
     syncMulti();
 
-    form.addEventListener("submit", handleProducerForm);
+    async function handleProducerSubmitWithCelebration(event) {
+      await handleProducerForm(event);
+      var successShown = form.style.display === "none";
+      if (!successShown) {
+        var formSuccess = document.getElementById("form-success");
+        successShown = !!(formSuccess && formSuccess.style.display === "block");
+      }
+      if (!successShown) return;
+
+      var successEl = document.getElementById("application-success");
+      if (successEl) {
+        successEl.style.display = "flex";
+
+        if (typeof confetti === "function") {
+          confetti({
+            particleCount: 120,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ["#3D6B45", "#EAF2EB", "#2E5235", "#ffffff", "#B87333"]
+          });
+
+          setTimeout(function () {
+            confetti({
+              particleCount: 60,
+              angle: 60,
+              spread: 55,
+              origin: { x: 0, y: 0.6 }
+            });
+            confetti({
+              particleCount: 60,
+              angle: 120,
+              spread: 55,
+              origin: { x: 1, y: 0.6 }
+            });
+          }, 400);
+        }
+
+        setTimeout(function () {
+          successEl.style.transition = "opacity 1s";
+          successEl.style.opacity = "0";
+          setTimeout(function () {
+            successEl.style.display = "none";
+            window.location.href = "profile.html";
+          }, 1000);
+        }, 4000);
+      }
+    }
+
+    form.addEventListener("submit", handleProducerSubmitWithCelebration);
+  }
+
+  async function prefillApplicationForm() {
+    if (!window.currentUser || !window.currentUser.uid) return;
+    var doc = await db.collection("users").doc(window.currentUser.uid).get();
+    if (!doc.exists) return;
+    var profile = doc.data() || {};
+
+    var fields = {
+      businessName: profile.businessName || "",
+      contactName: profile.name || "",
+      email: profile.email || "",
+      state: profile.state || "",
+      zipcode: profile.zipcode || "",
+      ein: profile.ein || "",
+      businessWebsite: profile.businessWebsite || ""
+    };
+
+    Object.keys(fields).forEach(function (name) {
+      var el = document.querySelector('[name="' + name + '"]');
+      if (el && fields[name]) {
+        el.value = fields[name];
+      }
+    });
   }
 
   function updateSectionVisibility() {
@@ -658,6 +755,7 @@
   function initAuthWatcher() {
     auth.onAuthStateChanged(function (user) {
       state.user = user || null;
+      window.currentUser = user || null;
 
       if (!user) {
         state.profile = null;
@@ -676,6 +774,7 @@
           updateHero();
           updateSectionVisibility();
           refreshLoggedInSections();
+          prefillApplicationForm().catch(function () { return null; });
         })
         .catch(function () {
           state.profile = null;
@@ -698,9 +797,11 @@
     }
 
     initApplicationForm();
-    if (document.getElementById("seller-map")) {
-      initSellerMap();
-    }
+    waitForLeaflet(function() {
+      const mapEl = document.getElementById('seller-map')
+      if (!mapEl) return
+      initSellerMap()
+    })
     initAuthWatcher();
   }
 

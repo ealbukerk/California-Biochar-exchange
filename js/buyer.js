@@ -214,8 +214,6 @@
 
   function listingCardHtml(listing, extraScore, explanation, options) {
     options = options || {};
-    var expandedByDefault = !!options.expanded;
-    var includeCompare = options.includeCompare !== false;
     var certBadges = listing.certifications
       .map(function (cert) {
         return '<span class="cert-badge">' + htmlEscape(cert) + "</span>";
@@ -240,16 +238,9 @@
     var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
       ? window.renderVerifiedBadge()
       : "";
-    var detailsId = "details-" + listing.id + (expandedByDefault ? "-matched" : "-browse");
-    var scoreId = "scorecard-" + listing.id + (expandedByDefault ? "-matched" : "-browse");
-    var scorecardToggleHtml =
-      '<button class="scorecard-toggle" type="button" data-target="' + scoreId + '">' +
-      (expandedByDefault ? "Hide scorecard ↑" : "Full scorecard ↓") +
-      "</button>";
-    var scorecardExpandedClass = expandedByDefault ? "scorecard-expanded open" : "scorecard-expanded";
 
     return (
-      '<article class="listing-card" id="listing-' + htmlEscape(listing.id) + '">' +
+      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
       '<div class="compare-corner">' +
       '<input type="checkbox" class="compare-check" data-id="' + htmlEscape(listing.id) + '" id="compare-' + htmlEscape(listing.id) + '"' +
       (state.compareList.indexOf(listing.id) !== -1 ? " checked" : "") +
@@ -263,23 +254,11 @@
       '<div class="price-row"><span class="price-value">$' + htmlEscape(listing.pricePerTonne) + '</span><span class="price-unit">/tonne</span></div>' +
       '<span class="card-detail">Available: ' + htmlEscape(listing.availableTonnes) + " tonnes</span>" +
       "</div>" +
-      (expandedByDefault ? "" : '<a href="#" class="card-toggle details-toggle" data-target="' + detailsId + '">Show details ↓</a>') +
-      '<div class="' + (expandedByDefault ? "card-details open" : "card-details") + '" id="' + detailsId + '">' +
       '<div class="scorecard-section">' +
       '<div class="scorecard-inline">' +
       '<span class="scorecard-badge">' + htmlEscape(listing.scorecard.carbonContent) + '% C</span>' +
       '<span class="scorecard-badge">pH ' + htmlEscape(listing.scorecard.pH) + "</span>" +
       '<span class="scorecard-badge">' + htmlEscape(listing.scorecard.surfaceArea) + " m²/g</span>" +
-      scorecardToggleHtml +
-      "</div>" +
-      '<div class="' + scorecardExpandedClass + '" id="' + scoreId + '">' +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Carbon Content</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.carbonContent) + "%</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">pH</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.pH) + "</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Surface Area</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.surfaceArea) + " m²/g</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Particle Size</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.particleSize) + "</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Moisture</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.moisture) + "%</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Ash Content</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.ashContent) + "%</span></div>" +
-      '<div class="scorecard-field"><span class="scorecard-field-name">Electrical Conductivity</span><span class="scorecard-field-value">' + htmlEscape(listing.scorecard.electricalConductivity) + " dS/m</span></div>" +
       "</div>" +
       "</div>" +
       '<div class="badge-row" style="margin-top:var(--space-3);">' + certBadges + "</div>" +
@@ -293,16 +272,14 @@
           '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
           '<p class="card-detail" style="margin-top:var(--space-2);">' + htmlEscape(explanation || "") + "</p>"
         : "") +
-      (includeCompare ? "" : "") +
       '<div class="listing-actions" style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3);">' +
-      '<a class="btn btn-primary" href="listing.html?id=' + encodeURIComponent(listing.id) + '">Make an offer</a>' +
+      '<span class="btn btn-primary">Make an offer</span>' +
       '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button></div>' +
       '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
       '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(listing.minOrderTonnes) + '" style="max-width:130px;" />' +
       '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm purchase</button>' +
       "</div>" +
-      "</div>" +
-      "</article>"
+      "</a>"
     );
   }
 
@@ -368,27 +345,6 @@
         return listingCardHtml(item.listing, item.score, item.explanation, { expanded: true, includeCompare: true });
       })
       .join("");
-
-    if (!grid.dataset.scoreDelegationBound) {
-      grid.addEventListener("click", function (event) {
-        var target = event.target;
-        if (target.classList.contains("scorecard-toggle")) {
-          event.stopPropagation();
-          var section = target.closest(".scorecard-section");
-          if (!section) return;
-          var expanded = section.querySelector(".scorecard-expanded");
-          if (!expanded) return;
-          if (expanded.classList.contains("open")) {
-            expanded.classList.remove("open");
-            target.textContent = "Full scorecard ↓";
-          } else {
-            expanded.classList.add("open");
-            target.textContent = "Hide scorecard ↑";
-          }
-        }
-      });
-      grid.dataset.scoreDelegationBound = "true";
-    }
   }
 
   function renderHeroSlot() {
@@ -672,60 +628,6 @@
     grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
     updateCompareBar();
 
-    if (!grid.dataset.toggleDelegationBound) {
-      grid.addEventListener("click", function (event) {
-        var target = event.target;
-        if (target.classList.contains("scorecard-toggle")) {
-          event.stopPropagation();
-          var detailsWrap = target.closest(".card-details");
-          if (!detailsWrap) return;
-          var expanded = detailsWrap.querySelector(".scorecard-expanded");
-          if (!expanded) return;
-          if (expanded.classList.contains("open")) {
-            expanded.classList.remove("open");
-            target.textContent = "Full scorecard ↓";
-          } else {
-            expanded.classList.add("open");
-            target.textContent = "Hide scorecard ↑";
-          }
-        }
-
-        if (target.classList.contains("details-toggle")) {
-          event.preventDefault();
-          event.stopPropagation();
-          var card = target.closest(".listing-card");
-          if (!card) return;
-          var details = card.querySelector(".card-details");
-          if (!details) return;
-          if (details.classList.contains("open")) {
-            details.classList.remove("open");
-            target.textContent = "Show details ↓";
-          } else {
-            details.classList.add("open");
-            target.textContent = "Hide details ↑";
-          }
-        }
-      });
-      grid.dataset.toggleDelegationBound = "true";
-    }
-
-    grid.querySelectorAll(".buy-now-toggle-btn").forEach(function (toggle) {
-      toggle.addEventListener("click", function () {
-        var listingId = toggle.getAttribute("data-id");
-        var inline = document.getElementById("buy-inline-" + listingId);
-        if (!inline) return;
-        inline.style.display = inline.style.display === "none" || inline.style.display === "" ? "flex" : "none";
-      });
-    });
-
-    grid.querySelectorAll(".buy-now-confirm-btn").forEach(function (btn) {
-      btn.addEventListener("click", function () {
-        var listingId = btn.getAttribute("data-id");
-        if (!listingId) return;
-        handleCardBuyNow(listingId);
-      });
-    });
-
     function runComparison() {
       if (state.compareList.length < 2) return;
       var selected = state.compareList
@@ -915,6 +817,7 @@
         if (!target.classList.contains("compare-check")) {
           return;
         }
+        event.stopPropagation();
         var listingId = target.dataset.id;
         if (!listingId) {
           return;
@@ -942,6 +845,47 @@
         updateCompareBar();
       });
       document.body.dataset.compareDelegationBoundBuyer = "true";
+    }
+
+    if (!document.body.dataset.cardClickDelegationBoundBuyer) {
+      document.addEventListener("click", function (event) {
+        if (event.target.closest(".compare-corner")) {
+          event.preventDefault();
+          event.stopPropagation();
+          return;
+        }
+
+        if (event.target.classList.contains("buynow-quick-btn")) {
+          event.preventDefault();
+          event.stopPropagation();
+          var quickId = event.target.dataset.id;
+          if (quickId) {
+            handleCardBuyNow(quickId);
+          }
+          return;
+        }
+
+        var buyToggle = event.target.closest(".buy-now-toggle-btn");
+        if (buyToggle) {
+          event.preventDefault();
+          event.stopPropagation();
+          var listingId = buyToggle.getAttribute("data-id");
+          var inline = document.getElementById("buy-inline-" + listingId);
+          if (!inline) return;
+          inline.style.display = inline.style.display === "none" || inline.style.display === "" ? "flex" : "none";
+          return;
+        }
+
+        var buyConfirm = event.target.closest(".buy-now-confirm-btn");
+        if (buyConfirm) {
+          event.preventDefault();
+          event.stopPropagation();
+          var id = buyConfirm.getAttribute("data-id");
+          if (!id) return;
+          handleCardBuyNow(id);
+        }
+      });
+      document.body.dataset.cardClickDelegationBoundBuyer = "true";
     }
 
     auth.onAuthStateChanged(function (user) {
@@ -985,16 +929,6 @@
         });
       });
     }
-    document.addEventListener("click", function (event) {
-      var target = event.target;
-      if (!target || !target.classList || !target.classList.contains("buy-now-confirm-btn")) {
-        return;
-      }
-
-      var listingId = target.getAttribute("data-id");
-      if (!listingId) return;
-      handleCardBuyNow(listingId);
-    });
   }
 
   document.addEventListener("DOMContentLoaded", init);
