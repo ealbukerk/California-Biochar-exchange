@@ -1,5 +1,9 @@
 (function () {
   var compareList = [];
+  var listingsGridEl = null;
+  var filterBarEl = null;
+  var comparisonViewEl = null;
+  var allListingsRef = [];
 
   function formatDateRange(fromISO, untilISO) {
     var from = new Date(fromISO);
@@ -159,6 +163,77 @@
       bar.style.display = "none";
     }
   }
+
+  function runComparison() {
+    if (compareList.length < 2 || !listingsGridEl) {
+      return;
+    }
+
+    if (filterBarEl) {
+      filterBarEl.style.display = "none";
+    }
+    listingsGridEl.style.display = "none";
+    var compareBar = document.getElementById("compare-bar");
+    if (compareBar) {
+      compareBar.style.display = "none";
+    }
+    if (comparisonViewEl) {
+      comparisonViewEl.style.display = "block";
+      renderComparisonView(comparisonViewEl, allListingsRef, function () {
+        compareList = [];
+        document.querySelectorAll(".compare-check").forEach(function (checkbox) {
+          checkbox.checked = false;
+        });
+
+        comparisonViewEl.innerHTML = "";
+        comparisonViewEl.style.display = "none";
+        listingsGridEl.style.display = "grid";
+        if (filterBarEl) {
+          filterBarEl.style.display = "block";
+        }
+        if (typeof window.__cbxListingsUpdate === "function") {
+          window.__cbxListingsUpdate();
+        }
+      });
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    if (e.target.id === "compare-btn" || e.target.closest("#compare-btn")) {
+      e.preventDefault();
+      e.stopPropagation();
+      runComparison();
+    }
+  });
+
+  document.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("compare-check")) return;
+    e.stopPropagation();
+    var id = e.target.dataset.id;
+    if (e.target.checked) {
+      if (compareList.length >= 3) {
+        e.target.checked = false;
+        var tip = document.createElement("span");
+        tip.className = "compare-tooltip";
+        tip.textContent = "Maximum 3";
+        tip.style.cssText = "position:absolute;top:-24px;right:0;background:#1A1A1A;color:white;font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap";
+        var corner = e.target.closest(".compare-corner");
+        if (corner) {
+          corner.appendChild(tip);
+        }
+        setTimeout(function () {
+          tip.remove();
+        }, 2000);
+        return;
+      }
+      if (!compareList.includes(id)) compareList.push(id);
+    } else {
+      compareList = compareList.filter(function (i) {
+        return i !== id;
+      });
+    }
+    updateCompareBar();
+  });
 
   function showMaxCompareTooltip(checkbox) {
     var label = checkbox.parentElement;
@@ -469,11 +544,12 @@
         .join("") + (hiddenCount > 0 ? '<span class="suitable-more">+' + hiddenCount + " more</span>" : "");
 
       return (
-        '<a href="listing.html?id=' + listing.id + '" class="listing-card" id="listing-' + listing.id + '" style="text-decoration:none;color:inherit;display:block">' +
+        '<div class="listing-card-wrapper" style="position:relative">' +
         '<div class="compare-corner">' +
-        '<input type="checkbox" class="compare-check" data-id="' + listing.id + '" id="compare-' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + ">" +
-        '<label for="compare-' + listing.id + '" class="compare-label">Compare</label>' +
+        '<input type="checkbox" class="compare-check" data-id="' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + ">" +
+        '<label class="compare-label">Compare</label>' +
         "</div>" +
+        '<a href="listing.html?id=' + listing.id + '" class="listing-card" id="listing-' + listing.id + '" style="text-decoration:none;color:inherit;display:block">' +
         '<div class="listing-top-row"><h3 style="margin:0;">' + listing.producerName + '</h3>' + verifiedBadge + "</div>" +
         '<div class="listing-subtitle">' + (listing.region || listing.state || "") + "</div>" +
         '<span class="feedstock-tag">' + listing.feedstock + "</span>" +
@@ -500,7 +576,8 @@
         '<input type="number" min="' + listing.minOrderTonnes + '" value="' + listing.minOrderTonnes + '" style="max-width:130px;" />' +
         '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + listing.id + '">Confirm purchase</button>' +
         "</div>" +
-        "</a>"
+        "</a>" +
+        "</div>"
       );
     });
 
@@ -509,8 +586,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var grid = document.getElementById("listings-grid");
-    var filterBar = document.getElementById("filter-bar");
-    var compareBtn = document.getElementById("compare-btn");
     var comparisonView = document.getElementById("comparison-view");
     var listings = window.LISTINGS;
 
@@ -523,6 +598,12 @@
       updateCompareBar();
       updateUrlFromFilters();
     }
+    window.__cbxListingsUpdate = update;
+
+    listingsGridEl = grid;
+    filterBarEl = document.getElementById("filter-bar");
+    comparisonViewEl = comparisonView;
+    allListingsRef = listings || [];
 
     var feedstockEl = document.getElementById("ms-feedstock");
     var regionEl = document.getElementById("ms-region");
@@ -569,42 +650,6 @@
       }
     });
 
-    if (!document.body.dataset.compareDelegationBoundListings) {
-      document.addEventListener("change", function (event) {
-        var target = event.target;
-        if (!target.classList.contains("compare-check")) {
-          return;
-        }
-        event.stopPropagation();
-        var listingId = target.dataset.id;
-        if (!listingId) {
-          return;
-        }
-        if (target.checked) {
-          if (compareList.indexOf(listingId) !== -1) {
-            updateCompareBar();
-            return;
-          }
-          if (compareList.length >= 3) {
-            target.checked = false;
-            var tip = document.createElement("span");
-            tip.className = "compare-tooltip";
-            tip.textContent = "Maximum 3";
-            target.parentElement.appendChild(tip);
-            setTimeout(function () { tip.remove(); }, 2000);
-            return;
-          }
-          compareList.push(listingId);
-        } else {
-          compareList = compareList.filter(function (id) {
-            return id !== listingId;
-          });
-        }
-        updateCompareBar();
-      });
-      document.body.dataset.compareDelegationBoundListings = "true";
-    }
-
     if (!document.body.dataset.cardClickDelegationBoundListings) {
       document.addEventListener("click", function (event) {
         if (event.target.closest(".compare-corner")) {
@@ -645,42 +690,6 @@
         }
       });
       document.body.dataset.cardClickDelegationBoundListings = "true";
-    }
-
-    function runComparison() {
-      if (compareList.length < 2) {
-        return;
-      }
-
-      if (filterBar) {
-        filterBar.style.display = "none";
-      }
-      grid.style.display = "none";
-      var compareBar = document.getElementById("compare-bar");
-      if (compareBar) {
-        compareBar.style.display = "none";
-      }
-      if (comparisonView) {
-        comparisonView.style.display = "block";
-        renderComparisonView(comparisonView, listings, function () {
-          compareList = [];
-          document.querySelectorAll(".compare-check").forEach(function (checkbox) {
-            checkbox.checked = false;
-          });
-
-          comparisonView.innerHTML = "";
-          comparisonView.style.display = "none";
-          grid.style.display = "grid";
-          if (filterBar) {
-            filterBar.style.display = "block";
-          }
-          update();
-        });
-      }
-    }
-
-    if (compareBtn) {
-      compareBtn.addEventListener("click", runComparison);
     }
 
     hydrateFiltersFromUrl();

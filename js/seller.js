@@ -720,8 +720,9 @@
     var txnSection = document.getElementById("transaction-section");
     var dealSection = document.getElementById("dealrooms-section");
 
+    appSection.classList.remove("hidden");
+
     if (!state.user) {
-      appSection.classList.remove("hidden");
       listingSection.classList.add("hidden");
       txnSection.classList.add("hidden");
       if (dealSection) {
@@ -730,7 +731,6 @@
       return;
     }
 
-    appSection.classList.add("hidden");
     txnSection.classList.remove("hidden");
 
     if (String((state.profile && state.profile.role) || "").toLowerCase() === "seller") {
@@ -744,6 +744,53 @@
         dealSection.classList.add("hidden");
       }
     }
+  }
+
+  function renderApplicationNotice(type) {
+    var noticeEl = document.getElementById("application-notice");
+    if (!noticeEl) return;
+
+    if (type === "approved") {
+      noticeEl.innerHTML =
+        '<div class="listing-active-notice">' +
+        "<p>Your listing is currently live. You can update your details below and resubmit if anything has changed.</p>" +
+        "</div>";
+      return;
+    }
+
+    if (type === "pending") {
+      noticeEl.innerHTML =
+        '<div class="listing-pending-notice">' +
+        "<p>Complete your application below to list your biochar on Biochar.market.</p>" +
+        "</div>";
+      return;
+    }
+
+    noticeEl.innerHTML = "";
+  }
+
+  function refreshApplicationState() {
+    if (!state.user) {
+      renderApplicationNotice("none");
+      return Promise.resolve();
+    }
+
+    return db
+      .collection("listings")
+      .where("producerUID", "==", state.user.uid)
+      .where("status", "==", "Approved")
+      .limit(1)
+      .get()
+      .then(function (snapshot) {
+        if (!snapshot.empty) {
+          renderApplicationNotice("approved");
+        } else {
+          renderApplicationNotice("pending");
+        }
+      })
+      .catch(function () {
+        renderApplicationNotice("pending");
+      });
   }
 
   function refreshLoggedInSections() {
@@ -762,6 +809,7 @@
         updateNav();
         updateHero();
         updateSectionVisibility();
+        refreshApplicationState();
         return;
       }
 
@@ -774,6 +822,7 @@
           updateHero();
           updateSectionVisibility();
           refreshLoggedInSections();
+          refreshApplicationState();
           prefillApplicationForm().catch(function () { return null; });
         })
         .catch(function () {
@@ -782,6 +831,8 @@
           updateHero();
           updateSectionVisibility();
           refreshLoggedInSections();
+          refreshApplicationState();
+          prefillApplicationForm().catch(function () { return null; });
         });
     });
   }

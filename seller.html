@@ -328,6 +328,22 @@
         font-size: var(--font-size-sm);
       }
 
+      .listing-active-notice {
+        background: var(--color-accent-light);
+        border: 1px solid var(--color-accent);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin-bottom: var(--space-5);
+      }
+
+      .listing-pending-notice {
+        background: var(--color-bg);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin-bottom: var(--space-5);
+      }
+
       .legend-item {
         display: flex;
         align-items: center;
@@ -447,6 +463,11 @@
         </div>
       </div>
     </nav>
+    <div class="back-bar">
+      <div class="container">
+        <button class="back-btn" onclick="history.back()">← Back</button>
+      </div>
+    </div>
 
     <section class="seller-hero">
       <div class="container-narrow">
@@ -490,6 +511,7 @@
       <div class="container">
         <h2 style="text-align: center;">Apply to list your biochar</h2>
         <p>Applications reviewed within 2 business days.</p>
+        <div id="application-notice"></div>
 
         <form id="producer-form" class="apply-form">
           <div class="form-group">

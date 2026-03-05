@@ -187,99 +187,9 @@
       "</div></section>" +
       '<section class="inquiry-section">' +
       "<h2>Enter Deal Room</h2>" +
-      (window.currentUser
-        ? '<div class="deal-entry-buttons" style="display:flex;gap:var(--space-4);margin-top:var(--space-4);flex-wrap:wrap;">' +
-          '<button id="make-offer-btn" class="btn btn-primary" type="button">Make an offer</button>' +
-          '<button id="quick-buy-btn" class="btn btn-secondary" type="button">Buy now at $' +
-          listing.pricePerTonne +
-          '/tonne</button>' +
-          "</div>" +
-          '<div id="quick-buy-panel" class="buynow-quick" style="display:none;margin-top:var(--space-4);max-width:560px;">' +
-          '<div><label for="quick-volume">Volume (tonnes)</label><input id="quick-volume" type="number" min="' +
-          listing.minOrderTonnes +
-          '" placeholder="Min ' +
-          listing.minOrderTonnes +
-          ' tonnes"></div>' +
-          '<div style="margin-top:var(--space-4);"><label for="quick-delivery-method">Delivery method</label><select id="quick-delivery-method"><option>Buyer collects</option><option>Producer delivers</option><option>Third party freight</option></select></div>' +
-          '<div style="margin-top:var(--space-4);"><label for="quick-delivery-date">Target delivery date</label><input id="quick-delivery-date" type="date"></div>' +
-          '<button id="confirm-quick-buy-btn" class="btn btn-primary" type="button" style="margin-top:var(--space-4);">Confirm purchase</button>' +
-          "</div>"
-        : '<p style="margin-top:var(--space-3);">Create a free account to send an offer or buy now.</p>' +
-          '<a class="btn btn-primary" href="auth.html?role=buyer" style="margin-top:var(--space-4);">Create account</a>') +
-      '<p id="deal-entry-error" style="display:none;color:var(--color-warning);margin-top:var(--space-3);">Could not create deal room. Please try again.</p>' +
+      '<div id="deal-entry"></div>' +
       "</section>" +
       "</div>";
-
-    if (window.currentUser) {
-      var dealError = document.getElementById("deal-entry-error");
-      var makeOfferBtn = document.getElementById("make-offer-btn");
-      var quickBuyBtn = document.getElementById("quick-buy-btn");
-      var quickPanel = document.getElementById("quick-buy-panel");
-      var confirmQuickBuyBtn = document.getElementById("confirm-quick-buy-btn");
-      var currentUserUID =
-        window.currentUser && window.currentUser.uid ? window.currentUser.uid : window.currentUser;
-      var buyerName =
-        (window.userProfile && (window.userProfile.businessName || window.userProfile.name)) || "Buyer";
-
-      function showDealError() {
-        if (dealError) {
-          dealError.style.display = "block";
-        }
-      }
-
-      if (makeOfferBtn) {
-        makeOfferBtn.addEventListener("click", async function () {
-          if (dealError) {
-            dealError.style.display = "none";
-          }
-          try {
-            var dealId = await createDealRoom(listing, window.userProfile || {}, currentUserUID);
-            window.location.href = "dealroom.html?id=" + encodeURIComponent(dealId);
-          } catch (error) {
-            showDealError();
-          }
-        });
-      }
-
-      if (quickBuyBtn && quickPanel) {
-        quickBuyBtn.addEventListener("click", function () {
-          quickPanel.style.display = quickPanel.style.display === "none" ? "block" : "none";
-        });
-      }
-
-      if (confirmQuickBuyBtn) {
-        confirmQuickBuyBtn.addEventListener("click", async function () {
-          var volumeEl = document.getElementById("quick-volume");
-          var deliveryMethodEl = document.getElementById("quick-delivery-method");
-          var deliveryDateEl = document.getElementById("quick-delivery-date");
-          var volume = Number(volumeEl && volumeEl.value ? volumeEl.value : 0);
-
-          if (!volume || volume < listing.minOrderTonnes) {
-            showDealError();
-            return;
-          }
-
-          if (dealError) {
-            dealError.style.display = "none";
-          }
-
-          try {
-            var dealId = await createDealRoom(listing, window.userProfile || {}, currentUserUID);
-            await buyNow(
-              dealId,
-              currentUserUID,
-              buyerName,
-              volume,
-              deliveryMethodEl ? deliveryMethodEl.value : "Buyer collects",
-              deliveryDateEl ? deliveryDateEl.value : ""
-            );
-            window.location.href = "dealroom.html?id=" + encodeURIComponent(dealId);
-          } catch (error) {
-            showDealError();
-          }
-        });
-      }
-    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -290,6 +200,7 @@
 
     var params = new URLSearchParams(window.location.search);
     var id = params.get("id") || "";
+    var listingId = id;
     var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS : [];
     var listing = listings.find(function (item) {
       return item.id === id;
@@ -301,5 +212,102 @@
     }
 
     renderListing(container, listing);
+    var dealEntry = document.getElementById("deal-entry");
+    if (dealEntry) {
+      dealEntry.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">Loading...</p>';
+    }
+
+    auth.onAuthStateChanged(function (user) {
+      var dealEntryEl = document.getElementById("deal-entry");
+      if (!dealEntryEl) return;
+
+      var currentListing = (window.LISTINGS || []).find(function (l) { return l.id === listingId; });
+      if (!currentListing) return;
+
+      if (user) {
+        dealEntryEl.innerHTML =
+          '<h2 style="font-size:var(--font-size-xl);font-weight:var(--font-weight-bold);margin-bottom:var(--space-4)">Make a move</h2>' +
+          '<p style="color:var(--color-text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--space-6)">Your inquiry goes directly to the producer. We introduce you within 24 hours.</p>' +
+          '<div style="display:flex;gap:var(--space-4);flex-wrap:wrap">' +
+            '<button class="btn btn-primary" id="makeoffer-btn" data-id="' + currentListing.id + '">Make an offer</button>' +
+            '<button class="btn btn-secondary" id="buynow-btn" data-id="' + currentListing.id + '" data-price="' + currentListing.pricePerTonne + '" data-min="' + currentListing.minOrderTonnes + '">Buy now at $' + currentListing.pricePerTonne + '/tonne</button>' +
+          '</div>' +
+          '<div id="buynow-form" style="display:none;margin-top:var(--space-5);padding:var(--space-5);background:var(--color-bg);border-radius:var(--radius-md);border:1px solid var(--color-border)">' +
+            '<label class="form-group"><span>Volume (tonnes)</span><input type="number" id="buynow-volume" min="' + currentListing.minOrderTonnes + '" placeholder="Min ' + currentListing.minOrderTonnes + ' tonnes"></label>' +
+            '<label class="form-group"><span>Delivery method</span><select id="buynow-delivery"><option>Buyer collects</option><option>Producer delivers</option><option>Third party freight</option></select></label>' +
+            '<label class="form-group"><span>Target delivery date</span><input type="date" id="buynow-date"></label>' +
+            '<div id="buynow-total" style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)"></div>' +
+            '<button class="btn btn-primary" id="buynow-confirm">Confirm purchase</button>' +
+          "</div>";
+      } else {
+        dealEntryEl.innerHTML =
+          '<div style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-8);text-align:center">' +
+            '<p style="color:var(--color-text-secondary);margin-bottom:var(--space-5)">Create a free account to make an offer or buy now.</p>' +
+            '<a href="auth.html?role=buyer" class="btn btn-primary">Create free account</a>' +
+            '<p style="margin-top:var(--space-3);font-size:var(--font-size-sm)"><a href="auth.html" style="color:var(--color-accent)">Already have an account? Log in</a></p>' +
+          "</div>";
+      }
+
+      var makeOfferBtn = document.getElementById("makeoffer-btn");
+      if (makeOfferBtn) {
+        makeOfferBtn.addEventListener("click", async function () {
+          makeOfferBtn.disabled = true;
+          makeOfferBtn.textContent = "Opening deal room...";
+          try {
+            var offerDealId = await createDealRoom(currentListing, window.userProfile, user.uid);
+            window.location.href = "dealroom.html?id=" + offerDealId;
+          } catch (err) {
+            makeOfferBtn.disabled = false;
+            makeOfferBtn.textContent = "Make an offer";
+            alert("Something went wrong. Please try again.");
+          }
+        });
+      }
+
+      var buyNowBtn = document.getElementById("buynow-btn");
+      if (buyNowBtn) {
+        buyNowBtn.addEventListener("click", function () {
+          var form = document.getElementById("buynow-form");
+          if (form) form.style.display = form.style.display === "none" ? "block" : "none";
+        });
+      }
+
+      var volumeInput = document.getElementById("buynow-volume");
+      if (volumeInput) {
+        volumeInput.addEventListener("input", function () {
+          var vol = parseFloat(this.value) || 0;
+          var total = vol * currentListing.pricePerTonne;
+          var totalEl = document.getElementById("buynow-total");
+          if (totalEl && total > 0) {
+            var commission = calculateCommission(total);
+            totalEl.textContent = "Total: $" + total.toLocaleString() + " | Commission: " + commission.rateDisplay + " ($" + commission.commissionAmount.toLocaleString() + ")";
+          }
+        });
+      }
+
+      var confirmBtn = document.getElementById("buynow-confirm");
+      if (confirmBtn) {
+        confirmBtn.addEventListener("click", async function () {
+          var volume = parseFloat(document.getElementById("buynow-volume").value);
+          var delivery = document.getElementById("buynow-delivery").value;
+          var date = document.getElementById("buynow-date").value;
+          if (!volume || volume < currentListing.minOrderTonnes) {
+            alert("Minimum order is " + currentListing.minOrderTonnes + " tonnes");
+            return;
+          }
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = "Processing...";
+          try {
+            var dealId = await createDealRoom(currentListing, window.userProfile, user.uid);
+            await buyNow(dealId, user.uid, window.userProfile.businessName, volume, delivery, date);
+            window.location.href = "dealroom.html?id=" + dealId;
+          } catch (err) {
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = "Confirm purchase";
+            alert("Something went wrong. Please try again.");
+          }
+        });
+      }
+    });
   });
 })();

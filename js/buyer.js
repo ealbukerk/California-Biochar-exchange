@@ -1,9 +1,42 @@
 (function () {
+  var compareList = [];
   var state = {
     user: null,
-    profile: null,
-    compareList: []
+    profile: null
   };
+
+  document.addEventListener("click", function (e) {
+    if (e.target.id === "compare-btn" || e.target.closest("#compare-btn")) {
+      e.preventDefault();
+      e.stopPropagation();
+      runComparison();
+    }
+  });
+
+  document.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("compare-check")) return;
+    e.stopPropagation();
+    const id = e.target.dataset.id;
+    if (e.target.checked) {
+      if (compareList.length >= 3) {
+        e.target.checked = false;
+        const tip = document.createElement("span");
+        tip.className = "compare-tooltip";
+        tip.textContent = "Maximum 3";
+        tip.style.cssText = "position:absolute;top:-24px;right:0;background:#1A1A1A;color:white;font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap";
+        const corner = e.target.closest(".compare-corner");
+        if (corner) {
+          corner.appendChild(tip);
+        }
+        setTimeout(function () { tip.remove(); }, 2000);
+        return;
+      }
+      if (!compareList.includes(id)) compareList.push(id);
+    } else {
+      compareList = compareList.filter(function (i) { return i !== id; });
+    }
+    updateCompareBar();
+  });
 
   if (typeof window.submitToAirtable !== "function") {
     window.submitToAirtable = async function () {
@@ -240,13 +273,14 @@
       : "";
 
     return (
-      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
+      '<div class="listing-card-wrapper" style="position:relative">' +
       '<div class="compare-corner">' +
-      '<input type="checkbox" class="compare-check" data-id="' + htmlEscape(listing.id) + '" id="compare-' + htmlEscape(listing.id) + '"' +
-      (state.compareList.indexOf(listing.id) !== -1 ? " checked" : "") +
+      '<input type="checkbox" class="compare-check" data-id="' + htmlEscape(listing.id) + '"' +
+      (compareList.indexOf(listing.id) !== -1 ? " checked" : "") +
       ">" +
-      '<label for="compare-' + htmlEscape(listing.id) + '" class="compare-label">Compare</label>' +
+      '<label class="compare-label">Compare</label>' +
       "</div>" +
+      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
       '<div class="listing-top-row"><h3 style="margin:0;">' + htmlEscape(listing.producerName) + '</h3>' + (verifiedBadge ? verifiedBadge : "") + "</div>" +
       '<div class="listing-subtitle">' + htmlEscape(listing.region || listing.state || "") + "</div>" +
       '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + "</span>" +
@@ -279,7 +313,8 @@
       '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(listing.minOrderTonnes) + '" style="max-width:130px;" />' +
       '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm purchase</button>' +
       "</div>" +
-      "</a>"
+      "</a>" +
+      "</div>"
     );
   }
 
@@ -440,12 +475,12 @@
   }
 
   function updateCompareBar() {
-    var bar = document.getElementById("compare-bar");
-    var count = document.getElementById("compare-count");
+    const bar = document.getElementById("compare-bar");
+    const count = document.getElementById("compare-count");
     if (!bar || !count) return;
-    if (state.compareList.length >= 2) {
+    if (compareList.length >= 2) {
       bar.style.display = "flex";
-      count.textContent = state.compareList.length + " listings selected";
+      count.textContent = compareList.length + " listings selected";
     } else {
       bar.style.display = "none";
     }
@@ -598,7 +633,7 @@
     });
 
     document.getElementById("back-to-listings").addEventListener("click", function () {
-      state.compareList = [];
+      compareList = [];
       document.getElementById("comparison-view").classList.add("hidden");
       document.getElementById("comparison-view").innerHTML = "";
       document.getElementById("filter-bar").classList.remove("hidden");
@@ -611,6 +646,32 @@
         window.open("listing.html?id=" + encodeURIComponent(listing.id), "_blank");
       });
     });
+  }
+
+  function runComparison() {
+    if (compareList.length < 2) return;
+    var selected = compareList
+      .map(function (id) {
+        return (window.LISTINGS || []).find(function (listing) {
+          return listing.id === id;
+        });
+      })
+      .filter(Boolean);
+
+    if (selected.length < 2) return;
+
+    var filterBar = document.getElementById("filter-bar");
+    var grid = document.getElementById("listings-grid");
+    var comparisonView = document.getElementById("comparison-view");
+    var compareBar = document.getElementById("compare-bar");
+
+    if (filterBar) filterBar.classList.add("hidden");
+    if (grid) grid.classList.add("hidden");
+    if (compareBar) compareBar.style.display = "none";
+    if (comparisonView) {
+      comparisonView.classList.remove("hidden");
+      renderComparisonView(selected);
+    }
   }
 
   function renderBrowseListings() {
@@ -628,28 +689,6 @@
     grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
     updateCompareBar();
 
-    function runComparison() {
-      if (state.compareList.length < 2) return;
-      var selected = state.compareList
-        .map(function (id) {
-          return (window.LISTINGS || []).find(function (listing) { return listing.id === id; });
-        })
-        .filter(Boolean);
-
-      if (selected.length < 2) return;
-
-      document.getElementById("filter-bar").classList.add("hidden");
-      grid.classList.add("hidden");
-      document.getElementById("compare-bar").style.display = "none";
-      comparisonView.classList.remove("hidden");
-      renderComparisonView(selected);
-    }
-
-    var compareBtn = document.getElementById("compare-btn");
-    if (compareBtn && !compareBtn.dataset.boundRunComparison) {
-      compareBtn.addEventListener("click", runComparison);
-      compareBtn.dataset.boundRunComparison = "true";
-    }
   }
 
   function renderListings() {
@@ -811,42 +850,6 @@
   }
 
   function initAuthState() {
-    if (!document.body.dataset.compareDelegationBoundBuyer) {
-      document.addEventListener("change", function (event) {
-        var target = event.target;
-        if (!target.classList.contains("compare-check")) {
-          return;
-        }
-        event.stopPropagation();
-        var listingId = target.dataset.id;
-        if (!listingId) {
-          return;
-        }
-        if (target.checked) {
-          if (state.compareList.indexOf(listingId) !== -1) {
-            updateCompareBar();
-            return;
-          }
-          if (state.compareList.length >= 3) {
-            target.checked = false;
-            var tip = document.createElement("span");
-            tip.className = "compare-tooltip";
-            tip.textContent = "Maximum 3";
-            target.parentElement.appendChild(tip);
-            setTimeout(function () { tip.remove(); }, 2000);
-            return;
-          }
-          state.compareList.push(listingId);
-        } else {
-          state.compareList = state.compareList.filter(function (id) {
-            return id !== listingId;
-          });
-        }
-        updateCompareBar();
-      });
-      document.body.dataset.compareDelegationBoundBuyer = "true";
-    }
-
     if (!document.body.dataset.cardClickDelegationBoundBuyer) {
       document.addEventListener("click", function (event) {
         if (event.target.closest(".compare-corner")) {
