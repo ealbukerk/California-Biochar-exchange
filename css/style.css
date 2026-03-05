@@ -419,18 +419,19 @@ textarea:focus {
 
 .back-bar {
   padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface);
 }
 
 .back-btn {
-  display: inline-flex;
-  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
-  text-decoration: none;
-  padding: 0 var(--space-6);
   cursor: pointer;
+  font-family: var(--font-sans);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .back-btn:hover {

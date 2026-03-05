@@ -178,19 +178,72 @@
       });
   }
 
-  async function plotBuyerMarkers(map) {
+  async function initSellerMap() {
+    const map = L.map('seller-map').setView([39.5, -98.35], 4)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map)
+
+    if (window.LISTINGS) {
+      const countyCoords = {
+        'Butte': [39.6, -121.6],
+        'Colusa': [39.2, -122.0],
+        'Fresno': [36.7, -119.7],
+        'Glenn': [39.6, -122.4],
+        'Kern': [35.3, -118.7],
+        'Kings': [36.1, -119.8],
+        'Madera': [37.2, -119.7],
+        'Mendocino': [39.3, -123.3],
+        'Merced': [37.2, -120.7],
+        'Monterey': [36.2, -121.0],
+        'Napa': [38.5, -122.3],
+        'Nevada': [39.3, -120.8],
+        'Sacramento': [38.5, -121.5],
+        'San Joaquin': [37.9, -121.3],
+        'San Luis Obispo': [35.3, -120.4],
+        'Santa Barbara': [34.7, -119.7],
+        'Santa Cruz': [37.0, -122.0],
+        'Shasta': [40.8, -122.0],
+        'Solano': [38.3, -121.9],
+        'Sonoma': [38.3, -122.7],
+        'Stanislaus': [37.5, -120.9],
+        'Sutter': [39.0, -121.7],
+        'Tehama': [40.1, -122.2],
+        'Tulare': [36.2, -119.0],
+        'Ventura': [34.4, -119.1],
+        'Yolo': [38.7, -121.9],
+        'Yuba': [39.2, -121.4]
+      }
+
+      window.LISTINGS.forEach(listing => {
+        const coords = countyCoords[listing.county]
+        if (!coords) return
+        L.circleMarker(coords, {
+          radius: 12,
+          fillColor: '#3D6B45',
+          color: '#fff',
+          weight: 2,
+          fillOpacity: 0.9
+        }).bindPopup(
+          '<strong>' + listing.producerName + '</strong><br>' +
+          listing.feedstock + '<br>' +
+          listing.availableTonnes + ' tonnes available<br>' +
+          '$' + listing.pricePerTonne + '/tonne<br>' +
+          listing.transactionsCompleted + ' transactions completed'
+        ).addTo(map)
+      })
+    }
+
     const buyersSnap = await db.collection('users').where('role', '==', 'buyer').get()
-    buyersSnap.forEach(async function (doc) {
+    buyersSnap.forEach(async doc => {
       const buyer = doc.data()
-      if (!buyer.state) return
-      const query = encodeURIComponent(buyer.zipcode ? buyer.zipcode + ' USA' : buyer.state + ' USA')
+      if (!buyer.state && !buyer.zipcode) return
+      const query = encodeURIComponent((buyer.zipcode || buyer.state) + ' USA')
       try {
         const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + query)
         const data = await res.json()
         if (!data || !data[0]) return
-        const lat = parseFloat(data[0].lat)
-        const lng = parseFloat(data[0].lon)
-        L.circleMarker([lat, lng], {
+        L.circleMarker([parseFloat(data[0].lat), parseFloat(data[0].lon)], {
           radius: 8,
           fillColor: '#B87333',
           color: '#fff',
@@ -199,64 +252,22 @@
         }).bindPopup(
           '<strong>' + (buyer.businessName || 'Buyer') + '</strong><br>' +
           (buyer.cropTypes ? buyer.cropTypes.join(', ') : '') + '<br>' +
-          (buyer.state || '') +
-          (buyer.zipcode ? ' ' + buyer.zipcode : '')
+          (buyer.state || '')
         ).addTo(map)
       } catch(e) {}
     })
-  }
 
-  function initMap() {
-    var mapEl = document.getElementById("seller-map");
-    if (!mapEl || typeof L === "undefined") return;
-
-    var map = L.map("seller-map").setView([39.5, -98.35], 4);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors"
-    }).addTo(map);
-
-    db.collection("listings")
-      .get()
-      .then(function (snapshot) {
-        snapshot.forEach(function (doc) {
-          var listing = doc.data() || {};
-          var coords = getProducerCoordinate(listing);
-          if (!coords) return;
-
-          L.circleMarker(coords, {
-            radius: 10,
-            color: "#3D6B45",
-            fillColor: "#3D6B45",
-            fillOpacity: 0.95,
-            weight: 2
-          })
-            .addTo(map)
-            .bindPopup(
-              "<strong>Producer Name:</strong> " + htmlEscape(listing.producerName || "-") + "<br>" +
-              "<strong>Feedstock:</strong> " + htmlEscape(listing.feedstock || "-") + "<br>" +
-              "<strong>Available Tonnes:</strong> " + htmlEscape(listing.availableTonnes || "-") + "<br>" +
-              "<strong>Price Per Tonne:</strong> $" + htmlEscape(listing.pricePerTonne || "-") + "<br>" +
-              "<strong>Transactions Completed:</strong> " + htmlEscape(listing.transactionsCompleted || 0)
-            );
-        });
-      })
-      .catch(function () {
-        return null;
-      });
-
-    plotBuyerMarkers(map).catch(function () {
-      return null;
-    });
-
-    var legend = L.control({ position: "bottomleft" });
-    legend.onAdd = function () {
-      var div = L.DomUtil.create("div", "map-legend");
+    const legend = L.control({ position: 'bottomleft' })
+    legend.onAdd = function() {
+      const div = L.DomUtil.create('div', 'map-legend')
       div.innerHTML =
-        '<div class="legend-item"><span class="legend-dot" style="background:#3D6B45;"></span> Producer</div>' +
-        '<div class="legend-item"><span class="legend-dot" style="background:#B87333;"></span> Buyer</div>';
-      return div;
-    };
-    legend.addTo(map);
+        '<div style="background:rgba(26,26,26,0.85);color:white;padding:10px 14px;border-radius:8px;font-size:12px">' +
+        '<div style="margin-bottom:6px"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#3D6B45;margin-right:6px"></span>Producer</div>' +
+        '<div><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#B87333;margin-right:6px"></span>Buyer</div>' +
+        '</div>'
+      return div
+    }
+    legend.addTo(map)
   }
 
   function renderListingStatusSection() {
@@ -687,7 +698,9 @@
     }
 
     initApplicationForm();
-    initMap();
+    if (document.getElementById("seller-map")) {
+      initSellerMap();
+    }
     initAuthWatcher();
   }
 

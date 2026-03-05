@@ -152,21 +152,12 @@
     if (!bar || !count) {
       return;
     }
-
-    bar.style.position = "fixed";
-    bar.style.bottom = "0";
-    bar.style.left = "0";
-    bar.style.right = "0";
-    bar.style.background = "var(--color-surface)";
-    bar.style.borderTop = "2px solid var(--color-accent)";
-    bar.style.padding = "var(--space-4) var(--space-8)";
-    bar.style.alignItems = "center";
-    bar.style.justifyContent = "space-between";
-    bar.style.zIndex = "300";
-    bar.style.boxShadow = "0 -4px 12px rgba(0,0,0,0.08)";
-
-    count.textContent = compareList.length + " listings selected";
-    bar.style.display = compareList.length >= 2 ? "flex" : "none";
+    if (compareList.length >= 2) {
+      bar.style.display = "flex";
+      count.textContent = compareList.length + " listings selected";
+    } else {
+      bar.style.display = "none";
+    }
   }
 
   function showMaxCompareTooltip(checkbox) {
@@ -481,6 +472,10 @@
 
       return (
         '<article class="listing-card" id="listing-' + listing.id + '">' +
+        '<div class="compare-corner">' +
+        '<input type="checkbox" class="compare-check" data-id="' + listing.id + '" id="compare-' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + ">" +
+        '<label for="compare-' + listing.id + '" class="compare-label">Compare</label>' +
+        "</div>" +
         '<div class="listing-top-row"><h3 style="margin:0;">' + listing.producerName + '</h3>' + verifiedBadge + "</div>" +
         '<div class="listing-subtitle">' + (listing.region || listing.state || "") + "</div>" +
         '<span class="feedstock-tag">' + listing.feedstock + "</span>" +
@@ -488,7 +483,7 @@
         '<div class="price-row"><span class="price-value">$' + listing.pricePerTonne + '</span><span class="price-unit">/tonne</span></div>' +
         '<span class="card-detail">Available: ' + listing.availableTonnes + " tonnes</span>" +
         "</div>" +
-        '<a href="#" class="card-toggle" data-target="' + detailId + '">Show details ↓</a>' +
+        '<a href="#" class="card-toggle details-toggle" data-target="' + detailId + '">Show details ↓</a>' +
         '<div class="card-details" id="' + detailId + '">' +
         '<div class="scorecard-inline">' +
         '<span class="scorecard-badge">' + listing.scorecard.carbonContent + '% C</span>' +
@@ -511,8 +506,6 @@
         '<p class="card-detail">Min order: ' + listing.minOrderTonnes + " tonnes</p>" +
         '<p class="card-detail ' + leadTime.className + '">' + leadTime.text + "</p>" +
         '<div class="rating-row"><span>' + listing.transactionsCompleted + " transactions</span><span>·</span><span>" + ratingText + "</span>" + ratingStarsHtml + "</div>" +
-        '<label style="display:inline-flex;align-items:center;gap:6px;font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-3);">' +
-        '<input class="compare-check" type="checkbox" data-id="' + listing.id + '"' + (compareList.includes(listing.id) ? " checked" : "") + " />+ Compare</label>" +
         '<div class="listing-actions" style="display:flex;gap:var(--space-2);margin-top:var(--space-3);flex-wrap:wrap;">' +
         '<a class="btn btn-primary" href="listing.html?id=' + listing.id + '">Make an offer</a>' +
         '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + listing.id + '">Buy now</button>' +
@@ -527,12 +520,48 @@
     });
 
     grid.innerHTML = cards.join("");
+
+    if (!grid.dataset.toggleDelegationBound) {
+      grid.addEventListener("click", function (event) {
+        var target = event.target;
+        if (target.classList.contains("scorecard-toggle")) {
+          event.stopPropagation();
+          var detailsWrap = target.closest(".card-details");
+          if (!detailsWrap) return;
+          var expanded = detailsWrap.querySelector(".scorecard-expanded");
+          if (!expanded) return;
+          if (expanded.classList.contains("open")) {
+            expanded.classList.remove("open");
+            target.textContent = "Full scorecard ↓";
+          } else {
+            expanded.classList.add("open");
+            target.textContent = "Hide scorecard ↑";
+          }
+        }
+
+        if (target.classList.contains("details-toggle")) {
+          event.preventDefault();
+          event.stopPropagation();
+          var card = target.closest(".listing-card");
+          if (!card) return;
+          var details = card.querySelector(".card-details");
+          if (!details) return;
+          if (details.classList.contains("open")) {
+            details.classList.remove("open");
+            target.textContent = "Show details ↓";
+          } else {
+            details.classList.add("open");
+            target.textContent = "Hide details ↑";
+          }
+        }
+      });
+      grid.dataset.toggleDelegationBound = "true";
+    }
   }
 
   document.addEventListener("DOMContentLoaded", function () {
     var grid = document.getElementById("listings-grid");
     var filterBar = document.getElementById("filter-bar");
-    var compareBar = document.getElementById("compare-bar");
     var compareBtn = document.getElementById("compare-btn");
     var comparisonView = document.getElementById("comparison-view");
     var listings = window.LISTINGS;
@@ -592,73 +621,42 @@
       }
     });
 
-    grid.addEventListener("change", function (event) {
-      var target = event.target;
-      if (!target.classList.contains("compare-check")) {
-        return;
-      }
-
-      var listingId = target.getAttribute("data-id");
-      if (!listingId) {
-        return;
-      }
-
-      if (target.checked) {
-        if (compareList.indexOf(listingId) !== -1) {
+    if (!document.body.dataset.compareDelegationBoundListings) {
+      document.addEventListener("change", function (event) {
+        var target = event.target;
+        if (!target.classList.contains("compare-check")) {
           return;
         }
-
-        if (compareList.length >= 3) {
-          target.checked = false;
-          showMaxCompareTooltip(target);
+        var listingId = target.dataset.id;
+        if (!listingId) {
           return;
         }
-
-        compareList.push(listingId);
-      } else {
-        compareList = compareList.filter(function (id) {
-          return id !== listingId;
-        });
-      }
-
-      updateCompareBar();
-    });
+        if (target.checked) {
+          if (compareList.indexOf(listingId) !== -1) {
+            updateCompareBar();
+            return;
+          }
+          if (compareList.length >= 3) {
+            target.checked = false;
+            var tip = document.createElement("span");
+            tip.className = "compare-tooltip";
+            tip.textContent = "Maximum 3";
+            target.parentElement.appendChild(tip);
+            setTimeout(function () { tip.remove(); }, 2000);
+            return;
+          }
+          compareList.push(listingId);
+        } else {
+          compareList = compareList.filter(function (id) {
+            return id !== listingId;
+          });
+        }
+        updateCompareBar();
+      });
+      document.body.dataset.compareDelegationBoundListings = "true";
+    }
 
     grid.addEventListener("click", function (event) {
-      var toggle = event.target.closest(".card-toggle");
-      if (toggle) {
-        event.preventDefault();
-        var targetId = toggle.getAttribute("data-target");
-        var panel = document.getElementById(targetId);
-        if (!panel) return;
-        var open = panel.classList.contains("open");
-        if (open) {
-          panel.classList.remove("open");
-          toggle.textContent = "Show details ↓";
-        } else {
-          panel.classList.add("open");
-          toggle.textContent = "Hide details ↑";
-        }
-        return;
-      }
-
-      var scoreToggle = event.target.closest(".scorecard-toggle");
-      if (scoreToggle) {
-        event.preventDefault();
-        var scoreTargetId = scoreToggle.getAttribute("data-target");
-        var scorePanel = document.getElementById(scoreTargetId);
-        if (!scorePanel) return;
-        var scoreOpen = scorePanel.classList.contains("open");
-        if (scoreOpen) {
-          scorePanel.classList.remove("open");
-          scoreToggle.textContent = "Full scorecard ↓";
-        } else {
-          scorePanel.classList.add("open");
-          scoreToggle.textContent = "Hide ↑";
-        }
-        return;
-      }
-
       var buyToggle = event.target.closest(".buy-now-toggle-btn");
       if (buyToggle) {
         event.preventDefault();
@@ -679,37 +677,40 @@
       }
     });
 
-    if (compareBtn) {
-      compareBtn.addEventListener("click", function () {
-        if (compareList.length < 2) {
-          return;
-        }
+    function runComparison() {
+      if (compareList.length < 2) {
+        return;
+      }
 
-        if (filterBar) {
-          filterBar.style.display = "none";
-        }
-        grid.style.display = "none";
-        if (compareBar) {
-          compareBar.style.display = "none";
-        }
-        if (comparisonView) {
-          comparisonView.style.display = "block";
-          renderComparisonView(comparisonView, listings, function () {
-            compareList = [];
-            document.querySelectorAll(".compare-check").forEach(function (checkbox) {
-              checkbox.checked = false;
-            });
-
-            comparisonView.innerHTML = "";
-            comparisonView.style.display = "none";
-            grid.style.display = "grid";
-            if (filterBar) {
-              filterBar.style.display = "block";
-            }
-            update();
+      if (filterBar) {
+        filterBar.style.display = "none";
+      }
+      grid.style.display = "none";
+      var compareBar = document.getElementById("compare-bar");
+      if (compareBar) {
+        compareBar.style.display = "none";
+      }
+      if (comparisonView) {
+        comparisonView.style.display = "block";
+        renderComparisonView(comparisonView, listings, function () {
+          compareList = [];
+          document.querySelectorAll(".compare-check").forEach(function (checkbox) {
+            checkbox.checked = false;
           });
-        }
-      });
+
+          comparisonView.innerHTML = "";
+          comparisonView.style.display = "none";
+          grid.style.display = "grid";
+          if (filterBar) {
+            filterBar.style.display = "block";
+          }
+          update();
+        });
+      }
+    }
+
+    if (compareBtn) {
+      compareBtn.addEventListener("click", runComparison);
     }
 
     hydrateFiltersFromUrl();
