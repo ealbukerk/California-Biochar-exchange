@@ -48,6 +48,22 @@
     }
   });
 
+  document.addEventListener("change", function (e) {
+    if (!e.target.classList.contains("compare-check")) return;
+    e.stopPropagation();
+    var id = e.target.dataset.id;
+    if (e.target.checked) {
+      if (compareList.length >= 3) {
+        e.target.checked = false;
+        return;
+      }
+      if (compareList.indexOf(id) === -1) compareList.push(id);
+    } else {
+      compareList = compareList.filter(function (i) { return i !== id; });
+    }
+    updateCompareBar();
+  });
+
   if (typeof window.submitToAirtable !== "function") {
     window.submitToAirtable = async function () {
       return {};
