@@ -62,12 +62,12 @@
       </div>
     </main>
 
-    <div id="compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid var(--color-accent);padding:16px 32px;align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)">
-      <span id="compare-count" style="font-weight:600;font-size:14px">0 listings selected</span>
-      <div style="display:flex;gap:12px;align-items:center">
-        <span style="font-size:13px;color:#666">Select up to 3 listings</span>
-        <button id="compare-btn" style="background:var(--color-accent);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Compare selected</button>
-      </div>
+    <div
+      id="compare-bar"
+      style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid var(--color-accent);padding:var(--space-4) var(--space-8);align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)"
+    >
+      <span id="compare-count">0 listings selected</span>
+      <button id="compare-btn" class="btn-primary">Compare Selected</button>
     </div>
 
     <footer class="site-footer">
