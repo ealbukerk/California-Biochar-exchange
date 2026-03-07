@@ -1,140 +1,52 @@
-var compareList = []
-
-function updateCompareBar() {
-  var bar = document.getElementById('compare-bar')
-  var count = document.getElementById('compare-count')
-  if (!bar) return
-  if (compareList.length >= 2) {
-    bar.style.display = 'flex'
-    if (count) count.textContent = compareList.length + ' listings selected'
-  } else {
-    bar.style.display = 'none'
-  }
-}
-
-function runComparison() {
-  if (compareList.length < 2) return
-  var listings = compareList.map(function(id) {
-    return window.LISTINGS.find(function(l) { return String(l.id) === String(id) })
-  }).filter(Boolean)
-  if (listings.length < 2) return
-
-  var modal = document.getElementById('compare-modal')
-  if (!modal) {
-    modal = document.createElement('div')
-    modal.id = 'compare-modal'
-    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto'
-    document.body.appendChild(modal)
-  }
-
-  var fields = [
-    { label: 'Feedstock', key: 'feedstock' },
-    { label: 'Price per tonne', key: 'pricePerTonne', prefix: '$' },
-    { label: 'Available tonnes', key: 'availableTonnes', suffix: ' t' },
-    { label: 'Min order', key: 'minOrderTonnes', suffix: ' t' },
-    { label: 'Lead time', key: 'leadTimeDays', suffix: ' days' },
-    { label: 'Carbon content', key: 'carbonContent', parent: 'scorecard', suffix: '%' },
-    { label: 'pH', key: 'pH', parent: 'scorecard' },
-    { label: 'Surface area', key: 'surfaceArea', parent: 'scorecard', suffix: ' m²/g' },
-    { label: 'Moisture', key: 'moisture', parent: 'scorecard', suffix: '%' },
-    { label: 'Ash content', key: 'ashContent', parent: 'scorecard', suffix: '%' },
-    { label: 'EC', key: 'electricalConductivity', parent: 'scorecard', suffix: ' dS/m' }
-  ]
-
-  function getVal(listing, field) {
-    var raw = field.parent ? (listing[field.parent] ? listing[field.parent][field.key] : null) : listing[field.key]
-    if (raw === null || raw === undefined || raw === '') return '—'
-    return (field.prefix || '') + raw + (field.suffix || '')
-  }
-
-  function getBest(field) {
-    var numericKeys = ['pricePerTonne','availableTonnes','carbonContent','surfaceArea']
-    if (numericKeys.indexOf(field.key) === -1) return null
-    var vals = listings.map(function(l) {
-      var raw = field.parent ? (l[field.parent] ? l[field.parent][field.key] : null) : l[field.key]
-      return parseFloat(raw)
-    })
-    if (vals.some(isNaN)) return null
-    return field.key === 'pricePerTonne'
-      ? vals.indexOf(Math.min.apply(null, vals))
-      : vals.indexOf(Math.max.apply(null, vals))
-  }
-
-  var cols = listings.map(function(l) { return '<th style="padding:12px 16px;text-align:left;font-weight:600">' + l.producerName + '<br><span style="font-size:12px;font-weight:400;color:#666">' + l.feedstock + '</span></th>' }).join('')
-
-  var rows = fields.map(function(field) {
-    var bestIdx = getBest(field)
-    var cells = listings.map(function(l, idx) {
-      var val = getVal(l, field)
-      var highlight = bestIdx === idx ? 'background:var(--color-accent-light);font-weight:600' : ''
-      return '<td style="padding:10px 16px;border-top:1px solid var(--color-border);' + highlight + '">' + val + '</td>'
-    }).join('')
-    return '<tr><td style="padding:10px 16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px;white-space:nowrap">' + field.label + '</td>' + cells + '</tr>'
-  }).join('')
-
-  var actionCells = listings.map(function(l) {
-    return '<td style="padding:12px 16px;border-top:2px solid var(--color-border)"><a href="listing.html?id=' + l.id + '" class="btn btn-primary" style="display:block;text-align:center;font-size:13px">View listing</a></td>'
-  }).join('')
-
-  modal.innerHTML =
-    '<div style="background:white;border-radius:12px;width:100%;max-width:' + (listings.length * 280 + 200) + 'px;overflow:hidden">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--color-border)">' +
-        '<h2 style="font-size:18px;font-weight:700">Comparing ' + listings.length + ' listings</h2>' +
-        '<button id="close-compare-modal" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666">×</button>' +
-      '</div>' +
-      '<div style="overflow-x:auto">' +
-        '<table style="width:100%;border-collapse:collapse">' +
-          '<thead><tr><th style="padding:12px 16px;text-align:left;color:var(--color-text-muted);font-size:13px">Field</th>' + cols + '</tr></thead>' +
-          '<tbody>' + rows + '</tbody>' +
-          '<tfoot><tr><td></td>' + actionCells + '</tr></tfoot>' +
-        '</table>' +
-      '</div>' +
-    '</div>'
-
-  modal.style.display = 'flex'
-
-  document.getElementById('close-compare-modal').addEventListener('click', function() {
-    modal.style.display = 'none'
-  })
-  modal.addEventListener('click', function(e) {
-    if (e.target === modal) modal.style.display = 'none'
-  })
-}
-
-document.addEventListener('change', function(e) {
-  if (!e.target.classList.contains('compare-check')) return
-  e.stopPropagation()
-  var id = String(e.target.dataset.id)
-  if (e.target.checked) {
-    if (compareList.length >= 3) {
-      e.target.checked = false
-      return
-    }
-    if (compareList.indexOf(id) === -1) compareList.push(id)
-  } else {
-    compareList = compareList.filter(function(i) { return i !== id })
-  }
-  updateCompareBar()
-})
-
-document.addEventListener('click', function(e) {
-  if (e.target.id === 'compare-btn' || (e.target.closest && e.target.closest('#compare-btn'))) {
-    e.preventDefault()
-    e.stopPropagation()
-    runComparison()
-  }
-  if (e.target.id === 'reset-filters') {
-    compareList = []
-    updateCompareBar()
-    document.querySelectorAll('.compare-check').forEach(function(cb) { cb.checked = false })
-  }
-})
-
 (function () {
+  var compareList = [];
   var state = {
     user: null,
     profile: null
   };
+
+  function updateCompareBar() {
+    const bar = document.getElementById("compare-bar");
+    const count = document.getElementById("compare-count");
+    if (!bar || !count) return;
+    if (compareList.length >= 2) {
+      bar.style.display = "flex";
+      count.textContent = compareList.length + " listings selected";
+    } else {
+      bar.style.display = "none";
+    }
+  }
+
+  function runComparison() {
+    if (compareList.length < 2) return;
+    var selected = compareList
+      .map(function (id) {
+        return (window.LISTINGS || []).find(function (listing) {
+          return listing.id === id;
+        });
+      })
+      .filter(Boolean);
+    if (selected.length < 2) return;
+    var filterBar = document.getElementById("filter-bar");
+    var grid = document.getElementById("listings-grid");
+    var comparisonView = document.getElementById("comparison-view");
+    var compareBar = document.getElementById("compare-bar");
+    if (filterBar) filterBar.classList.add("hidden");
+    if (grid) grid.classList.add("hidden");
+    if (compareBar) compareBar.style.display = "none";
+    if (comparisonView) {
+      comparisonView.classList.remove("hidden");
+      renderComparisonView(selected);
+    }
+  }
+
+  document.addEventListener("click", function (e) {
+    if (e.target.id === "compare-btn" || e.target.closest("#compare-btn")) {
+      e.preventDefault();
+      e.stopPropagation();
+      runComparison();
+    }
+  });
 
   if (typeof window.submitToAirtable !== "function") {
     window.submitToAirtable = async function () {
@@ -574,6 +486,7 @@ document.addEventListener('click', function(e) {
 
   function renderBrowseListings() {
     var grid = document.getElementById("listings-grid");
+    var comparisonView = document.getElementById("comparison-view");
     if (!grid) return;
 
     var filtered = getFilteredListings();
