@@ -1,9 +1,137 @@
+var compareList = []
+
+function updateCompareBar() {
+  var bar = document.getElementById('compare-bar')
+  var count = document.getElementById('compare-count')
+  if (!bar) return
+  if (compareList.length >= 2) {
+    bar.style.display = 'flex'
+    if (count) count.textContent = compareList.length + ' listings selected'
+  } else {
+    bar.style.display = 'none'
+  }
+}
+
+function runComparison() {
+  if (compareList.length < 2) return
+  var listings = compareList.map(function(id) {
+    return window.LISTINGS.find(function(l) { return String(l.id) === String(id) })
+  }).filter(Boolean)
+  if (listings.length < 2) return
+
+  var modal = document.getElementById('compare-modal')
+  if (!modal) {
+    modal = document.createElement('div')
+    modal.id = 'compare-modal'
+    modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto'
+    document.body.appendChild(modal)
+  }
+
+  var fields = [
+    { label: 'Feedstock', key: 'feedstock' },
+    { label: 'Price per tonne', key: 'pricePerTonne', prefix: '$' },
+    { label: 'Available tonnes', key: 'availableTonnes', suffix: ' t' },
+    { label: 'Min order', key: 'minOrderTonnes', suffix: ' t' },
+    { label: 'Lead time', key: 'leadTimeDays', suffix: ' days' },
+    { label: 'Carbon content', key: 'carbonContent', parent: 'scorecard', suffix: '%' },
+    { label: 'pH', key: 'pH', parent: 'scorecard' },
+    { label: 'Surface area', key: 'surfaceArea', parent: 'scorecard', suffix: ' m²/g' },
+    { label: 'Moisture', key: 'moisture', parent: 'scorecard', suffix: '%' },
+    { label: 'Ash content', key: 'ashContent', parent: 'scorecard', suffix: '%' },
+    { label: 'EC', key: 'electricalConductivity', parent: 'scorecard', suffix: ' dS/m' }
+  ]
+
+  function getVal(listing, field) {
+    var raw = field.parent ? (listing[field.parent] ? listing[field.parent][field.key] : null) : listing[field.key]
+    if (raw === null || raw === undefined || raw === '') return '—'
+    return (field.prefix || '') + raw + (field.suffix || '')
+  }
+
+  function getBest(field) {
+    var numericKeys = ['pricePerTonne','availableTonnes','carbonContent','surfaceArea']
+    if (numericKeys.indexOf(field.key) === -1) return null
+    var vals = listings.map(function(l) {
+      var raw = field.parent ? (l[field.parent] ? l[field.parent][field.key] : null) : l[field.key]
+      return parseFloat(raw)
+    })
+    if (vals.some(isNaN)) return null
+    return field.key === 'pricePerTonne'
+      ? vals.indexOf(Math.min.apply(null, vals))
+      : vals.indexOf(Math.max.apply(null, vals))
+  }
+
+  var cols = listings.map(function(l) { return '<th style="padding:12px 16px;text-align:left;font-weight:600">' + l.producerName + '<br><span style="font-size:12px;font-weight:400;color:#666">' + l.feedstock + '</span></th>' }).join('')
+
+  var rows = fields.map(function(field) {
+    var bestIdx = getBest(field)
+    var cells = listings.map(function(l, idx) {
+      var val = getVal(l, field)
+      var highlight = bestIdx === idx ? 'background:var(--color-accent-light);font-weight:600' : ''
+      return '<td style="padding:10px 16px;border-top:1px solid var(--color-border);' + highlight + '">' + val + '</td>'
+    }).join('')
+    return '<tr><td style="padding:10px 16px;border-top:1px solid var(--color-border);color:var(--color-text-muted);font-size:13px;white-space:nowrap">' + field.label + '</td>' + cells + '</tr>'
+  }).join('')
+
+  var actionCells = listings.map(function(l) {
+    return '<td style="padding:12px 16px;border-top:2px solid var(--color-border)"><a href="listing.html?id=' + l.id + '" class="btn btn-primary" style="display:block;text-align:center;font-size:13px">View listing</a></td>'
+  }).join('')
+
+  modal.innerHTML =
+    '<div style="background:white;border-radius:12px;width:100%;max-width:' + (listings.length * 280 + 200) + 'px;overflow:hidden">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px;border-bottom:1px solid var(--color-border)">' +
+        '<h2 style="font-size:18px;font-weight:700">Comparing ' + listings.length + ' listings</h2>' +
+        '<button id="close-compare-modal" style="background:none;border:none;font-size:24px;cursor:pointer;color:#666">×</button>' +
+      '</div>' +
+      '<div style="overflow-x:auto">' +
+        '<table style="width:100%;border-collapse:collapse">' +
+          '<thead><tr><th style="padding:12px 16px;text-align:left;color:var(--color-text-muted);font-size:13px">Field</th>' + cols + '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+          '<tfoot><tr><td></td>' + actionCells + '</tr></tfoot>' +
+        '</table>' +
+      '</div>' +
+    '</div>'
+
+  modal.style.display = 'flex'
+
+  document.getElementById('close-compare-modal').addEventListener('click', function() {
+    modal.style.display = 'none'
+  })
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) modal.style.display = 'none'
+  })
+}
+
+document.addEventListener('change', function(e) {
+  if (!e.target.classList.contains('compare-check')) return
+  e.stopPropagation()
+  var id = String(e.target.dataset.id)
+  if (e.target.checked) {
+    if (compareList.length >= 3) {
+      e.target.checked = false
+      return
+    }
+    if (compareList.indexOf(id) === -1) compareList.push(id)
+  } else {
+    compareList = compareList.filter(function(i) { return i !== id })
+  }
+  updateCompareBar()
+})
+
+document.addEventListener('click', function(e) {
+  if (e.target.id === 'compare-btn' || (e.target.closest && e.target.closest('#compare-btn'))) {
+    e.preventDefault()
+    e.stopPropagation()
+    runComparison()
+  }
+  if (e.target.id === 'reset-filters') {
+    compareList = []
+    updateCompareBar()
+    document.querySelectorAll('.compare-check').forEach(function(cb) { cb.checked = false })
+  }
+})
+
 (function () {
-  var compareList = [];
   var listingsGridEl = null;
-  var filterBarEl = null;
-  var comparisonViewEl = null;
-  var allListingsRef = [];
 
   function formatDateRange(fromISO, untilISO) {
     var from = new Date(fromISO);
@@ -149,276 +277,6 @@
     container.setValue(desired.length ? desired : ["All"]);
   }
 
-  function updateCompareBar() {
-    var bar = document.getElementById("compare-bar");
-    var count = document.getElementById("compare-count");
-
-    if (!bar || !count) {
-      return;
-    }
-    if (compareList.length >= 2) {
-      bar.style.display = "flex";
-      count.textContent = compareList.length + " listings selected";
-    } else {
-      bar.style.display = "none";
-    }
-  }
-
-  function runComparison() {
-    if (compareList.length < 2 || !listingsGridEl) {
-      return;
-    }
-
-    if (filterBarEl) {
-      filterBarEl.style.display = "none";
-    }
-    listingsGridEl.style.display = "none";
-    var compareBar = document.getElementById("compare-bar");
-    if (compareBar) {
-      compareBar.style.display = "none";
-    }
-    if (comparisonViewEl) {
-      comparisonViewEl.style.display = "block";
-      renderComparisonView(comparisonViewEl, allListingsRef, function () {
-        compareList = [];
-        document.querySelectorAll(".compare-check").forEach(function (checkbox) {
-          checkbox.checked = false;
-        });
-
-        comparisonViewEl.innerHTML = "";
-        comparisonViewEl.style.display = "none";
-        listingsGridEl.style.display = "grid";
-        if (filterBarEl) {
-          filterBarEl.style.display = "block";
-        }
-        if (typeof window.__cbxListingsUpdate === "function") {
-          window.__cbxListingsUpdate();
-        }
-      });
-    }
-  }
-
-  document.addEventListener("click", function (e) {
-    if (e.target.id === "compare-btn" || e.target.closest("#compare-btn")) {
-      e.preventDefault();
-      e.stopPropagation();
-      runComparison();
-    }
-  });
-
-  document.addEventListener("change", function (e) {
-    if (!e.target.classList.contains("compare-check")) return;
-    e.stopPropagation();
-    var id = e.target.dataset.id;
-    if (e.target.checked) {
-      if (compareList.length >= 3) {
-        e.target.checked = false;
-        var tip = document.createElement("span");
-        tip.className = "compare-tooltip";
-        tip.textContent = "Maximum 3";
-        tip.style.cssText = "position:absolute;top:-24px;right:0;background:#1A1A1A;color:white;font-size:11px;padding:2px 8px;border-radius:4px;white-space:nowrap";
-        var corner = e.target.closest(".compare-corner");
-        if (corner) {
-          corner.appendChild(tip);
-        }
-        setTimeout(function () {
-          tip.remove();
-        }, 2000);
-        return;
-      }
-      if (!compareList.includes(id)) compareList.push(id);
-    } else {
-      compareList = compareList.filter(function (i) {
-        return i !== id;
-      });
-    }
-    updateCompareBar();
-  });
-
-  function showMaxCompareTooltip(checkbox) {
-    var label = checkbox.parentElement;
-    if (!label) {
-      return;
-    }
-
-    var existing = label.querySelector(".compare-tooltip");
-    if (existing) {
-      existing.remove();
-    }
-
-    var tooltip = document.createElement("span");
-    tooltip.className = "compare-tooltip";
-    tooltip.textContent = "Maximum 3";
-    tooltip.style.marginLeft = "6px";
-    tooltip.style.color = "var(--color-warning)";
-    tooltip.style.fontSize = "var(--font-size-xs)";
-
-    label.appendChild(tooltip);
-
-    setTimeout(function () {
-      if (tooltip.parentNode) {
-        tooltip.parentNode.removeChild(tooltip);
-      }
-    }, 2000);
-  }
-
-  function getSelectedListings(allListings) {
-    return compareList
-      .map(function (id) {
-        return allListings.find(function (listing) {
-          return listing.id === id;
-        });
-      })
-      .filter(Boolean);
-  }
-
-  function getComparisonNumber(listing, key) {
-    if (key === "pricePerTonne") return listing.pricePerTonne;
-    if (key === "availableTonnes") return listing.availableTonnes;
-    if (key === "minOrderTonnes") return listing.minOrderTonnes;
-    if (key === "carbonContent") return listing.scorecard.carbonContent;
-    if (key === "pH") return listing.scorecard.pH;
-    if (key === "surfaceArea") return listing.scorecard.surfaceArea;
-    if (key === "moisture") return listing.scorecard.moisture;
-    if (key === "ashContent") return listing.scorecard.ashContent;
-    if (key === "electricalConductivity") return listing.scorecard.electricalConductivity;
-    if (key === "transactionsCompleted") return listing.transactionsCompleted;
-    if (key === "averageRating") return listing.averageRating;
-    return null;
-  }
-
-  function renderComparisonView(container, allListings, onBack) {
-    var selectedListings = getSelectedListings(allListings);
-    if (selectedListings.length < 2) {
-      container.innerHTML = "";
-      return;
-    }
-
-    var rowDefs = [
-      { key: "producerName", label: "Producer Name", display: function (l) { return l.producerName; } },
-      { key: "county", label: "County", display: function (l) { return l.county; } },
-      { key: "feedstock", label: "Feedstock", display: function (l) { return l.feedstock; } },
-      { key: "pricePerTonne", label: "Price Per Tonne", display: function (l) { return "$" + l.pricePerTonne; } },
-      { key: "availableTonnes", label: "Available Tonnes", display: function (l) { return l.availableTonnes; } },
-      { key: "minOrderTonnes", label: "Min Order Tonnes", display: function (l) { return l.minOrderTonnes; } },
-      { key: "availability", label: "Availability", display: function (l) { return formatDateRange(l.availableFrom, l.availableUntil); } },
-      { key: "carbonContent", label: "Carbon Content", display: function (l) { return l.scorecard.carbonContent.toFixed(1) + "%"; } },
-      { key: "pH", label: "pH", display: function (l) { return l.scorecard.pH.toFixed(1); } },
-      { key: "surfaceArea", label: "Surface Area", display: function (l) { return l.scorecard.surfaceArea + " m²/g"; } },
-      { key: "particleSize", label: "Particle Size", display: function (l) { return l.scorecard.particleSize; } },
-      { key: "moisture", label: "Moisture", display: function (l) { return l.scorecard.moisture.toFixed(1) + "%"; } },
-      { key: "ashContent", label: "Ash Content", display: function (l) { return l.scorecard.ashContent.toFixed(1) + "%"; } },
-      { key: "electricalConductivity", label: "Electrical Conductivity", display: function (l) { return l.scorecard.electricalConductivity.toFixed(1) + " dS/m"; } },
-      { key: "labVerified", label: "Lab Verified", display: function (l) { return l.scorecard.labVerified ? "Yes" : "No"; } },
-      { key: "certifications", label: "Certifications", display: function (l) { return l.certifications.join(", "); } },
-      { key: "suitableFor", label: "Suitable For", display: function (l) { return l.suitableFor.join(", "); } },
-      { key: "transactionsCompleted", label: "Transactions Completed", display: function (l) { return l.transactionsCompleted; } },
-      { key: "averageRating", label: "Rating", display: function (l) { return l.averageRating == null ? "N/A" : l.averageRating.toFixed(1); } }
-    ];
-
-    var higherBetter = {
-      carbonContent: true,
-      surfaceArea: true,
-      availableTonnes: true,
-      transactionsCompleted: true,
-      averageRating: true
-    };
-
-    var lowerBetter = {
-      pricePerTonne: true,
-      moisture: true,
-      ashContent: true
-    };
-
-    var headCells = selectedListings
-      .map(function (listing) {
-        return "<th>" + listing.producerName + "</th>";
-      })
-      .join("");
-
-    var rowsHtml = rowDefs
-      .map(function (row) {
-        var values = selectedListings.map(function (listing) {
-          return row.display(listing);
-        });
-
-        var bestValue = null;
-        if (higherBetter[row.key] || lowerBetter[row.key]) {
-          var numericValues = selectedListings
-            .map(function (listing) {
-              return getComparisonNumber(listing, row.key);
-            })
-            .filter(function (v) {
-              return typeof v === "number" && !Number.isNaN(v);
-            });
-
-          if (numericValues.length) {
-            bestValue = higherBetter[row.key]
-              ? Math.max.apply(null, numericValues)
-              : Math.min.apply(null, numericValues);
-          }
-        }
-
-        var valueCells = selectedListings
-          .map(function (listing, idx) {
-            var numericValue = getComparisonNumber(listing, row.key);
-            var isBest =
-              bestValue != null &&
-              typeof numericValue === "number" &&
-              !Number.isNaN(numericValue) &&
-              numericValue === bestValue;
-
-            var style = isBest
-              ? ' style="background: var(--color-accent-light); font-weight: var(--font-weight-bold);"'
-              : "";
-
-            return "<td" + style + ">" + values[idx] + "</td>";
-          })
-          .join("");
-
-        return "<tr><td><strong>" + row.label + "</strong></td>" + valueCells + "</tr>";
-      })
-      .join("");
-
-    container.innerHTML =
-      '<div style="display:flex;gap:var(--space-3);margin-bottom:var(--space-6);">' +
-      '<button id="back-to-listings" class="btn btn-secondary" type="button">Back to Listings</button>' +
-      '<button id="inquire-all" class="btn btn-primary" type="button">Inquire About All</button>' +
-      "</div>" +
-      '<div style="overflow-x:auto;border:1px solid var(--color-border);border-radius:var(--radius-lg);background:var(--color-surface);">' +
-      '<table style="width:100%;border-collapse:collapse;min-width:900px;">' +
-      "<thead><tr><th style=\"text-align:left;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-border);background:var(--color-bg);\">Field</th>" +
-      headCells +
-      "</tr></thead>" +
-      "<tbody>" +
-      rowsHtml +
-      "</tbody></table></div>";
-
-    container.querySelectorAll("th, td").forEach(function (el) {
-      if (!el.getAttribute("style")) {
-        el.setAttribute(
-          "style",
-          "text-align:left;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-border);font-size:var(--font-size-sm);"
-        );
-      } else {
-        el.setAttribute(
-          "style",
-          "text-align:left;padding:var(--space-3) var(--space-4);border-bottom:1px solid var(--color-border);font-size:var(--font-size-sm);" +
-            el.getAttribute("style")
-        );
-      }
-    });
-
-    var backButton = document.getElementById("back-to-listings");
-    var inquireAllButton = document.getElementById("inquire-all");
-
-    backButton.addEventListener("click", onBack);
-    inquireAllButton.addEventListener("click", function () {
-      selectedListings.forEach(function (listing) {
-        window.open("listing.html?id=" + listing.id, "_blank");
-      });
-    });
-  }
 
   function getFilteredListings(listings, filters) {
     var filtered = listings.filter(function (listing) {
@@ -586,7 +444,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     var grid = document.getElementById("listings-grid");
-    var comparisonView = document.getElementById("comparison-view");
     var listings = window.LISTINGS;
 
     if (!grid) {
@@ -601,9 +458,6 @@
     window.__cbxListingsUpdate = update;
 
     listingsGridEl = grid;
-    filterBarEl = document.getElementById("filter-bar");
-    comparisonViewEl = comparisonView;
-    allListingsRef = listings || [];
 
     var feedstockEl = document.getElementById("ms-feedstock");
     var regionEl = document.getElementById("ms-region");

@@ -368,6 +368,16 @@ function buildAvailabilityTabs() {
 
     panelsEl.appendChild(panel)
   })
+
+  wizardData.feedstocks.forEach(function(feedstock, i) {
+    const panel = document.getElementById('avail-panel-' + i)
+    if (!panel) return
+    const inputs = panel.querySelectorAll('input, select')
+    inputs.forEach(function(input) {
+      input.addEventListener('input', function() { saveAvailabilityData() })
+      input.addEventListener('change', function() { saveAvailabilityData() })
+    })
+  })
 }
 
 function saveAvailabilityData() {
@@ -391,20 +401,61 @@ function saveAvailabilityData() {
 function validateStep4() {
   saveAvailabilityData()
   let valid = true
+
   wizardData.feedstocks.forEach(function(feedstock, i) {
-    const a = wizardData.availability[feedstock]
-    if (!a.availableTonnes || !a.minOrderTonnes || !a.pricePerTonne || !a.leadTimeDays || a.deliveryMethods.length === 0) {
-      const tab = document.querySelector('#availability-tabs .feedstock-tab[data-index="' + i + '"]')
+    const a = wizardData.availability[feedstock] || {}
+    const tab = document.querySelector('#availability-tabs .feedstock-tab[data-index="' + i + '"]')
+    const panel = document.getElementById('avail-panel-' + i)
+
+    const missing = []
+    if (!a.availableTonnes) missing.push('Available tonnes')
+    if (!a.minOrderTonnes) missing.push('Minimum order tonnes')
+    if (!a.pricePerTonne) missing.push('Price per tonne')
+    if (!a.leadTimeDays) missing.push('Lead time days')
+    if (!a.deliveryMethods || a.deliveryMethods.length === 0) missing.push('At least one delivery method')
+
+    let errorEl = panel ? panel.querySelector('.avail-error') : null
+    if (!errorEl && panel) {
+      errorEl = document.createElement('p')
+      errorEl.className = 'avail-error field-error'
+      panel.insertBefore(errorEl, panel.firstChild)
+    }
+
+    if (missing.length > 0) {
       if (tab) {
         tab.style.color = '#C0392B'
         tab.style.borderBottomColor = '#C0392B'
       }
+      if (errorEl) {
+        errorEl.textContent = 'Missing required fields: ' + missing.join(', ')
+        errorEl.style.display = 'block'
+      }
       valid = false
+    } else {
+      if (tab) {
+        tab.style.color = ''
+        tab.style.borderBottomColor = ''
+        tab.classList.add('complete')
+      }
+      if (errorEl) errorEl.style.display = 'none'
     }
   })
+
   if (!valid) {
-    alert('Please complete all required fields for each feedstock including at least one delivery method.')
+    const firstIncomplete = wizardData.feedstocks.findIndex(function(feedstock) {
+      const a = wizardData.availability[feedstock] || {}
+      return !a.availableTonnes || !a.minOrderTonnes || !a.pricePerTonne || !a.leadTimeDays || !a.deliveryMethods || a.deliveryMethods.length === 0
+    })
+    if (firstIncomplete >= 0) {
+      document.querySelectorAll('#availability-tabs .feedstock-tab').forEach(function(t) { t.classList.remove('active') })
+      document.querySelectorAll('#availability-panels .feedstock-tab-panel').forEach(function(p) { p.classList.remove('active') })
+      const tab = document.querySelector('#availability-tabs .feedstock-tab[data-index="' + firstIncomplete + '"]')
+      const panel = document.getElementById('avail-panel-' + firstIncomplete)
+      if (tab) tab.classList.add('active')
+      if (panel) panel.classList.add('active')
+    }
   }
+
   return valid
 }
 
