@@ -662,11 +662,6 @@
   function initAuthState() {
     if (!document.body.dataset.cardClickDelegationBoundBuyer) {
       document.addEventListener("click", function (event) {
-        if (event.target.closest(".compare-corner")) {
-          event.preventDefault();
-          event.stopPropagation();
-          return;
-        }
 
         if (event.target.classList.contains("buynow-quick-btn")) {
           event.preventDefault();
