@@ -225,6 +225,11 @@ async function buyNow(dealId, buyerUID, buyerName, volume, deliveryMethod, deliv
 }
 
 async function createTransactionFromDeal(dealId, deal, agreedTerms) {
+  if (typeof submitToAirtable !== 'function') {
+    console.log('Airtable not available - transaction saved to Firestore only')
+    return
+  }
+
   await db.collection('transactions').add({
     dealId,
     listingId: deal.listingId,
@@ -246,20 +251,22 @@ async function createTransactionFromDeal(dealId, deal, agreedTerms) {
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   })
 
-  await submitToAirtable('Transactions', {
-    'Transaction ID': 'BM-' + Date.now(),
-    'Producer Name': deal.producerName,
-    'Buyer Name': deal.buyerName,
-    'Feedstock': deal.feedstock,
-    'Tonnes': agreedTerms.volume,
-    'Price Per Tonne': agreedTerms.pricePerTonne,
-    'Transaction Value': agreedTerms.totalValue,
-    'Commission Rate': agreedTerms.commissionRate,
-    'Commission Amount': agreedTerms.commissionAmount,
-    'Delivery Method': agreedTerms.deliveryMethod,
-    'Status': 'Agreed',
-    'Date Initiated': new Date().toISOString().split('T')[0]
-  })
+  if (typeof submitToAirtable === 'function') {
+    submitToAirtable('Transactions', {
+      'Transaction ID': 'BM-' + Date.now(),
+      'Producer Name': deal.producerName,
+      'Buyer Name': deal.buyerName,
+      'Feedstock': deal.feedstock,
+      'Tonnes': agreedTerms.volume,
+      'Price Per Tonne': agreedTerms.pricePerTonne,
+      'Transaction Value': agreedTerms.totalValue,
+      'Commission Rate': agreedTerms.commissionRate,
+      'Commission Amount': agreedTerms.commissionAmount,
+      'Delivery Method': agreedTerms.deliveryMethod,
+      'Status': 'Agreed',
+      'Date Initiated': new Date().toISOString().split('T')[0]
+    })
+  }
 }
 
 async function sendMessage(dealId, senderUID, senderName, senderRole, text) {
