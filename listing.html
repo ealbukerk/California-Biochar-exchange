@@ -284,6 +284,30 @@
       </div>
     </div>
 
+    <div id="listing-hero" style="display:none;background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:var(--space-6) 0">
+      <div class="container">
+        <div style="display:grid;grid-template-columns:1fr auto;align-items:center;gap:var(--space-8)">
+          <div>
+            <div id="hero-producer" style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-1)"></div>
+            <h1 id="hero-feedstock" style="font-size:var(--font-size-2xl);font-weight:var(--font-weight-bold);margin-bottom:var(--space-2)"></h1>
+            <div style="display:flex;align-items:center;gap:var(--space-6)">
+              <div>
+                <span id="hero-price" style="font-size:var(--font-size-3xl);font-weight:var(--font-weight-bold);color:var(--color-accent)"></span>
+                <span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">/tonne</span>
+              </div>
+              <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">
+                <span id="hero-tonnes"></span> available
+              </div>
+              <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">
+                Min order: <span id="hero-minorder"></span> t
+              </div>
+            </div>
+          </div>
+          <div id="hero-actions" style="display:flex;flex-direction:column;gap:var(--space-3);min-width:200px"></div>
+        </div>
+      </div>
+    </div>
+
     <main class="listing-page">
       <div class="container">
         <div id="listing-detail"></div>

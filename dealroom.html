@@ -375,7 +375,14 @@
     <script src="js/verified.js"></script>
     <script src="js/commission.js"></script>
     <script src="js/data.js"></script>
-    <script src="js/airtable.js"></script>
+    <script>
+      if (typeof submitToAirtable === 'undefined') {
+        function submitToAirtable(table, fields) {
+          console.log('Airtable stub: would submit to', table, fields)
+          return Promise.resolve({})
+        }
+      }
+    </script>
     <script src="js/dealroom.js"></script>
     <script>
       auth.onAuthStateChanged(function (user) {

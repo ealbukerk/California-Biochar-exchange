@@ -358,3 +358,117 @@ window.getDealHeaderDisplay = function(deal) {
     buyerNameHtml: (deal && deal.buyerName ? deal.buyerName : '') + buyerBadge
   }
 }
+
+let __dealRoomUnsub = null
+
+function renderDealRoom(dealId, user) {
+  const container = document.getElementById('dealroom-container')
+  if (!container) return
+
+  if (__dealRoomUnsub) {
+    __dealRoomUnsub()
+    __dealRoomUnsub = null
+  }
+
+  db.collection('deals').doc(dealId).get().then(function(snap) {
+    if (!snap.exists) {
+      container.innerHTML = '<div style="padding:40px;text-align:center"><p>Deal room not found.</p><a href="profile.html">← Back to profile</a></div>'
+      return
+    }
+
+    const deal = snap.data()
+    if (user.uid !== deal.buyerUID && user.uid !== deal.producerUID) {
+      container.innerHTML = '<div style="padding:40px;text-align:center"><p>Access denied.</p></div>'
+      return
+    }
+
+    container.innerHTML = '<div style="padding:24px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface)">' +
+      '<h2 style="margin:0 0 8px 0">Deal room</h2>' +
+      '<p style="margin:0;color:var(--color-text-secondary)">Loading live deal data...</p>' +
+      '</div>'
+
+    __dealRoomUnsub = subscribeToDealRoom(
+      dealId,
+      function onDealUpdate(nextDeal) {
+        if (!nextDeal) return
+        const status = nextDeal.status || 'Open'
+        const roundsUsed = Number(nextDeal.roundsUsed || 0)
+        const maxRounds = Number(nextDeal.maxRounds || 0)
+        container.innerHTML =
+          '<div style="display:grid;gap:12px;padding:24px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface)">' +
+          '<h2 style="margin:0">Deal room</h2>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Feedstock:</strong> ' + (nextDeal.feedstock || '—') + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Producer:</strong> ' + (nextDeal.producerName || '—') + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Buyer:</strong> ' + (nextDeal.buyerName || '—') + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Status:</strong> ' + status + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Rounds:</strong> ' + (roundsUsed + 1) + '/' + maxRounds + '</p>' +
+          '</div>'
+      },
+      function onMessagesUpdate() {},
+      function onBidsUpdate() {}
+    )
+  })
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+  const params = new URLSearchParams(window.location.search)
+  const dealId = params.get('id')
+  const listingId = params.get('listingId')
+
+  if (!dealId && !listingId) {
+    document.getElementById('dealroom-container').innerHTML =
+      '<div style="padding:40px;text-align:center"><p>Deal room not found.</p><a href="buyer.html">← Back to listings</a></div>'
+    return
+  }
+
+  auth.onAuthStateChanged(async function(user) {
+    if (!user) {
+      window.location.href = 'auth.html?role=buyer'
+      return
+    }
+
+    let activeDealId = dealId
+
+    if (!activeDealId && listingId) {
+      const container = document.getElementById('dealroom-container')
+      if (container) container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--color-text-muted)">Setting up your deal room...</div>'
+
+      const existing = await db.collection('deals')
+        .where('listingId', '==', listingId)
+        .where('buyerUID', '==', user.uid)
+        .where('status', '==', 'Open')
+        .get()
+
+      if (!existing.empty) {
+        activeDealId = existing.docs[0].id
+      } else {
+        const listing = (window.LISTINGS || []).find(function(l) {
+          return String(l.id) === String(listingId)
+        })
+        if (!listing) {
+          if (container) container.innerHTML = '<div style="padding:40px;text-align:center"><p>Listing not found.</p><a href="buyer.html">← Back to listings</a></div>'
+          return
+        }
+        const profile = await db.collection('users').doc(user.uid).get()
+        const userProfile = profile.exists ? profile.data() : { businessName: user.email }
+        activeDealId = await createDealRoom(listing, userProfile, user.uid)
+      }
+
+      history.replaceState(null, '', 'dealroom.html?id=' + activeDealId)
+    }
+
+    const buyNowParam = params.get('buynow')
+    if (buyNowParam === 'true' && listingId) {
+      const listing = (window.LISTINGS || []).find(function(l) {
+        return String(l.id) === String(listingId)
+      })
+      if (listing && activeDealId) {
+        const profile = await db.collection('users').doc(user.uid).get()
+        const userProfile = profile.exists ? profile.data() : { businessName: user.email }
+        await buyNow(activeDealId, user.uid, userProfile.businessName, listing.minOrderTonnes, 'Buyer collects', '')
+      }
+    }
+
+    renderDealRoom(activeDealId, user)
+  })
+})
