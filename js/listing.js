@@ -117,6 +117,7 @@
       '<p class="rating-line">' +
       ratingLine +
       "</p>" +
+      '<div id="top-card-actions"></div>' +
       "</section>" +
       '<section class="scorecard-section">' +
       '<div class="section-title-row"><h2>Lab Scorecard</h2><span class="verify-badge ' +
@@ -223,6 +224,22 @@
 
       var currentListing = (window.LISTINGS || []).find(function (l) { return l.id === listingId; });
       if (!currentListing) return;
+
+      var topCardActions = document.getElementById("top-card-actions");
+      if (topCardActions) {
+        if (user) {
+          topCardActions.innerHTML =
+            '<div style="display:flex;gap:var(--space-3);margin-top:var(--space-5)">' +
+              '<a href="dealroom.html?listingId=' + listing.id + '" class="btn btn-primary">Make an offer</a>' +
+              '<a href="dealroom.html?listingId=' + listing.id + '&buynow=true" class="btn btn-secondary">Buy now at $' + listing.pricePerTonne + '/tonne</a>' +
+            '</div>';
+        } else {
+          topCardActions.innerHTML =
+            '<div style="margin-top:var(--space-5)">' +
+              '<a href="auth.html?role=buyer" class="btn btn-primary">Create account to buy</a>' +
+            '</div>';
+        }
+      }
 
       const heroEl = document.getElementById('listing-hero')
       if (heroEl) {

@@ -391,14 +391,20 @@ function renderDealRoom(dealId, user) {
       dealId,
       function onDealUpdate(nextDeal) {
         if (!nextDeal) return
+        var listingData = nextDeal.listingData
+        if (!listingData && nextDeal.listingId) {
+          listingData = (window.LISTINGS || []).find(function(l) {
+            return String(l.id) === String(nextDeal.listingId)
+          })
+        }
         const status = nextDeal.status || 'Open'
         const roundsUsed = Number(nextDeal.roundsUsed || 0)
         const maxRounds = Number(nextDeal.maxRounds || 0)
         container.innerHTML =
           '<div style="display:grid;gap:12px;padding:24px;border:1px solid var(--color-border);border-radius:12px;background:var(--color-surface)">' +
           '<h2 style="margin:0">Deal room</h2>' +
-          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Feedstock:</strong> ' + (nextDeal.feedstock || '—') + '</p>' +
-          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Producer:</strong> ' + (nextDeal.producerName || '—') + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Feedstock:</strong> ' + (nextDeal.feedstock || (listingData && listingData.feedstock) || '—') + '</p>' +
+          '<p style="margin:0;color:var(--color-text-secondary)"><strong>Producer:</strong> ' + (nextDeal.producerName || (listingData && listingData.producerName) || '—') + '</p>' +
           '<p style="margin:0;color:var(--color-text-secondary)"><strong>Buyer:</strong> ' + (nextDeal.buyerName || '—') + '</p>' +
           '<p style="margin:0;color:var(--color-text-secondary)"><strong>Status:</strong> ' + status + '</p>' +
           '<p style="margin:0;color:var(--color-text-secondary)"><strong>Rounds:</strong> ' + (roundsUsed + 1) + '/' + maxRounds + '</p>' +
@@ -457,6 +463,8 @@ document.addEventListener('DOMContentLoaded', async function() {
       history.replaceState(null, '', 'dealroom.html?id=' + activeDealId)
     }
 
+    console.log('Deal room ID resolved:', activeDealId)
+
     const buyNowParam = params.get('buynow')
     if (buyNowParam === 'true' && listingId) {
       const listing = (window.LISTINGS || []).find(function(l) {
@@ -469,6 +477,7 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
     }
 
+    console.log('Calling render with:', activeDealId)
     renderDealRoom(activeDealId, user)
   })
 })
