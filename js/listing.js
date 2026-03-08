@@ -241,29 +241,6 @@
         }
       }
 
-      const heroEl = document.getElementById('listing-hero')
-      if (heroEl) {
-        document.getElementById('hero-producer').textContent = listing.producerName
-        document.getElementById('hero-feedstock').textContent = listing.feedstock + ' Biochar'
-        document.getElementById('hero-price').textContent = '$' + listing.pricePerTonne
-        document.getElementById('hero-tonnes').textContent = listing.availableTonnes
-        document.getElementById('hero-minorder').textContent = listing.minOrderTonnes
-        heroEl.style.display = 'block'
-
-        const heroActions = document.getElementById('hero-actions')
-        if (heroActions) {
-          if (user) {
-            heroActions.innerHTML =
-              '<a href="dealroom.html?listingId=' + listing.id + '" class="btn btn-primary" style="text-align:center">Make an offer</a>' +
-              '<a href="dealroom.html?listingId=' + listing.id + '&buynow=true" class="btn btn-secondary" style="text-align:center">Buy now at $' + listing.pricePerTonne + '/tonne</a>'
-          } else {
-            heroActions.innerHTML =
-              '<a href="auth.html?role=buyer" class="btn btn-primary" style="text-align:center">Create account to buy</a>' +
-              '<a href="auth.html" style="text-align:center;font-size:var(--font-size-sm);color:var(--color-accent)">Already have an account? Log in</a>'
-          }
-        }
-      }
-
       if (user) {
         dealEntryEl.innerHTML =
           '<h2 style="font-size:var(--font-size-xl);font-weight:var(--font-weight-bold);margin-bottom:var(--space-4)">Make a move</h2>' +
