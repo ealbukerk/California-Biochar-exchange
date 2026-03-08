@@ -22,7 +22,7 @@
     var selected = compareList
       .map(function (id) {
         return (window.LISTINGS || []).find(function (listing) {
-          return listing.id === id;
+          return String(listing.id) === String(id);
         });
       })
       .filter(Boolean);
