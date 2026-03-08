@@ -389,12 +389,6 @@ document.addEventListener('click', function(e) {
         ? window.renderVerifiedBadge()
         : "";
 
-      var certBadges = listing.certifications
-        .map(function (cert) {
-          return '<span class="cert-badge">' + cert + "</span>";
-        })
-        .join("");
-
       var suitableTags = visibleSuitable
         .map(function (item) {
           return '<span class="suitable-tag">' + item + "</span>";
@@ -420,12 +414,19 @@ document.addEventListener('click', function(e) {
         '<span class="scorecard-badge">pH ' + listing.scorecard.pH + "</span>" +
         '<span class="scorecard-badge">' + listing.scorecard.surfaceArea + ' m²/g</span>' +
         "</div>" +
-        '<div class="badge-row" style="margin-top:var(--space-3);">' + certBadges + "</div>" +
         '<div class="suitable-row" style="margin-top:var(--space-3);">' + suitableTags + "</div>" +
-        '<p class="card-detail">Availability: ' + formatDateRange(listing.availableFrom, listing.availableUntil) + "</p>" +
         '<p class="card-detail">Min order: ' + listing.minOrderTonnes + " tonnes</p>" +
         '<p class="card-detail ' + leadTime.className + '">' + leadTime.text + "</p>" +
-        '<div class="rating-row"><span>' + listing.transactionsCompleted + " transactions</span><span>·</span><span>" + ratingText + "</span>" + ratingStarsHtml + "</div>" +
+        '<div class="rating-row">' +
+          '<span>' + listing.transactionsCompleted + ' transactions</span>' +
+          '<span>·</span>' +
+          '<span>' + ratingText + '</span>' +
+          ratingStarsHtml +
+          '<span>·</span>' +
+          '<span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
+          (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
+          '</span>' +
+        '</div>' +
         '<div class="listing-actions" style="display:flex;gap:var(--space-2);margin-top:var(--space-3);flex-wrap:wrap;">' +
         '<span class="btn btn-primary">Make an offer</span>' +
         '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + listing.id + '">Buy now</button>' +

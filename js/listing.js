@@ -51,12 +51,6 @@
   }
 
   function renderListing(container, listing) {
-    var certBadges = listing.certifications
-      .map(function (cert) {
-        return '<span class="cert-badge">' + cert + "</span>";
-      })
-      .join("");
-
     var suitableTags = listing.suitableFor
       .map(function (item) {
         return '<span class="suitable-tag">' + item + "</span>";
@@ -105,18 +99,12 @@
       '<span class="headline-detail">' +
       listing.availableTonnes +
       " tonnes available</span>" +
-      '<span class="headline-detail">' +
-      formatDate(listing.availableFrom) +
-      " – " +
-      formatDate(listing.availableUntil) +
-      "</span>" +
-      "</div>" +
-      '<div class="badge-row">' +
-      certBadges +
       "</div>" +
       '<p class="rating-line">' +
       ratingLine +
-      "</p>" +
+      '<span style="margin-left:12px;color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
+      (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
+      '</span></p>' +
       '<div id="top-card-actions"></div>' +
       "</section>" +
       '<section class="scorecard-section">' +
