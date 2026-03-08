@@ -744,6 +744,7 @@
   function init() {
     initAuthState();
     initBrowseFilters();
+    renderBrowseListings();
     initMap();
     var logoutBtn = document.getElementById("nav-logout");
     if (logoutBtn) {
