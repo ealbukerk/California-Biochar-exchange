@@ -47,23 +47,63 @@
     modal.classList.remove('hidden');
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;display:block;';
 
-    var cols = listings.map(function(l) {
-      return '<td style="padding:16px;vertical-align:top;width:50%"><strong>' + l.producerName + '</strong><br>' +
-        '<span class="feedstock-tag">' + l.feedstock + '</span><br><br>' +
-        '<strong>Price:</strong> $' + l.pricePerTonne + '/t<br>' +
-        '<strong>Available:</strong> ' + l.availableTonnes + ' tonnes<br>' +
-        '<strong>Carbon:</strong> ' + l.scorecard.carbonContent + '%<br>' +
-        '<strong>pH:</strong> ' + l.scorecard.pH + '<br>' +
-        '<strong>Surface Area:</strong> ' + l.scorecard.surfaceArea + ' m²/g<br>' +
-        '<strong>Certifications:</strong> ' + (l.certifications.length ? l.certifications.join(', ') : 'None') +
-        '</td>';
+    var fields = [
+      { label: 'Carbon Content', key: 'carbonContent', unit: '%', higher: true },
+      { label: 'pH', key: 'pH', unit: '', higher: true },
+      { label: 'Surface Area', key: 'surfaceArea', unit: ' m²/g', higher: true },
+      { label: 'Moisture', key: 'moisture', unit: '%', higher: false },
+      { label: 'Ash Content', key: 'ashContent', unit: '%', higher: false },
+      { label: 'Electrical Conductivity', key: 'electricalConductivity', unit: ' dS/m', higher: false },
+    ];
+
+    var scores = listings.map(function() { return 0; });
+
+    var fieldRows = fields.map(function(field) {
+      var values = listings.map(function(l) {
+        return typeof l.scorecard[field.key] === 'number' ? l.scorecard[field.key] : null;
+      });
+      var validValues = values.filter(function(v) { return v !== null; });
+      var best = validValues.length ? (field.higher ? Math.max.apply(null, validValues) : Math.min.apply(null, validValues)) : null;
+      var cells = values.map(function(v, i) {
+        var isBest = v !== null && v === best;
+        if (isBest) scores[i] += 1;
+        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' +
+          (v !== null ? v + field.unit : '—') +
+          (isBest ? ' <span style="color:var(--color-accent);font-weight:700">✓</span>' : '') +
+          '</td>';
+      }).join('');
+      return '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">' + field.label + '</td>' + cells + '</tr>';
     }).join('');
 
-    modal.innerHTML = '<div style="background:#fff;max-width:900px;margin:60px auto;border-radius:8px;padding:32px">' +
+    var particleRow = '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500">Particle Size</td>' +
+      listings.map(function(l) {
+        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' + htmlEscape(l.scorecard.particleSize || '—') + '</td>';
+      }).join('') + '</tr>';
+
+    var maxScore = Math.max.apply(null, scores);
+    var scoreRow = '<tr style="background:var(--color-accent-light)"><td style="padding:12px 16px;font-weight:700">Total Score</td>' +
+      scores.map(function(s) {
+        return '<td style="padding:12px 16px;text-align:center;font-weight:700;font-size:18px;color:' +
+          (s === maxScore ? 'var(--color-accent)' : 'inherit') + '">' + s + '</td>';
+      }).join('') + '</tr>';
+
+    var headerCols = '<th style="padding:12px 16px;text-align:left;min-width:160px">Field</th>' +
+      listings.map(function(l) {
+        return '<th style="padding:12px 16px;text-align:center;font-weight:600">' +
+          htmlEscape(l.producerName) + '<br>' +
+          '<span style="font-size:12px;font-weight:400;color:#666">' + htmlEscape(l.feedstock) + '</span>' +
+          '</th>';
+      }).join('');
+
+    modal.innerHTML = '<div style="background:#fff;max-width:' + (300 + listings.length * 220) + 'px;margin:60px auto;border-radius:8px;padding:32px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">' +
       '<h2 style="margin:0">Compare Listings</h2>' +
       '<button onclick="document.getElementById(\'comparison-view\').style.display=\'none\'" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>' +
-      '</div><table style="width:100%;border-collapse:collapse"><tr>' + cols + '</tr></table></div>';
+      '</div>' +
+      '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">' +
+      '<thead style="background:#f9f9f9"><tr>' + headerCols + '</tr></thead>' +
+      '<tbody>' + fieldRows + particleRow + scoreRow + '</tbody>' +
+      '</table></div></div>';
 
     if (!existing) document.body.appendChild(modal);
     modal.style.display = 'block';
