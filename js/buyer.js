@@ -47,47 +47,130 @@
     modal.classList.remove('hidden');
     modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;display:block;';
 
-    var fields = [
-      { label: 'Carbon Content', key: 'carbonContent', unit: '%', higher: true },
-      { label: 'pH', key: 'pH', unit: '', higher: true },
-      { label: 'Surface Area', key: 'surfaceArea', unit: ' m²/g', higher: true },
-      { label: 'Moisture', key: 'moisture', unit: '%', higher: false },
-      { label: 'Ash Content', key: 'ashContent', unit: '%', higher: false },
-      { label: 'Electrical Conductivity', key: 'electricalConductivity', unit: ' dS/m', higher: false },
-    ];
-
+    // Score each listing per field. Ties all get the point.
     var scores = listings.map(function() { return 0; });
 
-    var fieldRows = fields.map(function(field) {
+    function awardBest(indexedValues, lowerIsBetter) {
+      var vals = indexedValues.map(function(iv) { return iv.v; });
+      var validVals = vals.filter(function(v) { return v !== null; });
+      if (!validVals.length) return [];
+      var best = lowerIsBetter ? Math.min.apply(null, validVals) : Math.max.apply(null, validVals);
+      return indexedValues.filter(function(iv) { return iv.v === best; }).map(function(iv) { return iv.i; });
+    }
+
+    function awardClosestToRange(indexedValues, lo, hi) {
+      var distances = indexedValues.map(function(iv) {
+        if (iv.v === null) return { i: iv.i, d: Infinity };
+        var v = iv.v;
+        var d = (v >= lo && v <= hi) ? 0 : Math.min(Math.abs(v - lo), Math.abs(v - hi));
+        return { i: iv.i, d: d };
+      });
+      var validD = distances.filter(function(x) { return x.d !== Infinity; });
+      if (!validD.length) return [];
+      var bestD = Math.min.apply(null, validD.map(function(x) { return x.d; }));
+      return distances.filter(function(x) { return x.d === bestD; }).map(function(x) { return x.i; });
+    }
+
+    function parseParticleRange(str) {
+      if (!str) return null;
+      var nums = str.replace(/[^0-9.\-–]/g, ' ').trim().split(/[\s\-–]+/).map(parseFloat).filter(function(n) { return !isNaN(n); });
+      if (nums.length >= 2) return { lo: nums[0], hi: nums[1] };
+      if (nums.length === 1) return { lo: nums[0], hi: nums[0] };
+      return null;
+    }
+
+    function awardBestParticle(listings) {
+      var OPTIMAL_LO = 1, OPTIMAL_HI = 4;
+      var scored = listings.map(function(l, i) {
+        var r = parseParticleRange(l.scorecard.particleSize);
+        if (!r) return { i: i, score: -1 };
+        var overlapLo = Math.max(r.lo, OPTIMAL_LO);
+        var overlapHi = Math.min(r.hi, OPTIMAL_HI);
+        var overlap = Math.max(0, overlapHi - overlapLo);
+        var span = r.hi - r.lo || 1;
+        return { i: i, score: overlap / span };
+      });
+      var validScored = scored.filter(function(x) { return x.score >= 0; });
+      if (!validScored.length) return [];
+      var best = Math.max.apply(null, validScored.map(function(x) { return x.score; }));
+      return scored.filter(function(x) { return x.score === best; }).map(function(x) { return x.i; });
+    }
+
+    var numericFields = [
+      { label: 'Carbon Content', key: 'carbonContent', unit: '%', lowerIsBetter: false },
+      { label: 'Surface Area', key: 'surfaceArea', unit: ' m²/g', lowerIsBetter: false },
+      { label: 'Moisture', key: 'moisture', unit: '%', lowerIsBetter: true },
+      { label: 'Ash Content', key: 'ashContent', unit: '%', lowerIsBetter: true },
+      { label: 'Electrical Conductivity', key: 'electricalConductivity', unit: ' dS/m', lowerIsBetter: true },
+    ];
+
+    // Award points for each numeric field
+    numericFields.forEach(function(field) {
+      var indexed = listings.map(function(l, i) {
+        var v = typeof l.scorecard[field.key] === 'number' ? l.scorecard[field.key] : null;
+        return { i: i, v: v };
+      });
+      awardBest(indexed, field.lowerIsBetter).forEach(function(i) { scores[i] += 1; });
+    });
+
+    // Award points for pH (optimal 7.5–8.5)
+    var phIndexed = listings.map(function(l, i) { return { i: i, v: typeof l.scorecard.pH === 'number' ? l.scorecard.pH : null }; });
+    awardClosestToRange(phIndexed, 7.5, 8.5).forEach(function(i) { scores[i] += 1; });
+
+    // Award points for particle size (optimal 1–4mm)
+    awardBestParticle(listings).forEach(function(i) { scores[i] += 1; });
+
+    // Build field rows with winner checkmarks
+    function buildNumericRow(label, values, unit, lowerIsBetter) {
+      var indexed = values.map(function(v, i) { return { i: i, v: v }; });
+      var winners = awardBest(indexed, lowerIsBetter);
+      var cells = values.map(function(v, i) {
+        var isWinner = winners.indexOf(i) !== -1;
+        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' +
+          (v !== null ? v + unit : '—') +
+          (isWinner ? ' <span style="color:var(--color-accent);font-weight:700">✓</span>' : '') +
+          '</td>';
+      }).join('');
+      return '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">' + label + '</td>' + cells + '</tr>';
+    }
+
+    var fieldRows = numericFields.map(function(field) {
       var values = listings.map(function(l) {
         return typeof l.scorecard[field.key] === 'number' ? l.scorecard[field.key] : null;
       });
-      var validValues = values.filter(function(v) { return v !== null; });
-      var best = validValues.length ? (field.higher ? Math.max.apply(null, validValues) : Math.min.apply(null, validValues)) : null;
-      var cells = values.map(function(v, i) {
-        var isBest = v !== null && v === best;
-        if (isBest) scores[i] += 1;
-        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' +
-          (v !== null ? v + field.unit : '—') +
-          (isBest ? ' <span style="color:var(--color-accent);font-weight:700">✓</span>' : '') +
-          '</td>';
-      }).join('');
-      return '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500;white-space:nowrap">' + field.label + '</td>' + cells + '</tr>';
+      return buildNumericRow(field.label, values, field.unit, field.lowerIsBetter);
     }).join('');
 
-    var particleRow = '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500">Particle Size</td>' +
-      listings.map(function(l) {
-        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' + htmlEscape(l.scorecard.particleSize || '—') + '</td>';
+    // pH row
+    var phVals = listings.map(function(l) { return typeof l.scorecard.pH === 'number' ? l.scorecard.pH : null; });
+    var phWinners = awardClosestToRange(phVals.map(function(v,i){return{i:i,v:v};}), 7.5, 8.5);
+    var phRow = '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500">pH <span style="font-size:11px;color:#999">(opt 7.5–8.5)</span></td>' +
+      phVals.map(function(v, i) {
+        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' +
+          (v !== null ? v : '—') +
+          (phWinners.indexOf(i) !== -1 ? ' <span style="color:var(--color-accent);font-weight:700">✓</span>' : '') +
+          '</td>';
       }).join('') + '</tr>';
 
+    // Particle size row
+    var particleWinners = awardBestParticle(listings);
+    var particleRow = '<tr><td style="padding:12px 16px;border-bottom:1px solid #eee;font-weight:500">Particle Size <span style="font-size:11px;color:#999">(opt 1–4mm)</span></td>' +
+      listings.map(function(l, i) {
+        return '<td style="padding:12px 16px;border-bottom:1px solid #eee;text-align:center">' +
+          htmlEscape(l.scorecard.particleSize || '—') +
+          (particleWinners.indexOf(i) !== -1 ? ' <span style="color:var(--color-accent);font-weight:700">✓</span>' : '') +
+          '</td>';
+      }).join('') + '</tr>';
+
+    // Total score row
     var maxScore = Math.max.apply(null, scores);
     var scoreRow = '<tr style="background:var(--color-accent-light)"><td style="padding:12px 16px;font-weight:700">Total Score</td>' +
       scores.map(function(s) {
         return '<td style="padding:12px 16px;text-align:center;font-weight:700;font-size:18px;color:' +
-          (s === maxScore ? 'var(--color-accent)' : 'inherit') + '">' + s + '</td>';
+          (s === maxScore ? 'var(--color-accent)' : 'inherit') + '">' + s + ' / 7</td>';
       }).join('') + '</tr>';
 
-    var headerCols = '<th style="padding:12px 16px;text-align:left;min-width:160px">Field</th>' +
+    var headerCols = '<th style="padding:12px 16px;text-align:left;min-width:180px">Field</th>' +
       listings.map(function(l) {
         return '<th style="padding:12px 16px;text-align:center;font-weight:600">' +
           htmlEscape(l.producerName) + '<br>' +
@@ -95,14 +178,14 @@
           '</th>';
       }).join('');
 
-    modal.innerHTML = '<div style="background:#fff;max-width:' + (300 + listings.length * 220) + 'px;margin:60px auto;border-radius:8px;padding:32px">' +
+    modal.innerHTML = '<div style="background:#fff;max-width:' + (280 + listings.length * 220) + 'px;margin:60px auto;border-radius:8px;padding:32px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">' +
       '<h2 style="margin:0">Compare Listings</h2>' +
       '<button onclick="document.getElementById(\'comparison-view\').style.display=\'none\'" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>' +
       '</div>' +
       '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">' +
       '<thead style="background:#f9f9f9"><tr>' + headerCols + '</tr></thead>' +
-      '<tbody>' + fieldRows + particleRow + scoreRow + '</tbody>' +
+      '<tbody>' + fieldRows + phRow + particleRow + scoreRow + '</tbody>' +
       '</table></div></div>';
 
     if (!existing) document.body.appendChild(modal);
@@ -370,7 +453,7 @@
       ">" +
       '<label class="compare-label">Compare</label>' +
       "</div>" +
-      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
+      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%">' +
       '<div class="listing-top-row"><h3 style="margin:0;">' + htmlEscape(listing.producerName) + '</h3>' + (verifiedBadge ? verifiedBadge : "") + "</div>" +
       '<div class="listing-subtitle">' + htmlEscape(listing.region || listing.state || "") + "</div>" +
       '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + "</span>" +
