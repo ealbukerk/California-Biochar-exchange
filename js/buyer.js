@@ -273,11 +273,6 @@
 
   function listingCardHtml(listing, extraScore, explanation, options) {
     options = options || {};
-    var certBadges = listing.certifications
-      .map(function (cert) {
-        return '<span class="cert-badge">' + htmlEscape(cert) + "</span>";
-      })
-      .join("");
 
     var visibleSuitable = listing.suitableFor.slice(0, 3);
     var suitableTags = visibleSuitable
@@ -321,12 +316,10 @@
       '<span class="scorecard-badge">' + htmlEscape(listing.scorecard.surfaceArea) + " m²/g</span>" +
       "</div>" +
       "</div>" +
-      '<div class="badge-row" style="margin-top:var(--space-3);">' + certBadges + "</div>" +
       '<div class="suitable-row" style="margin-top:var(--space-3);">' + suitableTags + "</div>" +
-      '<p class="card-detail">Availability: ' + htmlEscape(formatDateRange(listing.availableFrom, listing.availableUntil)) + "</p>" +
       '<p class="card-detail">Min order: ' + htmlEscape(listing.minOrderTonnes) + " tonnes</p>" +
       '<p class="card-detail ' + lead.className + '">' + htmlEscape(lead.text) + "</p>" +
-      '<div class="rating-row"><span>' + htmlEscape(listing.transactionsCompleted) + " transactions</span><span>·</span><span>" + htmlEscape(ratingText) + "</span>" + (stars ? '<span class="star-rating">' + htmlEscape(stars) + "</span>" : "") + "</div>" +
+      '<div class="rating-row"><span>' + htmlEscape(listing.transactionsCompleted) + " transactions</span><span>·</span><span>" + htmlEscape(ratingText) + "</span>" + (stars ? '<span class="star-rating">' + htmlEscape(stars) + "</span>" : "") + '<span>·</span><span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span></div>' +
       (typeof extraScore === "number"
         ? '<p class="card-detail" style="margin-top:var(--space-2);">Match score: ' + htmlEscape(extraScore) + '%</p>' +
           '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
