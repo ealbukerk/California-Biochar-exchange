@@ -661,7 +661,7 @@
     grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
     // Populate delivered cost for logged-in buyers with ZIP
     (function() {
-      var profile = window._buyerProfile || (window.state && window.state.profile);
+      var profile = state.profile;
       if (!profile || !profile.zipcode) return;
       var buyerZip = profile.zipcode;
       var appRate = profile.applicationRate || 0;
