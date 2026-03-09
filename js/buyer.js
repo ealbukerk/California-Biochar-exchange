@@ -370,7 +370,7 @@
       ">" +
       '<label class="compare-label">Compare</label>' +
       "</div>" +
-      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
+      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:block">' +
       '<div class="listing-top-row"><h3 style="margin:0;">' + htmlEscape(listing.producerName) + '</h3>' + (verifiedBadge ? verifiedBadge : "") + "</div>" +
       '<div class="listing-subtitle">' + htmlEscape(listing.region || listing.state || "") + "</div>" +
       '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + "</span>" +
