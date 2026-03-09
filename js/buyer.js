@@ -36,8 +36,36 @@
     if (compareBar) compareBar.style.display = "none";
     if (comparisonView) {
       comparisonView.classList.remove("hidden");
-      renderComparisonView(selected);
     }
+    renderComparisonView(selected);
+  }
+
+  function renderComparisonView(listings) {
+    var existing = document.getElementById('comparison-view');
+    var modal = existing || document.createElement('div');
+    modal.id = 'comparison-view';
+    modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;display:block;';
+
+    var cols = listings.map(function(l) {
+      return '<td style="padding:16px;vertical-align:top;width:50%"><strong>' + l.producerName + '</strong><br>' +
+        '<span class="feedstock-tag">' + l.feedstock + '</span><br><br>' +
+        '<strong>Price:</strong> $' + l.pricePerTonne + '/t<br>' +
+        '<strong>Available:</strong> ' + l.availableTonnes + ' tonnes<br>' +
+        '<strong>Carbon:</strong> ' + l.scorecard.carbonContent + '%<br>' +
+        '<strong>pH:</strong> ' + l.scorecard.pH + '<br>' +
+        '<strong>Surface Area:</strong> ' + l.scorecard.surfaceArea + ' m²/g<br>' +
+        '<strong>Certifications:</strong> ' + (l.certifications.length ? l.certifications.join(', ') : 'None') +
+        '</td>';
+    }).join('');
+
+    modal.innerHTML = '<div style="background:#fff;max-width:900px;margin:60px auto;border-radius:8px;padding:32px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">' +
+      '<h2 style="margin:0">Compare Listings</h2>' +
+      '<button onclick="document.getElementById(\'comparison-view\').style.display=\'none\'" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>' +
+      '</div><table style="width:100%;border-collapse:collapse"><tr>' + cols + '</tr></table></div>';
+
+    if (!existing) document.body.appendChild(modal);
+    modal.style.display = 'block';
   }
 
   document.addEventListener("click", function (e) {
