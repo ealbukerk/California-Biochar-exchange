@@ -472,6 +472,7 @@
       '<p class="card-detail">Min order: ' + htmlEscape(listing.minOrderTonnes) + " tonnes</p>" +
       '<p class="card-detail ' + lead.className + '">' + htmlEscape(lead.text) + "</p>" +
       '<div class="rating-row"><span>' + htmlEscape(listing.transactionsCompleted) + " transactions</span><span>·</span><span>" + htmlEscape(ratingText) + "</span>" + (stars ? '<span class="star-rating">' + htmlEscape(stars) + "</span>" : "") + '<span>·</span><span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span></div>' +
+      '<div class="delivered-cost-inline" id="dc-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-muted)"></div>' +
       (typeof extraScore === "number"
         ? '<p class="card-detail" style="margin-top:var(--space-2);">Match score: ' + htmlEscape(extraScore) + '%</p>' +
           '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
@@ -658,6 +659,34 @@
     }
 
     grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
+    // Populate delivered cost for logged-in buyers with ZIP
+    (function() {
+      var profile = window._buyerProfile || (window.state && window.state.profile);
+      if (!profile || !profile.zipcode) return;
+      var buyerZip = profile.zipcode;
+      var appRate = profile.applicationRate || 0;
+      (window.LISTINGS || []).forEach(function(listing) {
+        var el = document.getElementById('dc-' + listing.id);
+        if (!el || !listing.producerZip) return;
+        el.textContent = 'Calculating delivered cost...';
+        window.DeliveredCost.calc({
+          producerZip: listing.producerZip,
+          buyerZip: buyerZip,
+          pricePerTonne: listing.pricePerTonne,
+          tonnes: listing.minOrderTonnes,
+          applicationRate: appRate,
+          spreadCostPerTonne: 60
+        }).then(function(result) {
+          el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
+            Math.round(result.deliveredPerTonne) +
+            '/t delivered</strong>' +
+            (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
+            ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>';
+        }).catch(function() {
+          el.textContent = '';
+        });
+      });
+    })();
     updateCompareBar();
 
   }

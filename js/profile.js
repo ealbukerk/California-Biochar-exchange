@@ -203,6 +203,16 @@
         ? '<input id="profile-zipcode" value="' + (profile.zipcode || "") + '">' 
         : '<span>' + (profile.zipcode || "-") + '</span>') +
       '</div>' +
+      '<div class="info-item"><label>Farm Acreage</label>' +
+      (editing
+        ? '<input id="profile-acreage" type="number" min="0" value="' + (profile.acreage || "") + '" placeholder="acres">'
+        : '<span>' + (profile.acreage ? profile.acreage + ' acres' : '-') + '</span>') +
+      '</div>' +
+      '<div class="info-item"><label>Biochar Application Rate</label>' +
+      (editing
+        ? '<input id="profile-apprate" type="number" min="0" step="0.1" value="' + (profile.applicationRate || "") + '" placeholder="tons/acre">'
+        : '<span>' + (profile.applicationRate ? profile.applicationRate + ' tons/acre' : '-') + '</span>') +
+      '</div>' +
       '<div class="info-item"><label>Business Website</label>' +
       (editing
         ? '<input id="profile-business-website" type="url" value="' + (profile.businessWebsite || "") + '">' 
@@ -260,6 +270,8 @@
       businessName: document.getElementById("profile-business").value.trim(),
       state: document.getElementById("profile-state").value.trim(),
       zipcode: document.getElementById("profile-zipcode").value.trim(),
+      acreage: parseFloat(document.getElementById("profile-acreage").value) || null,
+      applicationRate: parseFloat(document.getElementById("profile-apprate").value) || null,
       businessWebsite: document.getElementById("profile-business-website").value.trim(),
       ein: document.getElementById("profile-ein").value.trim()
     };
