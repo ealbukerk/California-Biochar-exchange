@@ -313,6 +313,16 @@
 
     <section class="listings-section">
       <div class="container">
+        <div id="buyer-prefs-bar" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap">
+          <div style="flex:1;min-width:220px">
+            <label style="display:block;font-size:var(--font-size-sm);font-weight:600;margin-bottom:4px">
+              Spreading cost: $<span id="pref-spread-val">60</span>/tonne
+            </label>
+            <input id="pref-spread-slider" type="range" min="40" max="80" value="60" style="width:100%" />
+            <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">Drag to update delivered cost estimates on all listings</p>
+          </div>
+          <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)" id="pref-apprate-display"></div>
+        </div>
         <div id="top-matches-block" class="hidden">
           <h2>Your top matches</h2>
           <p>Ranked by compatibility with your soil profile and crop types.</p>

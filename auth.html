@@ -269,6 +269,22 @@
                     <option>Other</option>
                   </select>
                 </div>
+                <div id="buyer-farm-fields">
+                  <div class="field">
+                    <label for="su-acreage">Farm acreage <span style="color:var(--color-text-muted);font-weight:400">(optional)</span></label>
+                    <input id="su-acreage" type="number" min="0" placeholder="e.g. 250" />
+                  </div>
+                  <div class="field">
+                    <label for="su-apprate">Biochar application rate <span style="color:var(--color-text-muted);font-weight:400">(tons/acre, optional — default 7)</span></label>
+                    <input id="su-apprate" type="number" min="0" step="0.1" placeholder="7" />
+                  </div>
+                  <div class="field">
+                    <label for="su-spreadcost">Spreading cost preference: $<span id="su-spread-val">60</span>/tonne</label>
+                    <input id="su-spreadcost" type="range" min="40" max="80" value="60" style="width:100%" 
+                      oninput="document.getElementById('su-spread-val').textContent=this.value" />
+                    <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">Typical range $40–$80/tonne. Used to estimate delivered cost on listings.</p>
+                  </div>
+                </div>
               </div>
 
               <div class="step-actions">
@@ -429,6 +445,9 @@
               soilPH: soilPH,
               state: state,
               zipcode: zipcode,
+              acreage: parseFloat(document.getElementById("su-acreage").value) || null,
+              applicationRate: parseFloat(document.getElementById("su-apprate").value) || 7,
+              spreadCostPerTonne: parseFloat(document.getElementById("su-spreadcost").value) || 60,
               country: country,
               ein: ein,
               businessWebsite: businessWebsite,

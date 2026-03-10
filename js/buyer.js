@@ -670,7 +670,9 @@
   function injectDeliveredCosts() {
     if (!state.profile || !state.profile.zipcode) return;
     var buyerZip = state.profile.zipcode;
-    var appRate = state.profile.applicationRate || 0;
+    var appRate = state.profile.applicationRate || 7;
+    var slider = document.getElementById('pref-spread-slider');
+    var spreadCost = slider ? (parseFloat(slider.value) || 60) : (state.profile.spreadCostPerTonne || 60);
     (window.LISTINGS || []).forEach(function(listing) {
       var el = document.getElementById('dc-' + listing.id);
       if (!el || !listing.producerZip) return;
@@ -681,7 +683,7 @@
         pricePerTonne: listing.pricePerTonne,
         tonnes: listing.minOrderTonnes,
         applicationRate: appRate,
-        spreadCostPerTonne: 60
+        spreadCostPerTonne: spreadCost
       }).then(function(result) {
         el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
           Math.round(result.deliveredPerTonne) +
@@ -693,6 +695,17 @@
       });
     });
   }
+
+  // Re-run delivered costs when spread slider changes
+  (function() {
+    var slider = document.getElementById('pref-spread-slider');
+    var sliderVal = document.getElementById('pref-spread-val');
+    if (!slider) return;
+    slider.addEventListener('input', function() {
+      if (sliderVal) sliderVal.textContent = slider.value;
+      injectDeliveredCosts();
+    });
+  })();
 
   function initBrowseFilters() {
     makeMultiSelect(
@@ -904,6 +917,19 @@
           updateTopNav();
           renderHeroSlot();
           renderTopMatchesBlock();
+          // Set slider and display from saved profile prefs
+          var slider = document.getElementById('pref-spread-slider');
+          var sliderVal = document.getElementById('pref-spread-val');
+          var appRateDisplay = document.getElementById('pref-apprate-display');
+          if (slider && state.profile) {
+            var savedSpread = state.profile.spreadCostPerTonne || 60;
+            slider.value = savedSpread;
+            if (sliderVal) sliderVal.textContent = savedSpread;
+          }
+          if (appRateDisplay && state.profile) {
+            var ar = state.profile.applicationRate || 7;
+            appRateDisplay.textContent = 'Application rate: ' + ar + ' t/acre';
+          }
           injectDeliveredCosts();
         })
         .catch(function () {
