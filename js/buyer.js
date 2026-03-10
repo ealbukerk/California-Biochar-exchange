@@ -444,6 +444,13 @@
     var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
       ? window.renderVerifiedBadge()
       : "";
+    var autoVolume = (function() {
+      var ac = state.profile && state.profile.acreage;
+      var s = document.getElementById('pref-apprate-slider');
+      var ar = s ? (parseFloat(s.value) || 7) : ((state.profile && state.profile.applicationRate) || 7);
+      var vol = ac && ar ? Math.round(ac * ar) : null;
+      return (vol && vol >= listing.minOrderTonnes) ? vol : listing.minOrderTonnes;
+    })();
 
     return (
       '<div class="listing-card-wrapper" style="position:relative">' +
@@ -482,15 +489,7 @@
       '<span class="btn btn-primary">Make an offer</span>' +
       '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button></div>' +
       '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
-      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + (function() {' +
-      '  var ac = state.profile && state.profile.acreage;' +
-      '  var ar = (function() {' +
-      "    var s = document.getElementById('pref-apprate-slider');" +
-      '    return s ? parseFloat(s.value) : (state.profile && state.profile.applicationRate) || 7;' +
-      '  })();' +
-      '  var vol = ac && ar ? Math.round(ac * ar) : null;' +
-      '  return htmlEscape(vol && vol >= listing.minOrderTonnes ? vol : listing.minOrderTonnes);' +
-      '})() + '" style="max-width:130px;" />' +
+      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(autoVolume) + '" style="max-width:130px;" />' +
       '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm purchase</button>' +
       "</div>" +
       "</a>" +
