@@ -246,6 +246,7 @@ async function createTransactionFromDeal(dealId, deal, agreedTerms) {
     deliveryMethod: agreedTerms.deliveryMethod,
     deliveryDate: agreedTerms.deliveryDate,
     status: 'Agreed',
+    carbonContentPercent: deal.listingData && deal.listingData.scorecard ? deal.listingData.scorecard.carbonContent : null,
     confirmedByBuyer: false,
     confirmedByProducer: false,
     createdAt: firebase.firestore.FieldValue.serverTimestamp()

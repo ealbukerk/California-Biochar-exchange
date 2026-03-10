@@ -140,6 +140,66 @@
     }
   }
 
+  function renderCarbonDashboard() {
+    var wrap = document.getElementById("carbon-dashboard-wrap");
+    if (!wrap || !state.user) return;
+
+    wrap.innerHTML = '<p style="color:var(--color-text-muted)">Calculating your carbon impact...</p>';
+
+    db.collection("transactions")
+      .where("buyerUID", "==", state.user.uid)
+      .get()
+      .then(function(snap) {
+        if (snap.empty) {
+          wrap.innerHTML = '<p style="color:var(--color-text-muted)">No completed transactions yet. Your carbon impact will appear here once you purchase biochar.</p>';
+          return;
+        }
+
+        var totalTonnes = 0;
+        var totalCO2 = 0;
+
+        snap.forEach(function(doc) {
+          var tx = doc.data();
+          var tonnes = tx.tonnes || 0;
+          // Use stored carbonContent if available, fall back to listing lookup
+          var carbonPct = tx.carbonContentPercent || null;
+          if (!carbonPct) {
+            var listing = (window.LISTINGS || []).find(function(l) {
+              return l.id === tx.listingId;
+            });
+            carbonPct = listing ? listing.scorecard.carbonContent : 70; // default 70% if unknown
+          }
+          totalTonnes += tonnes;
+          totalCO2 += tonnes * (carbonPct / 100) * 3.67;
+        });
+
+        var carsEquivalent = (totalCO2 / 4.6).toFixed(1);
+
+        wrap.innerHTML =
+          '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-4)">' +
+            '<div style="background:var(--color-accent-light);border-radius:var(--radius-lg);padding:var(--space-5);text-align:center">' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0 0 4px">Total Biochar Applied</p>' +
+              '<p style="font-size:var(--font-size-3xl);font-weight:700;color:var(--color-accent);margin:0">' + totalTonnes.toFixed(1) + '</p>' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:4px 0 0">tonnes</p>' +
+            '</div>' +
+            '<div style="background:var(--color-accent-light);border-radius:var(--radius-lg);padding:var(--space-5);text-align:center">' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0 0 4px">CO₂ Stored</p>' +
+              '<p style="font-size:var(--font-size-3xl);font-weight:700;color:var(--color-accent);margin:0">' + totalCO2.toFixed(1) + '</p>' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:4px 0 0">tonnes CO₂e</p>' +
+            '</div>' +
+            '<div style="background:var(--color-accent-light);border-radius:var(--radius-lg);padding:var(--space-5);text-align:center">' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0 0 4px">Equivalent Cars Off Road</p>' +
+              '<p style="font-size:var(--font-size-3xl);font-weight:700;color:var(--color-accent);margin:0">' + carsEquivalent + '</p>' +
+              '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:4px 0 0">cars / year</p>' +
+            '</div>' +
+          '</div>' +
+          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-3)">Estimated using biochar carbon content × 3.67 CO₂ conversion factor. Equivalent cars calculated at 4.6t CO₂/year per vehicle.</p>';
+      })
+      .catch(function() {
+        wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load carbon data.</p>';
+      });
+  }
+
   function toNumber(value) {
     if (typeof value === "number") return value;
     if (typeof value === "string") {
@@ -587,6 +647,7 @@
     initPreferencesSection();
     await loadTransactions();
     await loadDealRooms();
+    renderCarbonDashboard();
     await loadScheduledOrders();
   }
 
