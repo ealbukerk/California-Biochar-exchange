@@ -659,40 +659,39 @@
     }
 
     grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
-    // Populate delivered cost for logged-in buyers with ZIP
-    (function() {
-      var profile = state.profile;
-      if (!profile || !profile.zipcode) return;
-      var buyerZip = profile.zipcode;
-      var appRate = profile.applicationRate || 0;
-      (window.LISTINGS || []).forEach(function(listing) {
-        var el = document.getElementById('dc-' + listing.id);
-        if (!el || !listing.producerZip) return;
-        el.textContent = 'Calculating delivered cost...';
-        window.DeliveredCost.calc({
-          producerZip: listing.producerZip,
-          buyerZip: buyerZip,
-          pricePerTonne: listing.pricePerTonne,
-          tonnes: listing.minOrderTonnes,
-          applicationRate: appRate,
-          spreadCostPerTonne: 60
-        }).then(function(result) {
-          el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
-            Math.round(result.deliveredPerTonne) +
-            '/t delivered</strong>' +
-            (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
-            ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>';
-        }).catch(function() {
-          el.textContent = '';
-        });
-      });
-    })();
     updateCompareBar();
 
   }
 
   function renderListings() {
     renderBrowseListings();
+  }
+
+  function injectDeliveredCosts() {
+    if (!state.profile || !state.profile.zipcode) return;
+    var buyerZip = state.profile.zipcode;
+    var appRate = state.profile.applicationRate || 0;
+    (window.LISTINGS || []).forEach(function(listing) {
+      var el = document.getElementById('dc-' + listing.id);
+      if (!el || !listing.producerZip) return;
+      el.textContent = 'Calculating...';
+      window.DeliveredCost.calc({
+        producerZip: listing.producerZip,
+        buyerZip: buyerZip,
+        pricePerTonne: listing.pricePerTonne,
+        tonnes: listing.minOrderTonnes,
+        applicationRate: appRate,
+        spreadCostPerTonne: 60
+      }).then(function(result) {
+        el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
+          Math.round(result.deliveredPerTonne) +
+          '/t delivered</strong>' +
+          (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
+          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>';
+      }).catch(function() {
+        el.textContent = '';
+      });
+    });
   }
 
   function initBrowseFilters() {
@@ -905,6 +904,7 @@
           updateTopNav();
           renderHeroSlot();
           renderTopMatchesBlock();
+          injectDeliveredCosts();
         })
         .catch(function () {
           state.profile = null;

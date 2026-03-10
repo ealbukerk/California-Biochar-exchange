@@ -441,7 +441,40 @@ function renderDealRoom(dealId, user) {
         '<div style="display:flex;justify-content:space-between;align-items:center">' +
           '<span style="font-size:13px;color:var(--color-text-muted)">' + complexity + ' deal · Round ' + (roundsUsed + 1) + ' of ' + maxRounds + '</span>' +
           (d.fairPriceMin && d.fairPriceMax ? '<span style="font-size:13px;color:var(--color-text-muted)">Fair range: $' + d.fairPriceMin + '–$' + d.fairPriceMax + '/t</span>' : '') +
-        '</div>'
+        '</div>' +
+        '<div id="dr-delivered-cost" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--color-border);font-size:13px;color:var(--color-text-muted)">Calculating delivered cost...</div>'
+    }
+
+    function injectDealRoomDeliveredCost(d) {
+      var el = document.getElementById('dr-delivered-cost');
+      if (!el) return;
+      var listing = getListingData(d);
+      if (!listing || !listing.producerZip) { el.textContent = ''; return; }
+      if (!window.DeliveredCost) { el.textContent = ''; return; }
+
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (!user) { el.textContent = ''; return; }
+        firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+          if (!doc.exists) { el.textContent = ''; return; }
+          var profile = doc.data();
+          if (!profile.zipcode) { el.textContent = ''; return; }
+          window.DeliveredCost.calc({
+            producerZip: listing.producerZip,
+            buyerZip: profile.zipcode,
+            pricePerTonne: d.listedPricePerTonne || listing.pricePerTonne,
+            tonnes: listing.minOrderTonnes,
+            applicationRate: profile.applicationRate || 0,
+            spreadCostPerTonne: 60
+          }).then(function(r) {
+            el.innerHTML =
+              '<strong style="color:var(--color-text-primary)">Delivered cost: ~$' + Math.round(r.deliveredPerTonne) + '/t</strong>' +
+              ' &nbsp;·&nbsp; <span>Material $' + Math.round(r.materialCost).toLocaleString() + '</span>' +
+              ' &nbsp;·&nbsp; <span>Transport $' + Math.round(r.transportCost).toLocaleString() + ' (' + r.distance + ' mi)</span>' +
+              ' &nbsp;·&nbsp; <span>Application $' + Math.round(r.applicationCost).toLocaleString() + '</span>' +
+              (r.costPerAcre ? ' &nbsp;·&nbsp; <strong>$' + Math.round(r.costPerAcre).toLocaleString() + '/acre</strong>' : '');
+          }).catch(function() { el.textContent = ''; });
+        });
+      });
     }
 
     function renderMessages(msgs) {
@@ -706,6 +739,7 @@ function renderDealRoom(dealId, user) {
         if (!nextDeal) return
         currentDeal = nextDeal
         renderInfoCard(nextDeal)
+        injectDealRoomDeliveredCost(nextDeal)
         renderBidPanel(nextDeal, currentBids)
       },
       function(msgs) {
