@@ -482,7 +482,15 @@
       '<span class="btn btn-primary">Make an offer</span>' +
       '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button></div>' +
       '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
-      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(listing.minOrderTonnes) + '" style="max-width:130px;" />' +
+      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + (function() {' +
+      '  var ac = state.profile && state.profile.acreage;' +
+      '  var ar = (function() {' +
+      "    var s = document.getElementById('pref-apprate-slider');" +
+      '    return s ? parseFloat(s.value) : (state.profile && state.profile.applicationRate) || 7;' +
+      '  })();' +
+      '  var vol = ac && ar ? Math.round(ac * ar) : null;' +
+      '  return htmlEscape(vol && vol >= listing.minOrderTonnes ? vol : listing.minOrderTonnes);' +
+      '})() + '" style="max-width:130px;" />' +
       '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm purchase</button>' +
       "</div>" +
       "</a>" +
@@ -531,7 +539,7 @@
       Array.isArray(state.profile.cropTypes) &&
       state.profile.cropTypes.length > 0;
 
-    if (!hasSavedCrops) {
+    if (!state.user) {
       block.classList.add("hidden");
       grid.innerHTML = "";
       return;
@@ -670,7 +678,8 @@
   function injectDeliveredCosts() {
     if (!state.profile || !state.profile.zipcode) return;
     var buyerZip = state.profile.zipcode;
-    var appRate = state.profile.applicationRate || 7;
+    var appRateSlider = document.getElementById('pref-apprate-slider');
+    var appRate = appRateSlider ? (parseFloat(appRateSlider.value) || 7) : (state.profile.applicationRate || 7);
     var slider = document.getElementById('pref-spread-slider');
     var spreadCost = slider ? (parseFloat(slider.value) || 60) : (state.profile.spreadCostPerTonne || 60);
     (window.LISTINGS || []).forEach(function(listing) {
@@ -703,6 +712,16 @@
     if (!slider) return;
     slider.addEventListener('input', function() {
       if (sliderVal) sliderVal.textContent = slider.value;
+      injectDeliveredCosts();
+    });
+  })();
+
+  (function() {
+    var slider = document.getElementById('pref-apprate-slider');
+    var valEl = document.getElementById('pref-apprate-val');
+    if (!slider) return;
+    slider.addEventListener('input', function() {
+      if (valEl) valEl.textContent = slider.value;
       injectDeliveredCosts();
     });
   })();
@@ -928,7 +947,13 @@
           }
           if (appRateDisplay && state.profile) {
             var ar = state.profile.applicationRate || 7;
-            appRateDisplay.textContent = 'Application rate: ' + ar + ' t/acre';
+            var appRateSlider = document.getElementById('pref-apprate-slider');
+            var appRateValEl = document.getElementById('pref-apprate-val');
+            if (appRateSlider) {
+              appRateSlider.value = ar;
+              if (appRateValEl) appRateValEl.textContent = ar;
+            }
+            if (appRateDisplay) appRateDisplay.textContent = '';
           }
           injectDeliveredCosts();
         })
