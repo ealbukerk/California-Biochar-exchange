@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biochar.market — List Feedstock</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    .page-hero { background: #7A5C1E; padding: var(--space-10) 0 var(--space-8); }
+    .page-hero h1 { color: white; font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .page-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-base); }
+    .form-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); margin-top: var(--space-8); margin-bottom: var(--space-12); }
+    .form-section { margin-bottom: var(--space-8); }
+    .form-section-title { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: var(--space-4); padding-bottom: var(--space-2); border-bottom: 1px solid var(--color-border); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); margin-bottom: var(--space-4); }
+    .form-row.full { grid-template-columns: 1fr; }
+    .form-field { display: flex; flex-direction: column; gap: var(--space-1); }
+    .form-field label { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-primary); }
+    .form-field label .req { color: #7A5C1E; margin-left: 2px; }
+    .form-field input, .form-field select, .form-field textarea { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: inherit; background: var(--color-surface); color: var(--color-text-primary); transition: border-color 0.15s; }
+    .form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: #7A5C1E; }
+    .form-field textarea { resize: vertical; min-height: 80px; }
+    .checkbox-row { display: flex; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+    .checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: #7A5C1E; }
+    .checkbox-row label { font-size: var(--font-size-sm); color: var(--color-text-secondary); cursor: pointer; }
+    .photo-upload-area { border: 2px dashed var(--color-border); border-radius: var(--radius-md); padding: var(--space-8); text-align: center; cursor: pointer; transition: border-color 0.15s; background: var(--color-bg); }
+    .photo-upload-area:hover { border-color: #7A5C1E; }
+    .photo-upload-area p { color: var(--color-text-muted); font-size: var(--font-size-sm); margin-top: var(--space-2); }
+    .upload-icon { font-size: 2rem; }
+    #photo-previews { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }
+    .photo-preview { width: 100px; height: 100px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+    #submit-btn { background: #7A5C1E; color: white; border: none; padding: var(--space-4) var(--space-8); border-radius: var(--radius-md); font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); cursor: pointer; width: 100%; transition: background 0.2s; font-family: inherit; }
+    #submit-btn:hover { background: #5E4516; }
+    #submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .auth-gate { text-align: center; padding: var(--space-12) 0; color: var(--color-text-secondary); }
+    .auth-gate a { color: #7A5C1E; font-weight: var(--font-weight-semibold); }
+    .success-banner { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4) var(--space-6); color: var(--color-accent); font-weight: var(--font-weight-semibold); text-align: center; display: none; margin-bottom: var(--space-6); }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container nav-inner">
+      <a class="nav-logo" href="index.html">BM</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <a href="feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Browse Feedstock</a>
+        <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+        <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+        <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="container-narrow">
+      <h1>List Your Feedstock</h1>
+      <p>Connect with biochar producers looking for quality biomass material.</p>
+    </div>
+  </section>
+
+  <main>
+    <div class="container-narrow">
+      <div id="auth-gate" class="auth-gate" style="display:none">
+        <p>Please <a href="auth.html">log in or create an account</a> to list feedstock.</p>
+      </div>
+      <div id="form-wrap">
+        <div class="success-banner" id="success-banner">✓ Your feedstock listing has been submitted! Producers will be able to find and contact you shortly.</div>
+        <div class="form-card">
+
+          <div class="form-section">
+            <div class="form-section-title">About You</div>
+            <div class="form-row">
+              <div class="form-field"><label>Your Name <span class="req">*</span></label><input type="text" id="f-name" placeholder="Jane Smith" /></div>
+              <div class="form-field"><label>Company / Operation <span class="req">*</span></label><input type="text" id="f-company" placeholder="Smith Family Farm" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-field"><label>Contact Email <span class="req">*</span></label><input type="email" id="f-email" placeholder="jane@example.com" /></div>
+              <div class="form-field"><label>Phone (optional)</label><input type="tel" id="f-phone" placeholder="(555) 555-5555" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Supplier Type <span class="req">*</span></label>
+                <select id="f-supplier-type">
+                  <option value="">Select type…</option>
+                  <option value="farmer">Farmer</option>
+                  <option value="sawmill">Sawmill</option>
+                  <option value="forestry_operator">Forestry Operator</option>
+                  <option value="tree_service">Tree Service</option>
+                  <option value="recycler">Recycler / Processor</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Material</div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Biomass Type <span class="req">*</span></label>
+                <select id="f-biomass-type">
+                  <option value="">Select type…</option>
+                  <optgroup label="Agricultural">
+                    <option value="orchard_prunings">Orchard prunings</option>
+                    <option value="almond_shells">Almond shells</option>
+                    <option value="pistachio_shells">Pistachio shells</option>
+                    <option value="walnut_shells">Walnut shells</option>
+                    <option value="corn_stover">Corn stover</option>
+                    <option value="rice_husks">Rice husks</option>
+                  </optgroup>
+                  <optgroup label="Forestry">
+                    <option value="forestry_slash">Forestry slash</option>
+                    <option value="logging_residue">Logging residue</option>
+                    <option value="thinning_material">Thinning material</option>
+                  </optgroup>
+                  <optgroup label="Urban / Industrial">
+                    <option value="clean_wood_waste">Clean wood waste</option>
+                    <option value="construction_wood">Construction wood (untreated only)</option>
+                    <option value="tree_service_chips">Tree service chips</option>
+                  </optgroup>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Particle Size <span class="req">*</span></label>
+                <select id="f-particle-size">
+                  <option value="">Select…</option>
+                  <option value="chipped">Chipped</option>
+                  <option value="whole_limbs">Whole limbs</option>
+                  <option value="mixed">Mixed</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Contamination Risk <span class="req">*</span></label>
+                <select id="f-contamination">
+                  <option value="">Select…</option>
+                  <option value="clean">Clean</option>
+                  <option value="possible_soil">Possible soil</option>
+                  <option value="mixed_debris">Mixed debris</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Age of Material <span class="req">*</span></label>
+                <select id="f-age">
+                  <option value="">Select…</option>
+                  <option value="fresh">Fresh (under 3 months)</option>
+                  <option value="6_months">~6 months</option>
+                  <option value="1_year_plus">1+ year</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-field">
+                <label>Moisture Content Estimate <span class="req">*</span></label>
+                <select id="f-moisture">
+                  <option value="">Select…</option>
+                  <option value="under_20">Under 20%</option>
+                  <option value="20_30">20–30%</option>
+                  <option value="30_40">30–40%</option>
+                  <option value="over_40">Over 40%</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label>Loading Type <span class="req">*</span></label>
+                <select id="f-loading">
+                  <option value="">Select…</option>
+                  <option value="pile">Pile</option>
+                  <option value="baled">Baled</option>
+                  <option value="loose">Loose</option>
+                  <option value="stacked">Stacked</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Volume &amp; Pricing</div>
+            <div class="form-row">
+              <div class="form-field"><label>Estimated Quantity (tons) <span class="req">*</span></label><input type="number" id="f-quantity" min="1" placeholder="600" /></div>
+              <div class="form-field"><label>Minimum Pickup (tons) <span class="req">*</span></label><input type="number" id="f-min-pickup" min="1" placeholder="40" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-field"><label>Price per Ton ($) <span class="req">*</span></label><input type="number" id="f-price" min="0" placeholder="18" /></div>
+              <div class="form-field" style="justify-content:flex-end">
+                <div class="checkbox-row"><input type="checkbox" id="f-negotiable" /><label for="f-negotiable">Price is negotiable</label></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Location &amp; Timing</div>
+            <div class="form-row">
+              <div class="form-field"><label>ZIP Code <span class="req">*</span></label><input type="text" id="f-zip" maxlength="5" placeholder="93274" /></div>
+              <div class="form-field"><label>Harvest / Available Date</label><input type="date" id="f-harvest-date" /></div>
+            </div>
+            <div class="form-row full">
+              <div class="form-field"><label>Availability Window</label><input type="text" id="f-availability" placeholder="e.g. March–June 2026" /></div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Photos (Recommended)</div>
+            <div class="photo-upload-area" id="photo-drop" onclick="document.getElementById('photo-input').click()">
+              <div class="upload-icon">📷</div>
+              <p>Click to upload photos of your pile or material<br><span style="font-size:0.75rem">JPG or PNG, up to 5 photos</span></p>
+            </div>
+            <input type="file" id="photo-input" accept="image/*" multiple style="display:none" />
+            <div id="photo-previews"></div>
+          </div>
+
+          <div class="form-section">
+            <div class="form-section-title">Additional Notes</div>
+            <div class="form-row full">
+              <div class="form-field"><label>Notes (optional)</label><textarea id="f-notes" placeholder="Any additional details about the material, access, or pickup terms…"></textarea></div>
+            </div>
+          </div>
+
+          <button type="button" id="submit-btn">Submit Listing</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script src="js/list-feedstock.js"></script>
+</body>
+</html>
