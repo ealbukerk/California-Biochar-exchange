@@ -40,7 +40,7 @@
         gap: var(--space-6);
         justify-content: center;
         margin-top: var(--space-8);
-        max-width: 640px;
+        max-width: 960px;
         margin-left: auto;
         margin-right: auto;
       }
@@ -100,6 +100,44 @@
       .hero-card-sell .btn {
         background: var(--color-accent);
         color: white;
+        margin-top: var(--space-5);
+        display: inline-block;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-md);
+        font-weight: var(--font-weight-semibold);
+        text-decoration: none;
+        font-size: var(--font-size-sm);
+      }
+
+      .hero-card-feedstock {
+        background: #7A5C1E;
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
+        flex: 1;
+        text-align: center;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      .hero-card-feedstock:hover {
+        background: #5E4516;
+      }
+
+      .hero-card-feedstock h3 {
+        color: white;
+        font-size: var(--font-size-xl);
+        font-weight: var(--font-weight-bold);
+      }
+
+      .hero-card-feedstock p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: var(--font-size-sm);
+        margin-top: var(--space-2);
+      }
+
+      .hero-card-feedstock .btn {
+        background: white;
+        color: #7A5C1E;
         margin-top: var(--space-5);
         display: inline-block;
         padding: var(--space-3) var(--space-6);
@@ -261,6 +299,11 @@
             <h3>I want to sell biochar</h3>
             <p>List your material and reach agricultural buyers across the US.</p>
             <a class="btn" href="seller.html">Apply to List</a>
+          </div>
+          <div class="hero-card-feedstock">
+            <h3>I have biomass feedstock</h3>
+            <p>List agricultural, forestry, or wood waste material for pyrolysis producers.</p>
+            <a class="btn" href="feedstock.html">List Feedstock</a>
           </div>
         </div>
       </div>
