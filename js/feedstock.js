@@ -270,7 +270,7 @@
       if (e.target === this) closeModal();
     });
     document.getElementById('modal-submit').addEventListener('click', function () {
-      firebase.auth().onAuthStateChanged(function (user) { submitRequest(user); });
+      submitRequest(firebase.auth().currentUser);
     });
   }
 
