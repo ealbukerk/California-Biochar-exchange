@@ -281,7 +281,7 @@
       .where('status', '==', 'active')
       .get()
       .then(function (snap) {
-        var list = [];
+        var list = window.FEEDSTOCK_LISTINGS ? window.FEEDSTOCK_LISTINGS.slice() : [];
         snap.forEach(function (doc) { var d = doc.data(); d._id = doc.id; list.push(d); });
         state.listings = list;
         return geocodeListings(list);

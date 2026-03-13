@@ -4,13 +4,109 @@
   var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
   var CLOUDINARY_PRESET = 'biochar_certs';
 
+  var BIOMASS_LABELS = {
+    orchard_prunings: 'Orchard Prunings', almond_shells: 'Almond Shells',
+    pistachio_shells: 'Pistachio Shells', walnut_shells: 'Walnut Shells',
+    corn_stover: 'Corn Stover', rice_husks: 'Rice Husks',
+    forestry_slash: 'Forestry Slash', logging_residue: 'Logging Residue',
+    thinning_material: 'Thinning Material', clean_wood_waste: 'Clean Wood Waste',
+    construction_wood: 'Construction Wood', tree_service_chips: 'Tree Service Chips'
+  };
+
+  var SUPPLIER_LABELS = {
+    farmer: 'Farmer', sawmill: 'Sawmill', forestry_operator: 'Forestry Operator',
+    tree_service: 'Tree Service', recycler: 'Recycler'
+  };
+
+  var MOISTURE_LABELS = {
+    under_20: 'Under 20%', '20_30': '20–30%', '30_40': '30–40%', over_40: 'Over 40%'
+  };
+
+  var CONTAMINATION_LABELS = {
+    clean: 'Clean', possible_soil: 'Possible soil', mixed_debris: 'Mixed debris'
+  };
+
+  var PARTICLE_LABELS = {
+    chipped: 'Chipped', whole_limbs: 'Whole limbs', mixed: 'Mixed'
+  };
+
+  var LOADING_LABELS = {
+    pile: 'Pile', baled: 'Baled', loose: 'Loose', stacked: 'Stacked'
+  };
+
+  var currentStep = 1;
+  var photoFiles = [];
+
   function val(id) { return document.getElementById(id).value.trim(); }
   function checked(id) { return document.getElementById(id).checked; }
 
+  function goToStep(n) {
+    document.querySelectorAll('.wizard-panel').forEach(function (p) { p.classList.remove('active'); });
+    document.getElementById('fs-step-' + n).classList.add('active');
+    document.querySelectorAll('.wizard-step-dot').forEach(function (dot) {
+      var s = Number(dot.getAttribute('data-step'));
+      dot.classList.remove('active', 'complete');
+      if (s === n) dot.classList.add('active');
+      if (s < n) dot.classList.add('complete');
+    });
+    currentStep = n;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function validateStep1() {
+    var required = ['f-biomass-type', 'f-supplier-type', 'f-zip', 'f-quantity', 'f-min-pickup', 'f-price'];
+    for (var i = 0; i < required.length; i++) {
+      if (!val(required[i])) {
+        document.getElementById(required[i]).focus();
+        document.getElementById(required[i]).style.borderColor = '#cc4444';
+        setTimeout(function (id) { document.getElementById(id).style.borderColor = ''; }, 2000, required[i]);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function validateStep2() {
+    var required = ['f-particle-size', 'f-contamination', 'f-moisture', 'f-age', 'f-loading'];
+    for (var i = 0; i < required.length; i++) {
+      if (!val(required[i])) {
+        document.getElementById(required[i]).focus();
+        document.getElementById(required[i]).style.borderColor = '#cc4444';
+        setTimeout(function (id) { document.getElementById(id).style.borderColor = ''; }, 2000, required[i]);
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function buildReviewSummary() {
+    var rows = [
+      ['Biomass type', BIOMASS_LABELS[val('f-biomass-type')] || val('f-biomass-type')],
+      ['Supplier type', SUPPLIER_LABELS[val('f-supplier-type')] || val('f-supplier-type')],
+      ['ZIP code', val('f-zip')],
+      ['Quantity', val('f-quantity') + ' tons'],
+      ['Min pickup', val('f-min-pickup') + ' tons'],
+      ['Price', '$' + val('f-price') + '/ton' + (checked('f-negotiable') ? ' (negotiable)' : '')],
+      ['Particle size', PARTICLE_LABELS[val('f-particle-size')] || val('f-particle-size')],
+      ['Contamination', CONTAMINATION_LABELS[val('f-contamination')] || val('f-contamination')],
+      ['Moisture', MOISTURE_LABELS[val('f-moisture')] || val('f-moisture')],
+      ['Age', val('f-age').replace(/_/g, ' ')],
+      ['Loading', LOADING_LABELS[val('f-loading')] || val('f-loading')],
+      ['Availability', val('f-availability') || '—'],
+      ['Photos', photoFiles.length ? photoFiles.length + ' photo(s) attached' : 'None']
+    ];
+    var html = '<div class="review-card-title">Listing Summary</div>';
+    rows.forEach(function (r) {
+      html += '<div class="review-row"><span class="review-label">' + r[0] + '</span><span class="review-val">' + r[1] + '</span></div>';
+    });
+    document.getElementById('review-summary').innerHTML = html;
+  }
+
   function handlePhotoSelect(files) {
+    photoFiles = Array.prototype.slice.call(files, 0, 5);
     var previews = document.getElementById('photo-previews');
-    var arr = Array.prototype.slice.call(files, 0, 5);
-    arr.forEach(function (file) {
+    previews.innerHTML = '';
+    photoFiles.forEach(function (file) {
       var reader = new FileReader();
       reader.onload = function (e) {
         var img = document.createElement('img');
@@ -22,10 +118,9 @@
     });
   }
 
-  function uploadPhotos(files) {
-    var arr = Array.prototype.slice.call(files, 0, 5);
-    if (!arr.length) return Promise.resolve([]);
-    var promises = arr.map(function (file) {
+  function uploadPhotos() {
+    if (!photoFiles.length) return Promise.resolve([]);
+    var promises = photoFiles.map(function (file) {
       var fd = new FormData();
       fd.append('file', file);
       fd.append('upload_preset', CLOUDINARY_PRESET);
@@ -37,22 +132,15 @@
   }
 
   function submitListing(user) {
-    var required = ['f-name','f-company','f-email','f-supplier-type','f-biomass-type',
-      'f-particle-size','f-contamination','f-age','f-moisture','f-loading',
-      'f-quantity','f-min-pickup','f-price','f-zip'];
-    var missing = required.filter(function (id) { return !val(id); });
-    if (missing.length) {
-      alert('Please fill in all required fields.');
-      document.getElementById(missing[0]).focus();
+    if (!val('f-name') || !val('f-company') || !val('f-email')) {
+      alert('Please fill in your name, company, and email.');
       return;
     }
-
     var btn = document.getElementById('submit-btn');
     btn.disabled = true;
-    btn.textContent = 'Submitting…';
+    btn.textContent = 'Publishing…';
 
-    var photoFiles = document.getElementById('photo-input').files;
-    uploadPhotos(photoFiles).then(function (photoUrls) {
+    uploadPhotos().then(function (photoUrls) {
       var listing = {
         supplierUID: user.uid,
         supplierName: val('f-name'),
@@ -80,15 +168,14 @@
       };
       return firebase.firestore().collection('feedstock_listings').add(listing);
     }).then(function () {
-      document.getElementById('success-banner').style.display = 'block';
+      document.getElementById('wizard-wrap').style.display = 'none';
+      document.getElementById('success-state').style.display = 'block';
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      btn.disabled = false;
-      btn.textContent = 'Submit Listing';
     }).catch(function (err) {
       console.error(err);
       alert('Submission failed. Please try again.');
       btn.disabled = false;
-      btn.textContent = 'Submit Listing';
+      btn.textContent = 'Publish Listing';
     });
   }
 
@@ -99,7 +186,7 @@
       var logout = document.getElementById('nav-logout');
 
       if (!user) {
-        document.getElementById('form-wrap').style.display = 'none';
+        document.getElementById('wizard-wrap').style.display = 'none';
         document.getElementById('auth-gate').style.display = 'block';
         return;
       }
@@ -123,9 +210,15 @@
         document.getElementById('f-email').value = user.email || '';
       });
 
-      document.getElementById('submit-btn').addEventListener('click', function () {
-        submitListing(user);
+      document.getElementById('next-1').addEventListener('click', function () {
+        if (validateStep1()) goToStep(2);
       });
+      document.getElementById('back-2').addEventListener('click', function () { goToStep(1); });
+      document.getElementById('next-2').addEventListener('click', function () {
+        if (validateStep2()) { buildReviewSummary(); goToStep(3); }
+      });
+      document.getElementById('back-3').addEventListener('click', function () { goToStep(2); });
+      document.getElementById('submit-btn').addEventListener('click', function () { submitListing(user); });
 
       document.getElementById('photo-input').addEventListener('change', function (e) {
         handlePhotoSelect(e.target.files);
