@@ -47,7 +47,7 @@
 
   function geocodeZip(zip) {
     return fetch('https://api.zippopotam.us/us/' + zip)
-      .then(function (r) { if (!r.ok) throw new Error('ZIP not found'); return r.json(); })
+      .then(function (r) { if (!r.ok) throw new Error('bad zip'); return r.json(); })
       .then(function (d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
   }
 
@@ -104,47 +104,58 @@
     var moistureLabel = MOISTURE_LABELS[l.moistureContent] || l.moistureContent;
     var contamLabel = CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk;
     var particleLabel = PARTICLE_LABELS[l.particleSize] || l.particleSize;
-    var contamColor = l.contaminationRisk === 'clean' ? 'var(--color-accent)' : l.contaminationRisk === 'possible_soil' ? 'var(--color-warning)' : '#cc4444';
+    var contamClass = 'contamination-' + (l.contaminationRisk || 'clean');
     var negTag = l.negotiable ? '<span class="fs-tag fs-tag-neg">Negotiable</span>' : '';
+    var freeTag = l.pricePerTon === 0 ? '<span class="fs-tag fs-tag-free">Free to haul</span>' : '';
+    var priceDisplay = l.pricePerTon === 0 ? 'Free' : '$' + l.pricePerTon + '/ton';
 
-    var photoHtml = (l.photos && l.photos.length)
-      ? '<img src="' + l.photos[0] + '" alt="Material photo" class="fs-card-photo" />'
-      : '<div class="fs-card-photo-placeholder">📦</div>';
-
-    var distHtml = l._dist !== undefined ? '<div class="fs-card-dist">' + l._dist + ' mi away</div>' : '';
+    var distLine = l._dist !== undefined
+      ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">' + l._dist + ' mi away</div>'
+      : '';
 
     var deliveredHtml = l._delivered !== undefined
-      ? '<div class="fs-card-delivered">' +
-          '<span class="fs-delivered-label">Listing:</span> $' + l.pricePerTon + '/ton &nbsp;+&nbsp; ' +
-          '<span class="fs-delivered-label">Est. trucking:</span> $' + l._transport + '/ton' +
-          '<br><strong>Delivered: $' + l._delivered + '/ton</strong>' +
+      ? '<div class="fs-delivered">' +
+          '$' + l.pricePerTon + '/ton listing &nbsp;+&nbsp; $' + l._transport + '/ton est. trucking' +
+          '<br><strong>Delivered: ~$' + l._delivered + '/ton</strong>' +
         '</div>'
       : '';
 
-    var availHtml = l.availabilityWindow ? '<div class="fs-card-avail">Available: ' + l.availabilityWindow + '</div>' : '';
+    var notesHtml = l.notes
+      ? '<div class="fs-card-notes">' + l.notes + '</div>'
+      : '';
 
-    return '<div class="fs-card">' +
-      photoHtml +
-      '<div class="fs-card-body">' +
-        '<div class="fs-card-top">' +
-          '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
-          '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
-          negTag +
+    var availHtml = l.availabilityWindow
+      ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">📅 ' + l.availabilityWindow + '</div>'
+      : '';
+
+    return '<div class="listing-card-wrapper">' +
+      '<div class="listing-card">' +
+        '<div>' +
+          '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
+            '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
+            '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
+            negTag + freeTag +
+          '</div>' +
+          '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +
+          distLine +
+          availHtml +
         '</div>' +
-        '<div class="fs-card-company">' + (l.company || l.supplierName || '') + '</div>' +
-        distHtml +
-        '<div class="fs-card-row">' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Quantity</div><div class="fs-stat-val">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Min pickup</div><div class="fs-stat-val">' + l.minimumPickupTons + ' tons</div></div>' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Price</div><div class="fs-stat-val">$' + l.pricePerTon + '/ton</div></div>' +
+
+        '<div class="fs-card-stats">' +
+          '<div class="fs-stat"><div class="fs-stat-label">Quantity</div><div class="fs-stat-val">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Min pickup</div><div class="fs-stat-val">' + l.minimumPickupTons + ' tons</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Price</div><div class="fs-stat-val">' + priceDisplay + '</div></div>' +
         '</div>' +
-        '<div class="fs-card-row">' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
-          '<div class="fs-card-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val" style="color:' + contamColor + '">' + contamLabel + '</div></div>' +
+
+        '<div class="fs-quality-row">' +
+          '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val ' + contamClass + '">' + contamLabel + '</div></div>' +
         '</div>' +
+
         deliveredHtml +
-        availHtml +
+        notesHtml +
+
         '<button class="fs-contact-btn" data-id="' + l._id + '">Request Feedstock</button>' +
       '</div>' +
     '</div>';
@@ -166,7 +177,7 @@
   }
 
   function openModal(id) {
-    var l = state.listings.find(function (x) { return x._id === id; });
+    var l = state.listings.find(function (x) { return String(x._id) === String(id); });
     if (!l) return;
     document.getElementById('modal-listing-id').value = id;
     document.getElementById('modal-listing-name').textContent =
@@ -189,21 +200,19 @@
 
   function submitRequest(user) {
     var id = document.getElementById('modal-listing-id').value;
-    var l = state.listings.find(function (x) { return x._id === id; });
+    var l = state.listings.find(function (x) { return String(x._id) === String(id); });
     if (!l) return;
     var name = document.getElementById('modal-name').value.trim();
     var email = document.getElementById('modal-email').value.trim();
     var message = document.getElementById('modal-message').value.trim();
     if (!name || !email || !message) { alert('Please fill in Name, Email, and Message.'); return; }
-
     var btn = document.getElementById('modal-submit');
     btn.disabled = true;
     btn.textContent = 'Sending…';
-
     firebase.firestore().collection('feedstock_requests').add({
       listingId: id,
       biomassType: l.biomassType,
-      supplierUID: l.supplierUID,
+      supplierUID: l.supplierUID || null,
       supplierName: l.supplierName,
       supplierEmail: l.contactEmail,
       requesterUID: user ? user.uid : null,
@@ -232,7 +241,8 @@
       state.buyerLng = c.lng;
       document.getElementById('zip-status').textContent = '✓';
       document.getElementById('zip-status').style.color = 'var(--color-accent)';
-      if (state.listings.length) { computeDistances(); applyFilters(); }
+      computeDistances();
+      applyFilters();
     }).catch(function () {
       document.getElementById('zip-status').textContent = '✗';
       document.getElementById('zip-status').style.color = 'red';
@@ -246,7 +256,7 @@
     document.getElementById('filter-price').addEventListener('input', function () {
       var v = Number(this.value);
       state.filters.maxPrice = v;
-      document.getElementById('filter-price-val').textContent = v > 0 ? '$' + v + '/ton max' : 'Any price';
+      document.getElementById('filter-price-val').textContent = v > 0 ? '$' + v + '/ton max' : 'Any';
       applyFilters();
     });
     document.getElementById('filter-contamination').addEventListener('change', function () {
@@ -275,25 +285,31 @@
   }
 
   function loadListings() {
-    var grid = document.getElementById('fs-grid');
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:var(--space-12);color:var(--color-text-muted)">Loading listings…</div>';
+    // Always show demo data immediately
+    var demoList = window.FEEDSTOCK_LISTINGS ? window.FEEDSTOCK_LISTINGS.slice() : [];
+    state.listings = demoList;
+    geocodeListings(demoList).then(function (list) {
+      state.listings = list;
+      computeDistances();
+      applyFilters();
+    });
+
+    // Then layer in real Firestore listings on top
     firebase.firestore().collection('feedstock_listings')
       .where('status', '==', 'active')
       .get()
       .then(function (snap) {
-        var list = window.FEEDSTOCK_LISTINGS ? window.FEEDSTOCK_LISTINGS.slice() : [];
-        snap.forEach(function (doc) { var d = doc.data(); d._id = doc.id; list.push(d); });
-        state.listings = list;
-        return geocodeListings(list);
-      })
-      .then(function (list) {
-        state.listings = list;
-        computeDistances();
-        applyFilters();
+        if (snap.empty) return;
+        var realListings = [];
+        snap.forEach(function (doc) { var d = doc.data(); d._id = doc.id; realListings.push(d); });
+        return geocodeListings(realListings).then(function (geocoded) {
+          state.listings = demoList.concat(geocoded);
+          computeDistances();
+          applyFilters();
+        });
       })
       .catch(function (err) {
-        console.error(err);
-        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:var(--space-8);color:var(--color-text-muted)">Failed to load listings.</div>';
+        console.warn('Firestore fetch failed, showing demo data only:', err);
       });
   }
 
@@ -313,20 +329,16 @@
             firebase.auth().signOut().then(function () { window.location.href = 'index.html'; });
           });
         }
-        // Autofill ZIP from profile for delivered cost
         firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
           if (doc.exists && doc.data().zipcode) {
             var z = doc.data().zipcode;
             document.getElementById('zip-input').value = z;
             setZip(z);
           }
-        });
-        // Autofill modal name/email
-        firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
           if (doc.exists) {
             var d = doc.data();
-            document.getElementById('modal-name').value = d.name || '';
-            document.getElementById('modal-company').value = d.businessName || '';
+            if (d.name) document.getElementById('modal-name').value = d.name;
+            if (d.businessName) document.getElementById('modal-company').value = d.businessName;
             document.getElementById('modal-email').value = d.email || user.email || '';
           }
         });

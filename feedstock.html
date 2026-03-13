@@ -6,52 +6,52 @@
   <title>Biochar.market — Find Feedstock</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/listings.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
-    .fs-hero { background: #7A5C1E; padding: var(--space-10) 0 var(--space-8); }
-    .fs-hero h1 { color: white; font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
-    .fs-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-base); }
-    .fs-hero-actions { margin-top: var(--space-5); }
-    .fs-hero-actions a { background: white; color: #7A5C1E; padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); font-weight: var(--font-weight-semibold); text-decoration: none; font-size: var(--font-size-sm); }
-    .fs-hero-actions a:hover { background: rgba(255,255,255,0.9); }
-
-    .fs-filter-bar { background: var(--color-surface); border-bottom: 1px solid var(--color-border); padding: var(--space-4) 0; position: sticky; top: 0; z-index: 20; }
-    .fs-filter-inner { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
-    .fs-filter-inner select, .fs-filter-inner input[type=text], .fs-filter-inner input[type=number] { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: inherit; background: var(--color-surface); color: var(--color-text-primary); }
-    .fs-filter-inner select:focus, .fs-filter-inner input:focus { outline: none; border-color: #7A5C1E; }
-    .fs-filter-label { font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: var(--font-weight-medium); }
-    .fs-filter-group { display: flex; flex-direction: column; gap: 2px; }
-    .fs-zip-wrap { display: flex; align-items: center; gap: var(--space-2); }
-    #zip-status { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); min-width: 16px; }
-    #filter-price-val { font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap; }
-
-    .fs-main { padding: var(--space-8) 0 var(--space-12); }
-    .fs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: var(--space-5); }
-    .fs-empty { text-align: center; padding: var(--space-12) 0; color: var(--color-text-muted); }
     .hidden { display: none !important; }
 
-    .fs-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; display: flex; flex-direction: column; transition: box-shadow 0.15s; }
-    .fs-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
-    .fs-card-photo { width: 100%; height: 160px; object-fit: cover; display: block; }
-    .fs-card-photo-placeholder { width: 100%; height: 100px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; background: #F5EFE6; }
-    .fs-card-body { padding: var(--space-5); flex: 1; display: flex; flex-direction: column; gap: var(--space-3); }
-    .fs-card-top { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
-    .fs-tag { padding: 2px 8px; border-radius: 999px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); }
+    .buyer-nav { background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+    .buyer-nav-inner { height: 64px; display: flex; align-items: center; justify-content: space-between; }
+    .buyer-nav-logo { color: #7A5C1E; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); text-decoration: none; }
+    .buyer-nav-links { display: flex; align-items: center; gap: var(--space-3); }
+
+    .buyer-hero { background: #7A5C1E; padding: var(--space-10) 0 var(--space-8); }
+    .buyer-hero h1 { color: white; font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .buyer-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-base); }
+    .buyer-hero-actions { margin-top: var(--space-5); }
+    .buyer-hero-actions a { background: white; color: #7A5C1E; padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); font-weight: var(--font-weight-semibold); text-decoration: none; font-size: var(--font-size-sm); }
+    .buyer-hero-actions a:hover { background: rgba(255,255,255,0.9); }
+
+    .filter-grid { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4) 0; }
+    .filter-grid select, .filter-grid input[type=text], .filter-grid input[type=number] { height: 42px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: 0 var(--space-3); font-family: var(--font-sans); font-size: var(--font-size-sm); color: var(--color-text-primary); }
+    .filter-grid select:focus, .filter-grid input:focus { outline: 2px solid var(--color-accent-light); border-color: #7A5C1E; }
+    .filter-zip-wrap { display: flex; align-items: center; gap: var(--space-2); }
+    #zip-status { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); min-width: 16px; }
+    #filter-price-val { font-size: var(--font-size-xs); color: var(--color-text-muted); white-space: nowrap; }
+    .filter-group { display: flex; flex-direction: column; gap: 2px; }
+    .filter-group-label { font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: var(--font-weight-medium); }
+
+    .fs-tag { padding: 2px 8px; border-radius: 999px; font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); display: inline-block; }
     .fs-tag-type { background: #F5EFE6; color: #7A5C1E; }
     .fs-tag-supplier { background: var(--color-accent-light); color: var(--color-accent); }
     .fs-tag-neg { background: #FEF3C7; color: #92400E; }
-    .fs-card-company { font-size: var(--font-size-base); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
-    .fs-card-dist { font-size: var(--font-size-sm); color: var(--color-text-muted); }
-    .fs-card-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
-    .fs-card-stat { background: var(--color-bg); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
+    .fs-tag-free { background: #D1FAE5; color: #065F46; }
+
+    .fs-card-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+    .fs-stat { background: var(--color-bg); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); }
     .fs-stat-label { font-size: 0.65rem; color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.04em; font-weight: var(--font-weight-semibold); }
     .fs-stat-val { font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); color: var(--color-text-primary); margin-top: 2px; }
-    .fs-card-delivered { background: #F5EFE6; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-secondary); line-height: 1.6; }
-    .fs-card-delivered strong { color: #7A5C1E; }
-    .fs-delivered-label { color: var(--color-text-muted); }
-    .fs-card-avail { font-size: var(--font-size-sm); color: var(--color-text-muted); }
+
+    .fs-quality-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-top: var(--space-2); }
+
+    .fs-delivered { background: #F5EFE6; border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-2); }
+    .fs-delivered strong { color: #7A5C1E; }
+
+    .fs-card-notes { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-2); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
     .fs-contact-btn { background: #7A5C1E; color: white; border: none; padding: var(--space-3) var(--space-5); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); cursor: pointer; width: 100%; margin-top: auto; font-family: inherit; transition: background 0.2s; }
     .fs-contact-btn:hover { background: #5E4516; }
 
@@ -69,13 +69,20 @@
     #modal-submit:hover { background: #5E4516; }
     #modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
     #modal-success { display: none; background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); color: var(--color-accent); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); text-align: center; margin-top: var(--space-4); }
+
+    .listings-section { padding: var(--space-8) 0 var(--space-12); }
+    .fs-empty { text-align: center; padding: var(--space-12) 0; color: var(--color-text-muted); }
+    .contamination-clean { color: var(--color-accent); }
+    .contamination-possible_soil { color: var(--color-warning); }
+    .contamination-mixed_debris { color: #cc4444; }
   </style>
 </head>
 <body>
-  <nav>
-    <div class="container nav-inner">
-      <a class="nav-logo" href="index.html">BM</a>
-      <div style="display:flex;align-items:center;gap:var(--space-3)">
+
+  <nav class="buyer-nav">
+    <div class="container buyer-nav-inner">
+      <a class="buyer-nav-logo" href="index.html">BM</a>
+      <div class="buyer-nav-links">
         <a href="list-feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">List Feedstock</a>
         <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
         <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
@@ -84,86 +91,86 @@
     </div>
   </nav>
 
-  <section class="fs-hero">
+  <section class="buyer-hero">
     <div class="container-narrow">
-      <h1>Find Biomass Feedstock</h1>
+      <h1>Find biomass feedstock</h1>
       <p>Browse agricultural, forestry, and wood waste material available for pyrolysis producers across the US.</p>
-      <div class="fs-hero-actions"><a href="list-feedstock.html">+ List Your Material</a></div>
+      <div class="buyer-hero-actions"><a href="list-feedstock.html">+ List your material</a></div>
     </div>
   </section>
 
-  <div class="fs-filter-bar">
+  <section class="listings-section">
     <div class="container">
-      <div class="fs-filter-inner">
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Material type</span>
-          <select id="filter-biomass">
-            <option value="">All types</option>
-            <optgroup label="Agricultural">
-              <option value="orchard_prunings">Orchard prunings</option>
-              <option value="almond_shells">Almond shells</option>
-              <option value="pistachio_shells">Pistachio shells</option>
-              <option value="walnut_shells">Walnut shells</option>
-              <option value="corn_stover">Corn stover</option>
-              <option value="rice_husks">Rice husks</option>
-            </optgroup>
-            <optgroup label="Forestry">
-              <option value="forestry_slash">Forestry slash</option>
-              <option value="logging_residue">Logging residue</option>
-              <option value="thinning_material">Thinning material</option>
-            </optgroup>
-            <optgroup label="Urban / Industrial">
-              <option value="clean_wood_waste">Clean wood waste</option>
-              <option value="construction_wood">Construction wood</option>
-              <option value="tree_service_chips">Tree service chips</option>
-            </optgroup>
-          </select>
-        </div>
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Contamination</span>
-          <select id="filter-contamination">
-            <option value="">Any</option>
-            <option value="clean">Clean only</option>
-            <option value="possible_soil">Possible soil OK</option>
-          </select>
-        </div>
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Max price/ton &nbsp;<span id="filter-price-val">Any price</span></span>
-          <input type="range" id="filter-price" min="0" max="100" step="5" value="0" style="width:120px;accent-color:#7A5C1E" />
-        </div>
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Min quantity (tons)</span>
-          <input type="number" id="filter-min-qty" placeholder="0" style="width:90px" min="0" />
-        </div>
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Your ZIP (for distance)</span>
-          <div class="fs-zip-wrap">
-            <input type="text" id="zip-input" placeholder="e.g. 95401" maxlength="5" style="width:90px" />
-            <span id="zip-status"></span>
+
+      <div class="filter-bar">
+        <div class="filter-grid">
+          <div class="filter-group">
+            <span class="filter-group-label">Material type</span>
+            <select id="filter-biomass" style="min-width:160px">
+              <option value="">All types</option>
+              <optgroup label="Agricultural">
+                <option value="orchard_prunings">Orchard prunings</option>
+                <option value="almond_shells">Almond shells</option>
+                <option value="pistachio_shells">Pistachio shells</option>
+                <option value="walnut_shells">Walnut shells</option>
+                <option value="corn_stover">Corn stover</option>
+                <option value="rice_husks">Rice husks</option>
+              </optgroup>
+              <optgroup label="Forestry">
+                <option value="forestry_slash">Forestry slash</option>
+                <option value="logging_residue">Logging residue</option>
+                <option value="thinning_material">Thinning material</option>
+              </optgroup>
+              <optgroup label="Urban / Industrial">
+                <option value="clean_wood_waste">Clean wood waste</option>
+                <option value="construction_wood">Construction wood</option>
+                <option value="tree_service_chips">Tree service chips</option>
+              </optgroup>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Contamination</span>
+            <select id="filter-contamination">
+              <option value="">Any</option>
+              <option value="clean">Clean only</option>
+              <option value="possible_soil">Possible soil OK</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Max price/ton &nbsp;<span id="filter-price-val">Any</span></span>
+            <input type="range" id="filter-price" min="0" max="100" step="5" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Min quantity (tons)</span>
+            <input type="number" id="filter-min-qty" placeholder="Any" style="width:90px" min="0" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Your ZIP</span>
+            <div class="filter-zip-wrap">
+              <input type="text" id="zip-input" placeholder="e.g. 95401" maxlength="5" style="width:90px" />
+              <span id="zip-status"></span>
+            </div>
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Sort by</span>
+            <select id="filter-sort">
+              <option value="newest">Newest</option>
+              <option value="closest">Closest</option>
+              <option value="cheapest">Cheapest</option>
+              <option value="largest">Largest volume</option>
+            </select>
           </div>
         </div>
-        <div class="fs-filter-group">
-          <span class="fs-filter-label">Sort by</span>
-          <select id="filter-sort">
-            <option value="newest">Newest</option>
-            <option value="closest">Closest</option>
-            <option value="cheapest">Cheapest</option>
-            <option value="largest">Largest volume</option>
-          </select>
-        </div>
       </div>
-    </div>
-  </div>
 
-  <main class="fs-main">
-    <div class="container">
-      <div id="fs-grid" class="fs-grid"></div>
+      <h2 style="margin-bottom:var(--space-6)">All feedstock listings</h2>
+      <div id="fs-grid" class="listings-grid"></div>
       <div id="fs-empty" class="fs-empty" style="display:none">
-        <p>No feedstock listings found matching your filters.</p>
+        <p>No feedstock listings match your filters.</p>
         <p style="margin-top:var(--space-3)"><a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">Be the first to list material →</a></p>
       </div>
     </div>
-  </main>
+  </section>
 
   <!-- Contact modal -->
   <div id="contact-modal" class="fs-modal-overlay hidden">
@@ -175,7 +182,7 @@
       <div class="fs-modal-field"><label>Your Name *</label><input type="text" id="modal-name" placeholder="Alex Johnson" /></div>
       <div class="fs-modal-field"><label>Company</label><input type="text" id="modal-company" placeholder="Pacific Biochar LLC" /></div>
       <div class="fs-modal-field"><label>Expected Volume (tons)</label><input type="number" id="modal-volume" placeholder="80" min="1" /></div>
-      <div class="fs-modal-field"><label>Message *</label><textarea id="modal-message" placeholder="Describe your pickup timeline, equipment, and any questions about the material…"></textarea></div>
+      <div class="fs-modal-field"><label>Message *</label><textarea id="modal-message" placeholder="Describe your pickup timeline, equipment, and any questions…"></textarea></div>
       <div class="fs-modal-field"><label>Contact Email *</label><input type="email" id="modal-email" placeholder="alex@example.com" /></div>
       <div class="fs-modal-field"><label>Phone (optional)</label><input type="tel" id="modal-phone" placeholder="(555) 555-5555" /></div>
       <button type="button" id="modal-submit">Send Request</button>
