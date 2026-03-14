@@ -39,7 +39,8 @@
     .form-group label { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-primary); }
     .required-star { color: #7A5C1E; }
     .field-hint { font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0; }
-    .form-group input, .form-group select, .form-group textarea { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: inherit; background: var(--color-surface); color: var(--color-text-primary); transition: border-color 0.15s; }
+    .form-group input, .form-group select, .form-group textarea { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: inherit; background: var(--color-surface); color: var(--color-text-primary); transition: border-color 0.15s; word-break: break-all; overflow-wrap: break-word; }
+    .review-val { word-break: break-all; overflow-wrap: break-word; max-width: 60%; }
     .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #7A5C1E; }
     .form-group textarea { resize: vertical; min-height: 80px; }
     .full-width { grid-column: 1 / -1; }
@@ -85,7 +86,8 @@
     <div class="container nav-inner">
       <a class="nav-logo" href="index.html">BM</a>
       <div style="display:flex;align-items:center;gap:var(--space-3)">
-        <a href="feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Browse Feedstock</a>
+        <a href="feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Browse Listings</a>
+        <a href="buyer.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Biochar Market</a>
         <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
         <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
         <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
@@ -195,6 +197,7 @@
                 </div>
                 <div class="form-group">
                   <label>Price per ton ($) <span class="required-star">*</span></label>
+                  <p class="field-hint">Material cost only — do not include transport. Enter 0 if free to haul.</p>
                   <input type="number" id="f-price" min="0" placeholder="18" />
                   <div class="checkbox-row"><input type="checkbox" id="f-negotiable" /><label for="f-negotiable">Price is negotiable</label></div>
                 </div>
@@ -236,12 +239,13 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Contamination risk <span class="required-star">*</span></label>
+                  <label>Contamination level <span class="required-star">*</span></label>
+                  <p class="field-hint">Producers use this to assess pyrolysis suitability. Be accurate — misrepresentation may result in rejected loads.</p>
                   <select id="f-contamination">
                     <option value="">Select…</option>
-                    <option value="clean">Clean</option>
-                    <option value="possible_soil">Possible soil</option>
-                    <option value="mixed_debris">Mixed debris</option>
+                    <option value="clean">Clean — no soil, rocks, metals, or treated wood</option>
+                    <option value="possible_soil">Possible soil contact — ground-piled material, minor dirt</option>
+                    <option value="mixed_debris">Mixed debris — rocks, wire, plastic, or unknown materials present</option>
                   </select>
                 </div>
                 <div class="form-group">
@@ -330,6 +334,12 @@
                 <div class="review-card-title">Listing Summary</div>
               </div>
 
+              <div style="margin-bottom:var(--space-4)">
+                <label style="display:flex;align-items:flex-start;gap:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-secondary);cursor:pointer">
+                  <input type="checkbox" id="f-terms" style="margin-top:3px;accent-color:#7A5C1E;flex-shrink:0" />
+                  I confirm the information above is accurate. I understand that misrepresenting material quality may result in listing removal and I agree to the platform's <a href="learn.html" style="color:#7A5C1E">terms of use</a>.
+                </label>
+              </div>
               <div class="wizard-nav">
                 <button class="btn-back" id="back-3">← Back</button>
                 <button class="btn-next" id="submit-btn">Publish Listing</button>

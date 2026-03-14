@@ -291,6 +291,7 @@
       <div class="container buyer-nav-inner">
         <a class="buyer-nav-logo" href="index.html">BM</a>
         <div class="buyer-nav-links">
+          <a href="feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Biomass Market</a>
           <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
           <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
           <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
@@ -323,44 +324,67 @@
 
     <section style="background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:var(--space-8) 0">
       <div class="container">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);max-width:800px;margin:0 auto">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);max-width:800px;margin:0 auto">
 
-          <div onclick="document.getElementById('hiw-panel').classList.toggle('hidden');document.getElementById('feedstock-panel').classList.add('hidden')"
-            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);cursor:pointer;transition:box-shadow 0.15s;user-select:none"
-            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
-            <div style="font-size:1.75rem;margin-bottom:var(--space-3)">📋</div>
-            <h3 style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);color:var(--color-text-primary)">How does it work?</h3>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">The buying process from browse to delivery →</p>
+          <div onclick="document.getElementById('hiw-panel').classList.toggle('hidden');document.getElementById('cert-panel').classList.add('hidden');document.getElementById('biochar-panel').classList.add('hidden')"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);cursor:pointer;transition:box-shadow 0.15s;user-select:none;display:flex;align-items:center;gap:var(--space-3)"
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">📋</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">How does it work?</span>
           </div>
 
-          <div onclick="document.getElementById('feedstock-panel').classList.toggle('hidden');document.getElementById('hiw-panel').classList.add('hidden')"
-            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);cursor:pointer;transition:box-shadow 0.15s;user-select:none"
-            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
-            <div style="font-size:1.75rem;margin-bottom:var(--space-3)">🌱</div>
-            <h3 style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);color:var(--color-text-primary)">What's the right feedstock for me?</h3>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">Match biochar source material to your crops →</p>
+          <a href="crops.html"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);cursor:pointer;transition:box-shadow 0.15s;user-select:none;display:flex;align-items:center;gap:var(--space-3);text-decoration:none"
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">🌱</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">What's the right feedstock for me?</span>
+          </a>
+
+          <div onclick="document.getElementById('cert-panel').classList.toggle('hidden');document.getElementById('hiw-panel').classList.add('hidden');document.getElementById('biochar-panel').classList.add('hidden')"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);cursor:pointer;transition:box-shadow 0.15s;user-select:none;display:flex;align-items:center;gap:var(--space-3)"
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">🏅</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">What do certifications mean?</span>
+          </div>
+
+          <div onclick="document.getElementById('biochar-panel').classList.toggle('hidden');document.getElementById('hiw-panel').classList.add('hidden');document.getElementById('cert-panel').classList.add('hidden')"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);cursor:pointer;transition:box-shadow 0.15s;user-select:none;display:flex;align-items:center;gap:var(--space-3)"
+            onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">⚗️</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">Understanding biochar</span>
           </div>
         </div>
 
-        <div id="hiw-panel" class="hidden" style="max-width:800px;margin:var(--space-6) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
+        <div id="hiw-panel" class="hidden" style="max-width:800px;margin:var(--space-5) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
           <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">How it works</h3>
           <div style="display:flex;flex-direction:column;gap:var(--space-4)">
             <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">01</span><div><strong>Browse or get matched</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Create a free account, answer a few questions about your crops and soil, and get ranked producer matches. Or browse and filter by feedstock, region, and certification.</p></div></div>
             <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">02</span><div><strong>Send an inquiry</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Found a listing that fits? Open a deal room and contact the producer directly.</p></div></div>
             <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">03</span><div><strong>Negotiate directly</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Agree on volume, price, and delivery. Buyer arranges pickup or producer arranges delivery — agreed before confirming.</p></div></div>
-            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">04</span><div><strong>Confirm delivery</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Both parties confirm delivery through the platform. Quality disputes must be raised within 7 days with lab evidence.</p></div></div>
-            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">05</span><div><strong>Transaction complete</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">A verified badge is added, both parties leave a rating, and commission is invoiced to the producer.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">04</span><div><strong>Confirm delivery</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Both parties confirm delivery. Quality disputes must be raised within 7 days with lab evidence.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">05</span><div><strong>Transaction complete</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Verified badge added, both parties rate, commission invoiced to producer.</p></div></div>
           </div>
         </div>
 
-        <div id="feedstock-panel" class="hidden" style="max-width:800px;margin:var(--space-6) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
-          <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">Matching biochar feedstock to your crops</h3>
+        <div id="cert-panel" class="hidden" style="max-width:800px;margin:var(--space-5) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
+          <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">What certifications mean</h3>
           <div style="display:flex;flex-direction:column;gap:var(--space-4)">
-            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🍇</span><div><strong>Vineyards &amp; orchards</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">High-carbon biochar from hardwood or nut shell feedstock. Look for carbon content above 70% and pH 7.5–8.5 to improve drainage in heavy soils.</p></div></div>
-            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌽</span><div><strong>Row crops &amp; grains</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Rice husk or corn stover biochar works well. Focus on surface area above 300 m²/g for nutrient holding. Apply at 5–10 tonnes/acre before planting.</p></div></div>
-            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🥬</span><div><strong>Organic vegetables</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">OMRI-certified biochar only. Low ash content (under 10%) reduces risk of heavy metals. Forestry feedstock biochar is a reliable choice.</p></div></div>
-            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌿</span><div><strong>Pasture &amp; forage</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Moisture retention is the primary benefit. Biochar with low electrical conductivity (under 1 dS/m) reduces salinity risk in irrigated pasture.</p></div></div>
-            <div style="margin-top:var(--space-2)"><a href="crops.html" style="color:var(--color-accent);font-weight:var(--font-weight-semibold);font-size:var(--font-size-sm)">View full crop guide →</a></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌿</span><div><strong>OMRI Listed</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Organic Materials Review Institute. Approved for use in certified organic production. Required if your farm carries organic certification.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🔬</span><div><strong>IBI Certified</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">International Biochar Initiative. Third-party lab verified against standardized quality thresholds for carbon content, heavy metals, and pH.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">☀️</span><div><strong>California Organic</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">CDFA-registered for use on California certified organic operations. Stricter than federal OMRI in some categories.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">✅</span><div><strong>Lab Verified</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Producer has submitted third-party lab results. Scorecard values are verified rather than self-reported. Look for this on every listing.</p></div></div>
+            <div style="margin-top:var(--space-2)"><a href="learn.html" style="color:var(--color-accent);font-weight:var(--font-weight-semibold);font-size:var(--font-size-sm)">Read full certification guide →</a></div>
+          </div>
+        </div>
+
+        <div id="biochar-panel" class="hidden" style="max-width:800px;margin:var(--space-5) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
+          <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">Understanding biochar</h3>
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">⚗️</span><div><strong>What is biochar?</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Charcoal made from organic waste via pyrolysis — heating biomass in low-oxygen conditions. Stable carbon that persists in soil for hundreds of years.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">💧</span><div><strong>Water retention</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Porous structure holds water and nutrients. Most impactful in sandy or degraded soils with poor water holding capacity.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌡️</span><div><strong>Soil pH</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Most biochar is alkaline (pH 7.5–9). Beneficial for acidic soils. Check scorecard pH before applying to already-alkaline ground.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌍</span><div><strong>Carbon sequestration</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Carbon in biochar is chemically stable. Unlike compost, it doesn't decompose — it locks carbon in soil rather than releasing it as CO₂.</p></div></div>
+            <div style="margin-top:var(--space-2)"><a href="learn.html" style="color:var(--color-accent);font-weight:var(--font-weight-semibold);font-size:var(--font-size-sm)">Full learning guide →</a></div>
           </div>
         </div>
 
