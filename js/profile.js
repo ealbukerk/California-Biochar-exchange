@@ -200,6 +200,130 @@
       });
   }
 
+  function renderMyFeedstockListings(uid) {
+    var wrap = document.getElementById('my-feedstock-wrap');
+    if (!wrap) return;
+    firebase.firestore().collection('feedstock_listings')
+      .where('supplierUID', '==', uid).where('status', '==', 'active').get()
+      .then(function (snap) {
+        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active feedstock listings yet.</p>'; return; }
+        var rows = '';
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          var label = d.biomassType ? d.biomassType.replace(/_/g, ' ') : 'Unknown';
+          rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--color-border)">' +
+            '<div><strong style="text-transform:capitalize">' + label + '</strong><span style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-left:var(--space-3)">' + (d.estimatedQuantityTons || '?') + ' tons · $' + (d.pricePerTon || '?') + '/ton · ' + (d.locationZip || '') + '</span></div>' +
+            '<a href="feedstock.html" class="btn btn-secondary" style="font-size:var(--font-size-xs)">View</a>' +
+          '</div>';
+        });
+        wrap.innerHTML = rows;
+      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load listings.</p>'; });
+  }
+
+  function renderMyDemandListings(uid) {
+    var wrap = document.getElementById('my-demand-wrap');
+    if (!wrap) return;
+    firebase.firestore().collection('feedstock_demand')
+      .where('producerUID', '==', uid).where('status', '==', 'active').get()
+      .then(function (snap) {
+        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active demand listings yet.</p>'; return; }
+        var rows = '';
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          var types = (d.acceptedBiomassTypes || []).slice(0, 3).map(function (v) { return v.replace(/_/g, ' '); }).join(', ');
+          rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--color-border)">' +
+            '<div><strong style="text-transform:capitalize">' + types + '</strong><span style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-left:var(--space-3)">' + (d.volumeNeeded || '?') + ' tons · ' + (d.locationZip || '') + '</span></div>' +
+            '<a href="producer-demand-browse.html" class="btn btn-secondary" style="font-size:var(--font-size-xs)">View</a>' +
+          '</div>';
+        });
+        wrap.innerHTML = rows;
+      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load demand listings.</p>'; });
+  }
+
+  function renderFeedstockInquiries(uid) {
+    var wrap = document.getElementById('feedstock-requests-wrap');
+    if (!wrap) return;
+    firebase.firestore().collection('feedstock_inquiries')
+      .where('producerUID', '==', uid).orderBy('createdAt', 'desc').limit(20).get()
+      .then(function (snap) {
+        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No inquiries received yet.</p>'; return; }
+        var rows = '';
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          rows += '<div style="padding:var(--space-4) 0;border-bottom:1px solid var(--color-border)">' +
+            '<div style="display:flex;justify-content:space-between">' +
+              '<strong>' + htmlEscape(d.supplierName || 'Unknown') + '</strong>' +
+              '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + (d.supplierEmail || '') + '</span>' +
+            '</div>' +
+            '<div style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-1)">' + htmlEscape(d.materialDescription || '') + '</div>' +
+            '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">' + (d.volumeAvailableTons ? d.volumeAvailableTons + ' tons available' : '') + '</div>' +
+            '<div style="font-size:var(--font-size-sm);margin-top:var(--space-2)">' + htmlEscape(d.message || '') + '</div>' +
+          '</div>';
+        });
+        wrap.innerHTML = rows;
+      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load inquiries.</p>'; });
+  }
+
+  function renderProducerDetails(profile) {
+    var wrap = document.getElementById('producer-details-wrap');
+    if (!wrap || !profile) return;
+    var PYRO = { kiln: 'Kiln', retort: 'Retort', continuous_reactor: 'Continuous reactor', gasifier: 'Gasifier', other: 'Other' };
+    var MOISTURE = { under_15: 'Under 15%', under_25: 'Under 25%', under_40: 'Under 40%', any: 'Any' };
+    var CONTAM = { clean_only: 'Clean only', soil_acceptable: 'Soil acceptable', mixed_acceptable: 'Mixed acceptable' };
+    var types = (profile.acceptedBiomassTypes || []).map(function (v) { return v.replace(/_/g, ' '); }).join(', ') || 'Not specified';
+    wrap.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Pyrolysis tech</div><div style="margin-top:4px;font-weight:600">' + (PYRO[profile.pyroTech] || 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max moisture</div><div style="margin-top:4px;font-weight:600">' + (MOISTURE[profile.maxMoistureAccepted] || 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Contamination</div><div style="margin-top:4px;font-weight:600">' + (CONTAM[profile.contaminationTolerance] || 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max distance</div><div style="margin-top:4px;font-weight:600">' + (profile.maxSourcingDistance === 'any' ? 'Any distance' : (profile.maxSourcingDistance || '?') + ' miles') + '</div></div>' +
+        '<div style="grid-column:1/-1"><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Biomass types accepted</div><div style="margin-top:4px;text-transform:capitalize">' + types + '</div></div>' +
+      '</div>';
+  }
+
+  function renderThirdPartyProfile(profile) {
+    var wrap = document.getElementById('third-party-wrap');
+    if (!wrap || !profile) return;
+    var TYPE = { logistics: 'Logistics / Hauling', broker: 'Broker / Aggregator', both: 'Logistics + Broker' };
+    var equip = (profile.tpEquipment || []).map(function (v) { return v.replace(/_/g, ' '); }).join(', ') || 'Not specified';
+    wrap.innerHTML =
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Role type</div><div style="margin-top:4px;font-weight:600">' + (TYPE[profile.thirdPartyType] || 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Service radius</div><div style="margin-top:4px;font-weight:600">' + (profile.serviceRadius === 'national' ? 'National' : (profile.serviceRadius || '?') + ' miles') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Load capacity</div><div style="margin-top:4px;font-weight:600">' + (profile.loadCapacity ? profile.loadCapacity + ' tons' : 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Equipment</div><div style="margin-top:4px;text-transform:capitalize">' + equip + '</div></div>' +
+      '</div>';
+  }
+
+  function applyRoleConditionalSections(profile, uid) {
+    var role = profile ? profile.role : 'buyer';
+    var prefsSection = document.getElementById('prefs-section');
+    var carbonSection = document.querySelector('[id=\"carbon-dashboard-wrap\"]') ? document.querySelector('[id=\"carbon-dashboard-wrap\"]').closest('section') : null;
+    var myFeedstock = document.getElementById('my-feedstock-section');
+    var myDemand = document.getElementById('my-demand-section');
+    var feedstockReqs = document.getElementById('feedstock-requests-section');
+    var producerDetails = document.getElementById('producer-details-section');
+    var thirdParty = document.getElementById('third-party-section');
+
+    if (role === 'buyer') {
+      if (prefsSection) prefsSection.hidden = false;
+      if (myFeedstock) myFeedstock.style.display = 'block';
+      renderMyFeedstockListings(uid);
+    }
+    if (role === 'seller') {
+      if (myDemand) myDemand.style.display = 'block';
+      if (feedstockReqs) feedstockReqs.style.display = 'block';
+      if (producerDetails) producerDetails.style.display = 'block';
+      renderMyDemandListings(uid);
+      renderFeedstockInquiries(uid);
+      renderProducerDetails(profile);
+    }
+    if (role === 'third_party') {
+      if (thirdParty) thirdParty.style.display = 'block';
+      renderThirdPartyProfile(profile);
+    }
+  }
+
   function toNumber(value) {
     if (typeof value === "number") return value;
     if (typeof value === "string") {

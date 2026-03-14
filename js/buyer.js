@@ -927,12 +927,12 @@
       }
 
       state.user = user;
-      if (state.profile && state.profile.role === 'seller') showProducerBanner();
       db.collection("users")
         .doc(user.uid)
         .get()
         .then(function (doc) {
           state.profile = doc.exists ? doc.data() : null;
+          if (state.profile && state.profile.role === 'seller') showProducerBanner();
           updateTopNav();
           renderHeroSlot();
           renderTopMatchesBlock();

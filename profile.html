@@ -365,6 +365,51 @@
           <div id="order-history-wrap"></div>
         </section>
 
+        <!-- FARMER: their feedstock listings -->
+        <section class="profile-section" id="my-feedstock-section" style="display:none">
+          <h2>Your Feedstock Listings</h2>
+          <p class="section-sub">Biomass material you've listed for biochar producers.</p>
+          <div id="my-feedstock-wrap" style="margin-top:var(--space-6)"></div>
+          <div style="margin-top:var(--space-4)">
+            <a href="list-feedstock.html" class="btn btn-primary">+ List New Material</a>
+          </div>
+        </section>
+
+        <!-- PRODUCER: their demand listings -->
+        <section class="profile-section" id="my-demand-section" style="display:none">
+          <h2>Your Feedstock Demand Listings</h2>
+          <p class="section-sub">What biomass you're actively seeking from suppliers.</p>
+          <div id="my-demand-wrap" style="margin-top:var(--space-6)"></div>
+          <div style="margin-top:var(--space-4)">
+            <a href="producer-demand.html" class="btn btn-primary">+ Post New Demand</a>
+          </div>
+        </section>
+
+        <!-- PRODUCER: incoming feedstock requests -->
+        <section class="profile-section" id="feedstock-requests-section" style="display:none">
+          <h2>Feedstock Inquiries Received</h2>
+          <p class="section-sub">Suppliers who responded to your demand listings.</p>
+          <div id="feedstock-requests-wrap" style="margin-top:var(--space-6)"></div>
+        </section>
+
+        <!-- PRODUCER: operation details -->
+        <section class="profile-section" id="producer-details-section" style="display:none">
+          <h2>Your Operation</h2>
+          <p class="section-sub">Details used to match you with compatible feedstock suppliers.</p>
+          <div id="producer-details-wrap" style="margin-top:var(--space-6)"></div>
+          <div style="margin-top:var(--space-4)">
+            <a href="feedstock.html" class="btn btn-primary">Browse Feedstock</a>
+            <a href="producer-demand-browse.html" class="btn btn-secondary" style="margin-left:var(--space-3)">Who's Selling</a>
+          </div>
+        </section>
+
+        <!-- THIRD PARTY: service card -->
+        <section class="profile-section" id="third-party-section" style="display:none">
+          <h2>Your Service Profile</h2>
+          <p class="section-sub">How you appear to producers and suppliers on the platform.</p>
+          <div id="third-party-wrap" style="margin-top:var(--space-6)"></div>
+        </section>
+
         <section style="margin-bottom:var(--space-8)">
           <h2 style="font-size:var(--font-size-2xl);font-weight:700;margin-bottom:var(--space-4)">
             🌱 Your Carbon Impact
@@ -442,6 +487,12 @@
           login.style.display = 'none'
           profile.style.display = 'inline-flex'
           logout.style.display = 'inline-flex'
+          db.collection('users').doc(user.uid).get().then(function (doc) {
+            var profileData = doc.exists ? doc.data() : null;
+            if (typeof applyRoleConditionalSections === 'function') {
+              applyRoleConditionalSections(profileData, user.uid);
+            }
+          });
         } else {
           login.style.display = 'inline-flex'
           profile.style.display = 'none'

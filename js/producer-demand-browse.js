@@ -260,26 +260,28 @@
   }
 
   function loadListings() {
-    var grid = document.getElementById('pdb-grid');
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:var(--space-12);color:var(--color-text-muted)">Loading demand listings…</div>';
+    var demoList = window.PRODUCER_DEMAND_LISTINGS ? window.PRODUCER_DEMAND_LISTINGS.slice() : [];
+    state.listings = demoList;
+    geocodeListings(demoList).then(function (list) {
+      state.listings = list;
+      computeDistances();
+      applyFilters();
+    });
     firebase.firestore().collection('feedstock_demand')
       .where('status', '==', 'active')
       .get()
       .then(function (snap) {
-        var list = [];
-        snap.forEach(function (doc) { var d = doc.data(); d._id = doc.id; list.push(d); });
-        state.listings = list;
-        return geocodeListings(list);
-      })
-      .then(function (list) {
-        state.listings = list;
-        computeDistances();
-        applyFilters();
+        if (snap.empty) return;
+        var real = [];
+        snap.forEach(function (doc) { var d = doc.data(); d._id = doc.id; real.push(d); });
+        return geocodeListings(real).then(function (geocoded) {
+          state.listings = demoList.concat(geocoded);
+          computeDistances();
+          applyFilters();
+        });
       })
       .catch(function (err) {
-        console.warn('Firestore error, showing empty state:', err);
-        state.listings = [];
-        applyFilters();
+        console.warn('Firestore error, showing demo data only:', err);
       });
   }
 
