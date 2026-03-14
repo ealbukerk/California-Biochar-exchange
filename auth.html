@@ -72,6 +72,7 @@
       }
 
       .role-grid {
+        flex-wrap: wrap;
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: var(--space-4);
@@ -201,36 +202,47 @@
                 <div class="checkbox-group">
                   <div class="role-grid">
                     <article class="role-card" data-role="buyer">
-                      <h3>I want to buy biochar</h3>
-                      <p>Find and purchase biochar from verified producers</p>
+                      <h3>🌱 I'm a farmer or land manager</h3>
+                      <p>Buy biochar for your soil and list biomass material you have available</p>
                     </article>
                     <article class="role-card" data-role="seller">
-                      <h3>I want to sell biochar</h3>
-                      <p>List your biochar and reach agricultural buyers</p>
+                      <h3>🔥 I produce biochar</h3>
+                      <p>List your biochar products and find biomass feedstock from local suppliers</p>
+                    </article>
+                    <article class="role-card" data-role="third_party">
+                      <h3>🚛 I'm a logistics provider or broker</h3>
+                      <p>Move biomass and biochar or coordinate deals between producers and buyers</p>
                     </article>
                   </div>
                 </div>
                 <div class="field seller-only-field">
                   <label for="su-ein">Business EIN</label>
-                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">
-                    Employer Identification Number. Format: XX-XXXXXXX. Required for seller verification.
-                  </p>
+                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Employer Identification Number. Format: XX-XXXXXXX. Required for seller verification.</p>
                   <input id="su-ein" type="text" name="ein" placeholder="XX-XXXXXXX" pattern="[0-9]{2}-[0-9]{7}" />
                 </div>
                 <div class="field seller-only-field">
                   <label for="su-business-website">Business website</label>
-                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">
-                    Your company website or LinkedIn page. Helps us verify your operation.
-                  </p>
+                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Your company website or LinkedIn. Helps us verify your operation.</p>
                   <input id="su-business-website" type="url" name="businessWebsite" placeholder="https://yourcompany.com" />
+                </div>
+                <div class="field third-party-only-field" style="display:none">
+                  <label for="su-tp-type">Your role type</label>
+                  <select id="su-tp-type">
+                    <option value="">Select…</option>
+                    <option value="logistics">Logistics / Hauling</option>
+                    <option value="broker">Broker / Aggregator</option>
+                    <option value="both">Both</option>
+                  </select>
                 </div>
               </div>
 
               <div class="step" data-step="3">
-                <h2>Step 3 - Your interests</h2>
-                <div id="buyer-step-fields">
-                  <h3>Which crop types are you interested in?</h3>
-                  <p class="crop-help">Not sure yet? <a href="crops.html" target="_blank">Learn which best suits you →</a></p>
+                <h2>Step 3 - Your Profile</h2>
+
+                <!-- FARMER fields -->
+                <div id="farmer-step-fields" style="display:none">
+                  <h3>Tell us about your farm</h3>
+                  <p class="crop-help">Helps us match you to the right biochar and biomass buyers. <a href="crops.html" target="_blank">Learn more →</a></p>
                   <div class="field">
                     <label>Crop types</label>
                     <div id="ms-signup-crops"></div>
@@ -250,7 +262,113 @@
                       <option>Above 8.5</option>
                     </select>
                   </div>
+                  <div class="field">
+                    <label for="su-soil-type">Soil type</label>
+                    <select id="su-soil-type">
+                      <option value="">Not sure</option>
+                      <option value="sandy">Sandy</option>
+                      <option value="loam">Loam</option>
+                      <option value="clay">Clay</option>
+                      <option value="degraded">Degraded</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Current soil issues <span style="color:var(--color-text-muted);font-weight:400">(check all that apply)</span></label>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2)">
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="poor_water_retention" /> Poor water retention</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="nutrient_loss" /> Nutrient loss</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="compaction" /> Compaction</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="acidity" /> Acidity</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="salinity" /> Salinity</label>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label>Farm equipment available <span style="color:var(--color-text-muted);font-weight:400">(for spreading)</span></label>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2)">
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="farm-equipment" value="manure_spreader" /> Manure spreader</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="farm-equipment" value="fertilizer_spreader" /> Fertilizer spreader</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="farm-equipment" value="compost_spreader" /> Compost spreader</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="farm-equipment" value="none" /> None</label>
+                    </div>
+                  </div>
                 </div>
+
+                <!-- PRODUCER fields -->
+                <div id="producer-step-fields" style="display:none">
+                  <h3>Tell us about your operation</h3>
+                  <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-bottom:var(--space-4)">Helps match you to compatible feedstock suppliers.</p>
+                  <div class="field">
+                    <label for="su-pyro-tech">Pyrolysis technology</label>
+                    <select id="su-pyro-tech">
+                      <option value="">Select…</option>
+                      <option value="kiln">Kiln</option>
+                      <option value="retort">Retort</option>
+                      <option value="continuous_reactor">Continuous reactor</option>
+                      <option value="gasifier">Gasifier</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Biomass types accepted</label>
+                    <div id="ms-signup-biomass"></div>
+                  </div>
+                  <div class="field">
+                    <label for="su-max-moisture">Maximum moisture content accepted</label>
+                    <select id="su-max-moisture">
+                      <option value="">Select…</option>
+                      <option value="under_15">Under 15%</option>
+                      <option value="under_25">Under 25%</option>
+                      <option value="under_40">Under 40%</option>
+                      <option value="any">Any</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="su-contamination-tolerance">Contamination tolerance</label>
+                    <select id="su-contamination-tolerance">
+                      <option value="clean_only">Clean only</option>
+                      <option value="soil_acceptable">Soil acceptable</option>
+                      <option value="mixed_acceptable">Mixed acceptable</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="su-max-distance">Maximum sourcing distance (miles)</label>
+                    <select id="su-max-distance">
+                      <option value="50">50 miles</option>
+                      <option value="100">100 miles</option>
+                      <option value="250">250 miles</option>
+                      <option value="any">Any distance</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- THIRD PARTY fields -->
+                <div id="third-party-step-fields" style="display:none">
+                  <h3>Tell us about your operation</h3>
+                  <div class="field">
+                    <label for="su-service-radius">Service radius (miles)</label>
+                    <select id="su-service-radius">
+                      <option value="50">50 miles</option>
+                      <option value="100">100 miles</option>
+                      <option value="250">250 miles</option>
+                      <option value="500">500 miles</option>
+                      <option value="national">National</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label>Equipment types</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2)">
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="tp-equipment" value="walking_floor" /> Walking floor trailers</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="tp-equipment" value="dump_trailer" /> Dump trailers</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="tp-equipment" value="flatbed" /> Flatbed</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="tp-equipment" value="hopper" /> Hopper</label>
+                    </div>
+                  </div>
+                  <div class="field">
+                    <label for="su-load-capacity">Load capacity (tons)</label>
+                    <input id="su-load-capacity" type="number" min="1" placeholder="e.g. 25" />
+                  </div>
+                </div>
+
               </div>
 
               <div class="step" data-step="4">
@@ -314,34 +432,17 @@
         var signupSuccess = document.getElementById("signup-success");
         var loginError = document.getElementById("login-error");
         var roleCards = Array.prototype.slice.call(document.querySelectorAll(".role-card"));
-        var buyerFields = document.getElementById("buyer-step-fields");
 
         var currentStep = 1;
         var selectedRole = "";
 
         var cropEl = document.getElementById("ms-signup-crops");
         var goalEl = document.getElementById("ms-signup-goals");
+        var biomassEl = document.getElementById("ms-signup-biomass");
 
-        makeMultiSelect(cropEl, [
-          "Almond Orchards",
-          "Walnut Orchards",
-          "Pistachio Orchards",
-          "Grapevine / Vineyards",
-          "Corn",
-          "Wheat",
-          "Rice",
-          "Row Crops",
-          "Pasture",
-          "Forestry"
-        ], "Select crop types");
-
-        makeMultiSelect(goalEl, [
-          "Improve Water Retention",
-          "Increase Nutrient Holding",
-          "Raise Soil pH",
-          "Reduce Fertilizer Use",
-          "Carbon Sequestration"
-        ], "Select goals");
+        makeMultiSelect(cropEl, ["Almond Orchards","Walnut Orchards","Pistachio Orchards","Grapevine / Vineyards","Corn","Wheat","Rice","Row Crops","Pasture","Forestry"], "Select crop types");
+        makeMultiSelect(goalEl, ["Improve Water Retention","Increase Nutrient Holding","Raise Soil pH","Reduce Fertilizer Use","Carbon Sequestration"], "Select goals");
+        makeMultiSelect(biomassEl, ["Orchard Prunings","Almond Shells","Pistachio Shells","Walnut Shells","Corn Stover","Rice Husks","Forestry Slash","Logging Residue","Thinning Material","Clean Wood Waste","Construction Wood","Tree Service Chips"], "Select biomass types");
 
         function setMode(mode) {
           var isLogin = mode === "login";
@@ -351,6 +452,12 @@
           tabSignup.classList.toggle("active", !isLogin);
         }
 
+        function showRoleFields() {
+          document.getElementById("farmer-step-fields").style.display = selectedRole === "buyer" ? "block" : "none";
+          document.getElementById("producer-step-fields").style.display = selectedRole === "seller" ? "block" : "none";
+          document.getElementById("third-party-step-fields").style.display = selectedRole === "third_party" ? "block" : "none";
+        }
+
         function showStep(step) {
           currentStep = step;
           Array.prototype.slice.call(signupForm.querySelectorAll(".step")).forEach(function (el) {
@@ -358,10 +465,7 @@
           });
           signupBack.disabled = step === 1;
           signupNext.textContent = step === 4 ? "Create Account" : "Next";
-          if (selectedRole !== "buyer" && step === 3) {
-            showStep(4);
-            return;
-          }
+          if (step === 3) showRoleFields();
         }
 
         function validateStep(step) {
@@ -384,29 +488,24 @@
               return false;
             }
           }
-
           if (step === 2) {
             if (!selectedRole) {
               signupError.textContent = "Please choose a role.";
               return false;
             }
           }
-
           if (step === 4) {
             var selectedState = document.getElementById("state-signup").value.trim();
             var zipcode = document.getElementById("su-zipcode").value.trim();
-            if (!selectedState) {
-              signupError.textContent = "Please select a state.";
-              return false;
-            }
-            if (!/^[0-9]{5}$/.test(zipcode)) {
-              signupError.textContent = "Please enter a valid 5-digit ZIP code.";
-              return false;
-            }
+            if (!selectedState) { signupError.textContent = "Please select a state."; return false; }
+            if (!/^[0-9]{5}$/.test(zipcode)) { signupError.textContent = "Please enter a valid 5-digit ZIP code."; return false; }
           }
-
           signupError.textContent = "";
           return true;
+        }
+
+        function getCheckedValues(name) {
+          return Array.prototype.slice.call(document.querySelectorAll('input[name="' + name + '"]:checked')).map(function(el) { return el.value; });
         }
 
         async function completeSignup() {
@@ -420,14 +519,45 @@
           var ein = selectedRole === "seller" ? document.getElementById("su-ein").value.trim() : null;
           var businessWebsite = selectedRole === "seller" ? document.getElementById("su-business-website").value.trim() : null;
 
-          var cropTypes = selectedRole === "buyer"
-            ? cropEl.getValue().filter(function (value) { return value !== "All"; })
-            : [];
-          var goals = selectedRole === "buyer"
-            ? goalEl.getValue().filter(function (value) { return value !== "All"; })
-            : [];
+          var userData = {
+            name: name,
+            businessName: businessName,
+            role: selectedRole,
+            state: state,
+            zipcode: zipcode,
+            country: country,
+            ein: ein,
+            businessWebsite: businessWebsite,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            email: email
+          };
 
-          var soilPH = selectedRole === "buyer" ? document.getElementById("su-soil").value : "";
+          if (selectedRole === "buyer") {
+            userData.cropTypes = cropEl.getValue().filter(function(v) { return v !== "All"; });
+            userData.goals = goalEl.getValue().filter(function(v) { return v !== "All"; });
+            userData.soilPH = document.getElementById("su-soil").value;
+            userData.soilType = document.getElementById("su-soil-type").value;
+            userData.soilIssues = getCheckedValues("soil-issues");
+            userData.farmEquipment = getCheckedValues("farm-equipment");
+            userData.acreage = parseFloat(document.getElementById("su-acreage").value) || null;
+            userData.applicationRate = parseFloat(document.getElementById("su-apprate").value) || 7;
+            userData.spreadCostPerTonne = parseFloat(document.getElementById("su-spreadcost").value) || 60;
+          }
+
+          if (selectedRole === "seller") {
+            userData.pyroTech = document.getElementById("su-pyro-tech").value;
+            userData.acceptedBiomassTypes = biomassEl.getValue().filter(function(v) { return v !== "All"; });
+            userData.maxMoistureAccepted = document.getElementById("su-max-moisture").value;
+            userData.contaminationTolerance = document.getElementById("su-contamination-tolerance").value;
+            userData.maxSourcingDistance = document.getElementById("su-max-distance").value;
+          }
+
+          if (selectedRole === "third_party") {
+            userData.thirdPartyType = document.getElementById("su-tp-type").value;
+            userData.serviceRadius = document.getElementById("su-service-radius").value;
+            userData.tpEquipment = getCheckedValues("tp-equipment");
+            userData.loadCapacity = parseFloat(document.getElementById("su-load-capacity").value) || null;
+          }
 
           signupNext.disabled = true;
           signupNext.textContent = "Creating...";
@@ -435,28 +565,10 @@
           try {
             var userCredential = await auth.createUserWithEmailAndPassword(email, password);
             var uid = userCredential.user.uid;
-
-            await db.collection("users").doc(uid).set({
-              name: name,
-              businessName: businessName,
-              role: selectedRole,
-              cropTypes: cropTypes,
-              goals: goals,
-              soilPH: soilPH,
-              state: state,
-              zipcode: zipcode,
-              acreage: parseFloat(document.getElementById("su-acreage").value) || null,
-              applicationRate: parseFloat(document.getElementById("su-apprate").value) || 7,
-              spreadCostPerTonne: parseFloat(document.getElementById("su-spreadcost").value) || 60,
-              country: country,
-              ein: ein,
-              businessWebsite: businessWebsite,
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-              email: email
-            });
-
+            await db.collection("users").doc(uid).set(userData);
             signupSuccess.textContent = "Account created. Redirecting...";
-            window.location.href = "index.html";
+            var redirect = selectedRole === "seller" ? "feedstock.html" : selectedRole === "third_party" ? "profile.html" : "buyer.html";
+            window.location.href = redirect;
           } catch (error) {
             signupError.textContent = error && error.message ? error.message : "Signup failed.";
             signupNext.disabled = false;
@@ -469,12 +581,14 @@
             selectedRole = card.getAttribute("data-role");
             roleCards.forEach(function (x) { x.classList.remove("active"); });
             card.classList.add("active");
-            buyerFields.hidden = selectedRole !== "buyer";
-            if (selectedRole === "seller") {
-              document.querySelectorAll('.seller-only-field').forEach(function (el) { el.style.display = 'block'; });
-            } else {
-              document.querySelectorAll('.seller-only-field').forEach(function (el) { el.style.display = 'none'; });
-            }
+            document.querySelectorAll('.seller-only-field').forEach(function (el) {
+              el.style.display = selectedRole === "seller" ? "block" : "none";
+            });
+            document.querySelectorAll('.third-party-only-field').forEach(function (el) {
+              el.style.display = selectedRole === "third_party" ? "block" : "none";
+            });
+            var farmFields = document.getElementById("buyer-farm-fields");
+            if (farmFields) farmFields.style.display = selectedRole === "buyer" ? "block" : "none";
           });
         });
 
@@ -486,25 +600,15 @@
         });
 
         signupBack.addEventListener("click", function () {
-          if (currentStep > 1) {
-            showStep(currentStep - 1);
-          }
+          if (currentStep > 1) showStep(currentStep - 1);
         });
 
         signupNext.addEventListener("click", function () {
-          if (!validateStep(currentStep)) {
-            return;
-          }
-
+          if (!validateStep(currentStep)) return;
           if (currentStep < 4) {
-            var nextStep = currentStep + 1;
-            if (currentStep === 2 && selectedRole !== "buyer") {
-              nextStep = 4;
-            }
-            showStep(nextStep);
+            showStep(currentStep + 1);
             return;
           }
-
           completeSignup();
         });
 
@@ -513,10 +617,13 @@
           loginError.textContent = "";
           var email = document.getElementById("login-email").value.trim();
           var password = document.getElementById("login-password").value;
-
           try {
-            await auth.signInWithEmailAndPassword(email, password);
-            window.location.href = "index.html";
+            var cred = await auth.signInWithEmailAndPassword(email, password);
+            var uid = cred.user.uid;
+            var doc = await db.collection("users").doc(uid).get();
+            var role = doc.exists ? doc.data().role : "buyer";
+            var redirect = role === "seller" ? "feedstock.html" : role === "third_party" ? "profile.html" : "buyer.html";
+            window.location.href = redirect;
           } catch (error) {
             loginError.textContent = error && error.message ? error.message : "Login failed.";
           }
@@ -527,5 +634,6 @@
         }
       })();
     </script>
+*** End Patch
   </body>
 </html>
