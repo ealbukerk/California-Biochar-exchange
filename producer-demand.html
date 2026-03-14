@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Biochar.market — Post Feedstock Demand</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    .hidden { display: none !important; }
+    .page-hero { background: var(--color-accent); padding: var(--space-10) 0 var(--space-8); }
+    .page-hero h1 { color: white; font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .page-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-base); }
+    .apply-wizard { max-width: 860px; margin: 0 auto; padding: var(--space-8) var(--space-6); }
+    .wizard-progress { margin-bottom: var(--space-10); }
+    .wizard-steps-bar { display: flex; align-items: center; justify-content: center; }
+    .wizard-step-dot { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); min-width: 80px; }
+    .dot-number { width: 32px; height: 32px; border-radius: 50%; background: var(--color-border); color: var(--color-text-muted); display: flex; align-items: center; justify-content: center; font-size: var(--font-size-sm); font-weight: var(--font-weight-bold); transition: all 0.2s; }
+    .wizard-step-dot.active .dot-number { background: var(--color-accent); color: white; }
+    .wizard-step-dot.complete .dot-number { background: var(--color-accent); color: white; }
+    .dot-label { font-size: var(--font-size-xs); color: var(--color-text-muted); text-align: center; white-space: nowrap; }
+    .wizard-step-dot.active .dot-label { color: var(--color-accent); font-weight: var(--font-weight-semibold); }
+    .wizard-step-line { flex: 1; height: 2px; background: var(--color-border); margin-bottom: 20px; min-width: 20px; }
+    .wizard-panel { display: none; }
+    .wizard-panel.active { display: block; }
+    .wizard-panel-inner { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-8); }
+    .wizard-step-title { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); }
+    .wizard-step-sub { margin-top: var(--space-2); color: var(--color-text-secondary); font-size: var(--font-size-base); margin-bottom: var(--space-6); }
+    .wizard-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); }
+    .form-group { display: flex; flex-direction: column; gap: var(--space-1); }
+    .form-group label { font-size: var(--font-size-sm); font-weight: var(--font-weight-medium); color: var(--color-text-primary); }
+    .required-star { color: var(--color-accent); }
+    .field-hint { font-size: var(--font-size-xs); color: var(--color-text-muted); margin: 0; }
+    .form-group input, .form-group select, .form-group textarea { padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-family: inherit; background: var(--color-surface); color: var(--color-text-primary); transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--color-accent); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .full-width { grid-column: 1 / -1; }
+    .checkbox-grid { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-2); }
+    .checkbox-grid label { display: flex; align-items: center; gap: 6px; font-size: var(--font-size-sm); font-weight: 400; color: var(--color-text-secondary); cursor: pointer; }
+    .checkbox-grid input[type=checkbox] { accent-color: var(--color-accent); width: 15px; height: 15px; }
+    .wizard-notice { background: var(--color-accent-light); border-radius: var(--radius-md); padding: var(--space-4); display: flex; gap: var(--space-3); margin-bottom: var(--space-6); }
+    .wizard-notice p { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin: 0; }
+    .wizard-nav { display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-8); padding-top: var(--space-6); border-top: 1px solid var(--color-border); }
+    .btn-back { background: none; border: 1px solid var(--color-border); color: var(--color-text-secondary); padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: inherit; }
+    .btn-back:hover { border-color: var(--color-text-muted); }
+    .btn-next { background: var(--color-accent); color: white; border: none; padding: var(--space-3) var(--space-8); border-radius: var(--radius-md); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn-next:hover { background: var(--color-accent-hover); }
+    .btn-next:disabled { opacity: 0.6; cursor: not-allowed; }
+    .review-card { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-6); }
+    .review-card-title { font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-bottom: var(--space-4); }
+    .review-row { display: flex; justify-content: space-between; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-sm); }
+    .review-row:last-child { border-bottom: none; }
+    .review-label { color: var(--color-text-muted); }
+    .review-val { font-weight: var(--font-weight-semibold); color: var(--color-text-primary); }
+    .auth-gate { text-align: center; padding: var(--space-12) 0; color: var(--color-text-secondary); }
+    .auth-gate a { color: var(--color-accent); font-weight: var(--font-weight-semibold); }
+    .success-state { text-align: center; padding: var(--space-12) 0; display: none; }
+    .success-state h2 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-top: var(--space-4); }
+    .success-state p { color: var(--color-text-secondary); margin-top: var(--space-2); }
+    .success-icon { font-size: 3rem; }
+  </style>
+</head>
+<body>
+  <nav class="buyer-nav" style="background:var(--color-surface);border-bottom:1px solid var(--color-border)">
+    <div class="container" style="height:64px;display:flex;align-items:center;justify-content:space-between">
+      <a href="index.html" style="color:var(--color-accent);font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);text-decoration:none">BM</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <a href="producer-demand-browse.html" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Browse Demand</a>
+        <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+        <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+        <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="page-hero">
+    <div class="container-narrow">
+      <h1>Post Feedstock Demand</h1>
+      <p>Tell suppliers what biomass you need. They'll come to you.</p>
+    </div>
+  </section>
+
+  <main style="padding-bottom:var(--space-12)">
+    <div class="container">
+      <div id="auth-gate" class="auth-gate" style="display:none">
+        <p>Please <a href="auth.html">log in</a> to post a demand listing.</p>
+      </div>
+      <div id="success-state" class="success-state">
+        <div class="success-icon">✅</div>
+        <h2>Demand listing posted!</h2>
+        <p>Feedstock suppliers can now find and contact you.</p>
+        <div style="margin-top:var(--space-6);display:flex;gap:var(--space-4);justify-content:center">
+          <a href="producer-demand-browse.html" class="btn btn-secondary">Browse all demand</a>
+          <a href="feedstock.html" class="btn btn-primary">Find feedstock now</a>
+        </div>
+      </div>
+      <div id="wizard-wrap">
+        <div class="apply-wizard">
+          <div class="wizard-progress">
+            <div class="wizard-steps-bar">
+              <div class="wizard-step-dot active" data-step="1">
+                <span class="dot-number">1</span>
+                <span class="dot-label">What You Need</span>
+              </div>
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step-dot" data-step="2">
+                <span class="dot-number">2</span>
+                <span class="dot-label">Quality &amp; Logistics</span>
+              </div>
+              <div class="wizard-step-line"></div>
+              <div class="wizard-step-dot" data-step="3">
+                <span class="dot-number">3</span>
+                <span class="dot-label">Review &amp; Post</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 1 -->
+          <div class="wizard-panel active" id="pd-step-1">
+            <div class="wizard-panel-inner">
+              <h2 class="wizard-step-title">What feedstock do you need?</h2>
+              <p class="wizard-step-sub">Suppliers filter by biomass type, location and volume. Be specific to get better matches.</p>
+              <div class="wizard-form-grid">
+                <div class="form-group full-width">
+                  <label>Biomass types accepted <span class="required-star">*</span></label>
+                  <p class="field-hint">Select all types your operation can process.</p>
+                  <div class="checkbox-grid" style="margin-top:var(--space-3)">
+                    <label><input type="checkbox" name="pd-biomass" value="orchard_prunings" /> Orchard prunings</label>
+                    <label><input type="checkbox" name="pd-biomass" value="almond_shells" /> Almond shells</label>
+                    <label><input type="checkbox" name="pd-biomass" value="pistachio_shells" /> Pistachio shells</label>
+                    <label><input type="checkbox" name="pd-biomass" value="walnut_shells" /> Walnut shells</label>
+                    <label><input type="checkbox" name="pd-biomass" value="corn_stover" /> Corn stover</label>
+                    <label><input type="checkbox" name="pd-biomass" value="rice_husks" /> Rice husks</label>
+                    <label><input type="checkbox" name="pd-biomass" value="forestry_slash" /> Forestry slash</label>
+                    <label><input type="checkbox" name="pd-biomass" value="logging_residue" /> Logging residue</label>
+                    <label><input type="checkbox" name="pd-biomass" value="thinning_material" /> Thinning material</label>
+                    <label><input type="checkbox" name="pd-biomass" value="clean_wood_waste" /> Clean wood waste</label>
+                    <label><input type="checkbox" name="pd-biomass" value="construction_wood" /> Construction wood</label>
+                    <label><input type="checkbox" name="pd-biomass" value="tree_service_chips" /> Tree service chips</label>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Volume needed <span class="required-star">*</span></label>
+                  <input type="number" id="pd-volume" min="1" placeholder="e.g. 200" />
+                </div>
+                <div class="form-group">
+                  <label>Volume period <span class="required-star">*</span></label>
+                  <select id="pd-volume-period">
+                    <option value="">Select…</option>
+                    <option value="per_week">Per week</option>
+                    <option value="per_month">Per month</option>
+                    <option value="per_year">Per year</option>
+                    <option value="one_time">One-time order</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Minimum shipment (tons) <span class="required-star">*</span></label>
+                  <input type="number" id="pd-min-shipment" min="1" placeholder="e.g. 20" />
+                </div>
+                <div class="form-group">
+                  <label>Maximum sourcing distance (miles) <span class="required-star">*</span></label>
+                  <select id="pd-max-distance">
+                    <option value="50">50 miles</option>
+                    <option value="100">100 miles</option>
+                    <option value="250">250 miles</option>
+                    <option value="any">Any distance</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Price willing to pay ($/ton)</label>
+                  <input type="number" id="pd-price-max" min="0" placeholder="e.g. 25" />
+                  <p class="field-hint">Leave blank if open to negotiation.</p>
+                </div>
+                <div class="form-group">
+                  <label>ZIP code <span class="required-star">*</span></label>
+                  <p class="field-hint">Your facility location — used to calculate delivered cost.</p>
+                  <input type="text" id="pd-zip" maxlength="5" placeholder="e.g. 95401" />
+                </div>
+              </div>
+              <div class="wizard-nav">
+                <span></span>
+                <button class="btn-next" id="pd-next-1">Next: Quality &amp; Logistics →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2 -->
+          <div class="wizard-panel" id="pd-step-2">
+            <div class="wizard-panel-inner">
+              <h2 class="wizard-step-title">Quality requirements &amp; logistics</h2>
+              <p class="wizard-step-sub">Help suppliers understand what your pyrolysis process can handle.</p>
+              <div class="wizard-form-grid">
+                <div class="form-group">
+                  <label>Maximum moisture accepted <span class="required-star">*</span></label>
+                  <select id="pd-max-moisture">
+                    <option value="">Select…</option>
+                    <option value="under_15">Under 15%</option>
+                    <option value="under_25">Under 25%</option>
+                    <option value="under_40">Under 40%</option>
+                    <option value="any">Any</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Contamination tolerance <span class="required-star">*</span></label>
+                  <select id="pd-contamination-tolerance">
+                    <option value="clean_only">Clean only</option>
+                    <option value="soil_acceptable">Soil acceptable</option>
+                    <option value="mixed_acceptable">Mixed acceptable</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Preferred particle size</label>
+                  <select id="pd-particle-size">
+                    <option value="any">Any</option>
+                    <option value="chipped">Chipped</option>
+                    <option value="shredded">Shredded</option>
+                    <option value="whole">Whole</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Preprocessing capability</label>
+                  <select id="pd-preprocessing">
+                    <option value="accepts_raw">Accepts raw biomass</option>
+                    <option value="requires_chipped">Requires chipped</option>
+                    <option value="requires_dried">Requires dried</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Pyrolysis technology</label>
+                  <select id="pd-pyro-tech">
+                    <option value="">Select…</option>
+                    <option value="kiln">Kiln</option>
+                    <option value="retort">Retort</option>
+                    <option value="continuous_reactor">Continuous reactor</option>
+                    <option value="gasifier">Gasifier</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Feedstock storage capacity (tons)</label>
+                  <input type="number" id="pd-storage-capacity" min="0" placeholder="e.g. 100" />
+                </div>
+                <div class="form-group full-width">
+                  <label>Loading equipment available</label>
+                  <div class="checkbox-grid">
+                    <label><input type="checkbox" name="pd-loading-equip" value="front_loader" /> Front loader</label>
+                    <label><input type="checkbox" name="pd-loading-equip" value="conveyor" /> Conveyor</label>
+                    <label><input type="checkbox" name="pd-loading-equip" value="forklift" /> Forklift</label>
+                    <label><input type="checkbox" name="pd-loading-equip" value="none" /> None — supplier must self-unload</label>
+                  </div>
+                </div>
+                <div class="form-group full-width">
+                  <label>Additional notes</label>
+                  <textarea id="pd-notes" placeholder="Access details, scheduling requirements, or anything suppliers should know…"></textarea>
+                </div>
+              </div>
+              <div class="wizard-nav">
+                <button class="btn-back" id="pd-back-2">← Back</button>
+                <button class="btn-next" id="pd-next-2">Next: Review &amp; Post →</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3 -->
+          <div class="wizard-panel" id="pd-step-3">
+            <div class="wizard-panel-inner">
+              <h2 class="wizard-step-title">Review your demand listing</h2>
+              <p class="wizard-step-sub">Confirm your details before posting.</p>
+              <div class="wizard-notice">
+                <span>ℹ️</span>
+                <p>Your contact info is only shared with suppliers who send an inquiry. It will not be publicly displayed.</p>
+              </div>
+              <div class="review-card">
+                <div class="review-card-title">Contact</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+                  <div class="form-group">
+                    <label>Operation name <span class="required-star">*</span></label>
+                    <input type="text" id="pd-company" placeholder="Pacific Biochar LLC" />
+                  </div>
+                  <div class="form-group">
+                    <label>Contact name <span class="required-star">*</span></label>
+                    <input type="text" id="pd-name" placeholder="Alex Johnson" />
+                  </div>
+                  <div class="form-group">
+                    <label>Contact email <span class="required-star">*</span></label>
+                    <input type="email" id="pd-email" placeholder="alex@example.com" />
+                  </div>
+                  <div class="form-group">
+                    <label>Phone (optional)</label>
+                    <input type="tel" id="pd-phone" placeholder="(555) 555-5555" />
+                  </div>
+                </div>
+              </div>
+              <div class="review-card" id="pd-review-summary">
+                <div class="review-card-title">Listing Summary</div>
+              </div>
+              <div class="wizard-nav">
+                <button class="btn-back" id="pd-back-3">← Back</button>
+                <button class="btn-next" id="pd-submit-btn">Post Demand Listing</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script src="js/producer-demand.js"></script>
+</body>
+</html>
