@@ -253,6 +253,16 @@
                   </div>
                 </div>
                 <div class="form-group full-width">
+                  <label>Photos of your facility <span style="color:var(--color-text-muted);font-weight:400">(recommended)</span></label>
+                  <p class="field-hint">Photos of your kiln or receiving area help suppliers understand your setup. Up to 5 images.</p>
+                  <div style="border:2px dashed var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);text-align:center;cursor:pointer;background:var(--color-bg);margin-top:var(--space-2)" onclick="document.getElementById('pd-photo-input').click()">
+                    <div style="font-size:1.75rem">📷</div>
+                    <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">Click to upload · JPG or PNG</p>
+                  </div>
+                  <input type="file" id="pd-photo-input" accept="image/*" multiple style="display:none" />
+                  <div id="pd-photo-previews" style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-3)"></div>
+                </div>
+                <div class="form-group full-width">
                   <label>Additional notes</label>
                   <textarea id="pd-notes" placeholder="Access details, scheduling requirements, or anything suppliers should know…"></textarea>
                 </div>

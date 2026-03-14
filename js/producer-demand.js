@@ -15,9 +15,41 @@
   var CONTAMINATION_LABELS = { clean_only: 'Clean only', soil_acceptable: 'Soil acceptable', mixed_acceptable: 'Mixed acceptable' };
   var PARTICLE_LABELS = { any: 'Any', chipped: 'Chipped', shredded: 'Shredded', whole: 'Whole' };
 
+  var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+  var CLOUDINARY_PRESET = 'biochar_certs';
+  var pdPhotoFiles = [];
   var currentStep = 1;
 
   function val(id) { return document.getElementById(id).value.trim(); }
+
+  function handlePdPhotos(files) {
+    pdPhotoFiles = Array.prototype.slice.call(files, 0, 5);
+    var previews = document.getElementById('pd-photo-previews');
+    if (!previews) return;
+    previews.innerHTML = '';
+    pdPhotoFiles.forEach(function (file) {
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var img = document.createElement('img');
+        img.src = e.target.result;
+        img.style.cssText = 'width:100px;height:100px;object-fit:cover;border-radius:var(--radius-md);border:1px solid var(--color-border)';
+        previews.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function uploadPdPhotos() {
+    if (!pdPhotoFiles.length) return Promise.resolve([]);
+    return Promise.all(pdPhotoFiles.map(function (file) {
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { return d.secure_url || ''; });
+    }));
+  }
 
   function getChecked(name) {
     return Array.prototype.slice.call(document.querySelectorAll('input[name="' + name + '"]:checked'))
@@ -116,18 +148,19 @@
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
-    firebase.firestore().collection('feedstock_demand').add(listing)
-      .then(function () {
-        document.getElementById('wizard-wrap').style.display = 'none';
-        document.getElementById('success-state').style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      })
-      .catch(function (err) {
-        console.error(err);
-        alert('Submission failed. Please try again.');
-        btn.disabled = false;
-        btn.textContent = 'Post Demand Listing';
-      });
+    uploadPdPhotos().then(function (photoUrls) {
+      listing.photos = photoUrls.filter(Boolean);
+      return firebase.firestore().collection('feedstock_demand').add(listing);
+    }).then(function () {
+      document.getElementById('wizard-wrap').style.display = 'none';
+      document.getElementById('success-state').style.display = 'block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }).catch(function (err) {
+      console.error(err);
+      alert('Submission failed. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Post Demand Listing';
+    });
   }
 
   function init() {
@@ -169,6 +202,9 @@
         }
         document.getElementById('pd-email').value = user.email || '';
       });
+
+      var pdPhotoInput = document.getElementById('pd-photo-input');
+      if (pdPhotoInput) pdPhotoInput.addEventListener('change', function (e) { handlePdPhotos(e.target.files); });
 
       document.getElementById('pd-next-1').addEventListener('click', function () {
         if (validateStep1()) goToStep(2);

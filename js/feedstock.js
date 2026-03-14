@@ -112,6 +112,15 @@
 
   function cardHtml(l) {
     var typeLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
+    var photoHtml = (l.photos && l.photos.length)
+      ? '<img src="' + l.photos[0] + '" alt="' + typeLabel + '" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0" />'
+      : '<div style="width:100%;height:160px;background:linear-gradient(135deg,#F5EFE6,#E8DDD0);display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
+        (typeLabel.toLowerCase().indexOf('almond') !== -1 || typeLabel.toLowerCase().indexOf('walnut') !== -1 || typeLabel.toLowerCase().indexOf('pistachio') !== -1 ? '🌰' :
+         typeLabel.toLowerCase().indexOf('rice') !== -1 || typeLabel.toLowerCase().indexOf('corn') !== -1 ? '🌾' :
+         typeLabel.toLowerCase().indexOf('wood') !== -1 || typeLabel.toLowerCase().indexOf('construction') !== -1 ? '🪵' :
+         typeLabel.toLowerCase().indexOf('forest') !== -1 || typeLabel.toLowerCase().indexOf('logging') !== -1 || typeLabel.toLowerCase().indexOf('thinning') !== -1 ? '🌲' :
+         typeLabel.toLowerCase().indexOf('tree') !== -1 ? '🌳' : '📦') +
+        '</div>';
     var supplierLabel = SUPPLIER_LABELS[l.supplierType] || l.supplierType;
     var moistureLabel = MOISTURE_LABELS[l.moistureContent] || l.moistureContent;
     var contamLabel = CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk;
@@ -141,7 +150,9 @@
       : '';
 
     return '<div class="listing-card-wrapper">' +
-      '<div class="listing-card">' +
+      '<div class="listing-card" style="padding:0;overflow:hidden">' +
+        photoHtml +
+        '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
         '<div>' +
           '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
             '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
@@ -170,6 +181,7 @@
         yieldHtml(l) +
 
         '<button class="fs-contact-btn" data-id="' + l._id + '">Request Feedstock</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }

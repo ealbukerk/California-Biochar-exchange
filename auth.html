@@ -567,7 +567,7 @@
             var uid = userCredential.user.uid;
             await db.collection("users").doc(uid).set(userData);
             signupSuccess.textContent = "Account created. Redirecting...";
-            var redirect = selectedRole === "seller" ? "feedstock.html" : selectedRole === "third_party" ? "profile.html" : "buyer.html";
+            var redirect = selectedRole === "seller" ? "seller.html" : selectedRole === "third_party" ? "profile.html" : "buyer.html";
             window.location.href = redirect;
           } catch (error) {
             signupError.textContent = error && error.message ? error.message : "Signup failed.";

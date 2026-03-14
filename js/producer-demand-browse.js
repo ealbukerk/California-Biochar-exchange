@@ -100,6 +100,9 @@
 
   function cardHtml(l) {
     var pyroLabel = PYRO_LABELS[l.pyroTech] || '';
+    var photoHtml = (l.photos && l.photos.length)
+      ? '<img src="' + l.photos[0] + '" alt="Operation photo" style="width:100%;height:140px;object-fit:cover;display:block;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0" />'
+      : '<div style="width:100%;height:100px;background:linear-gradient(135deg,var(--color-accent-light),var(--color-border));display:flex;align-items:center;justify-content:center;font-size:2.5rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">🔥</div>';
     var moistureLabel = MOISTURE_LABELS[l.maxMoistureAccepted] || l.maxMoistureAccepted;
     var contamLabel = CONTAMINATION_LABELS[l.contaminationTolerance] || l.contaminationTolerance;
     var periodLabel = PERIOD_LABELS[l.volumePeriod] || '';
@@ -119,7 +122,9 @@
     var contamClass = l.contaminationTolerance === 'clean_only' ? 'pdb-tag-clean' : 'pdb-tag-soil';
 
     return '<div class="listing-card-wrapper">' +
-      '<div class="listing-card">' +
+      '<div class="listing-card" style="padding:0;overflow:hidden">' +
+        photoHtml +
+        '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
         '<div>' +
           '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);align-items:center">' +
             (pyroLabel ? '<span class="pdb-tag pdb-tag-tech">' + pyroLabel + '</span>' : '') +
@@ -138,6 +143,7 @@
         scoreHtml +
         (l.notes ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + l.notes + '</div>' : '') +
         '<button class="pdb-contact-btn" data-id="' + l._id + '">Contact Producer</button>' +
+        '</div>' +
       '</div>' +
     '</div>';
   }

@@ -350,7 +350,7 @@
           try {
             var doc = await db.collection('users').doc(user.uid).get()
             var role = doc.exists ? doc.data().role : 'buyer'
-            var redirect = role === 'seller' ? 'feedstock.html' : role === 'third_party' ? 'profile.html' : 'buyer.html'
+            var redirect = role === 'seller' ? 'seller.html' : role === 'third_party' ? 'profile.html' : 'buyer.html'
             window.location.href = redirect
           } catch (e) {
             // no-op
