@@ -98,6 +98,18 @@
     renderGrid();
   }
 
+  function yieldHtml(l) {
+    var ratios = window.FEEDSTOCK_YIELD_RATIOS || {};
+    var ratio = ratios[l.biomassType];
+    if (!ratio || !l.estimatedQuantityTons) return '';
+    var charYield = Math.round(l.estimatedQuantityTons * ratio);
+    var co2 = Math.round(charYield * 0.85 * 3.67);
+    return '<div style="background:var(--color-accent-light);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-top:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-secondary)">' +
+      '🔥 Est. char yield: <strong>' + charYield.toLocaleString() + ' tons</strong>' +
+      ' &nbsp;·&nbsp; 🌍 CO₂ potential: <strong>' + co2.toLocaleString() + ' tCO₂e</strong>' +
+    '</div>';
+  }
+
   function cardHtml(l) {
     var typeLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
     var supplierLabel = SUPPLIER_LABELS[l.supplierType] || l.supplierType;
@@ -155,6 +167,7 @@
 
         deliveredHtml +
         notesHtml +
+        yieldHtml(l) +
 
         '<button class="fs-contact-btn" data-id="' + l._id + '">Request Feedstock</button>' +
       '</div>' +

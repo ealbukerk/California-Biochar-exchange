@@ -1,3 +1,18 @@
+window.FEEDSTOCK_YIELD_RATIOS = {
+  orchard_prunings: 0.28,
+  almond_shells: 0.32,
+  pistachio_shells: 0.33,
+  walnut_shells: 0.31,
+  corn_stover: 0.22,
+  rice_husks: 0.35,
+  forestry_slash: 0.26,
+  logging_residue: 0.27,
+  thinning_material: 0.25,
+  clean_wood_waste: 0.28,
+  construction_wood: 0.27,
+  tree_service_chips: 0.26
+};
+
 window.FEEDSTOCK_LISTINGS = [
   {
     _id: 'fs-demo-001',

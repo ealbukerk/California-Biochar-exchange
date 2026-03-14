@@ -927,6 +927,7 @@
       }
 
       state.user = user;
+      if (state.profile && state.profile.role === 'seller') showProducerBanner();
       db.collection("users")
         .doc(user.uid)
         .get()
@@ -963,6 +964,11 @@
           renderTopMatchesBlock();
         });
     });
+  }
+
+  function showProducerBanner() {
+    var banner = document.getElementById('producer-cta-banner');
+    if (banner) banner.classList.remove('hidden');
   }
 
   function init() {
