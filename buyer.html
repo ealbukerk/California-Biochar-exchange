@@ -321,36 +321,49 @@
       </div>
     </section>
 
-    <section class="how-it-works">
+    <section style="background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:var(--space-8) 0">
       <div class="container">
-        <h2>How it works</h2>
-        <div class="steps-grid">
-          <div class="step-card">
-            <div class="step-number">01</div>
-            <h3>Browse or get matched</h3>
-            <p>Create a free account, answer a few questions about your crops and soil, and get ranked producer matches. Or browse all listings and filter by feedstock, region, and certification.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);max-width:800px;margin:0 auto">
+
+          <div onclick="document.getElementById('hiw-panel').classList.toggle('hidden');document.getElementById('feedstock-panel').classList.add('hidden')"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);cursor:pointer;transition:box-shadow 0.15s;user-select:none"
+            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <div style="font-size:1.75rem;margin-bottom:var(--space-3)">📋</div>
+            <h3 style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);color:var(--color-text-primary)">How does it work?</h3>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">The buying process from browse to delivery →</p>
           </div>
-          <div class="step-card">
-            <div class="step-number">02</div>
-            <h3>Send an inquiry</h3>
-            <p>Found a listing that fits? Send an inquiry through the platform. We introduce you to the producer within 24 hours.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-number">03</div>
-            <h3>Negotiate directly</h3>
-            <p>You and the producer agree on volume, price, and delivery terms directly. The buyer arranges pickup or the producer arranges delivery — this is agreed between both parties before confirming.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-number">04</div>
-            <h3>Confirm delivery</h3>
-            <p>Once material is received and accepted both parties confirm delivery through the platform. No returns are accepted after delivery confirmation. Quality disputes must be raised within 7 days with lab evidence.</p>
-          </div>
-          <div class="step-card">
-            <div class="step-number">05</div>
-            <h3>Transaction complete</h3>
-            <p>The transaction is marked complete, a verified badge is added to the producer listing, and both parties leave a rating. Commission is invoiced to the producer on completed transactions only.</p>
+
+          <div onclick="document.getElementById('feedstock-panel').classList.toggle('hidden');document.getElementById('hiw-panel').classList.add('hidden')"
+            style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6);cursor:pointer;transition:box-shadow 0.15s;user-select:none"
+            onmouseover="this.style.boxShadow='0 4px 16px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <div style="font-size:1.75rem;margin-bottom:var(--space-3)">🌱</div>
+            <h3 style="font-size:var(--font-size-lg);font-weight:var(--font-weight-bold);color:var(--color-text-primary)">What's the right feedstock for me?</h3>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">Match biochar source material to your crops →</p>
           </div>
         </div>
+
+        <div id="hiw-panel" class="hidden" style="max-width:800px;margin:var(--space-6) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
+          <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">How it works</h3>
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">01</span><div><strong>Browse or get matched</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Create a free account, answer a few questions about your crops and soil, and get ranked producer matches. Or browse and filter by feedstock, region, and certification.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">02</span><div><strong>Send an inquiry</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Found a listing that fits? Open a deal room and contact the producer directly.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">03</span><div><strong>Negotiate directly</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Agree on volume, price, and delivery. Buyer arranges pickup or producer arranges delivery — agreed before confirming.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">04</span><div><strong>Confirm delivery</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Both parties confirm delivery through the platform. Quality disputes must be raised within 7 days with lab evidence.</p></div></div>
+            <div style="display:flex;gap:var(--space-4);align-items:flex-start"><span style="font-size:var(--font-size-xl);font-weight:800;color:var(--color-accent);min-width:32px">05</span><div><strong>Transaction complete</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">A verified badge is added, both parties leave a rating, and commission is invoiced to the producer.</p></div></div>
+          </div>
+        </div>
+
+        <div id="feedstock-panel" class="hidden" style="max-width:800px;margin:var(--space-6) auto 0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-6)">
+          <h3 style="font-weight:var(--font-weight-bold);margin-bottom:var(--space-5)">Matching biochar feedstock to your crops</h3>
+          <div style="display:flex;flex-direction:column;gap:var(--space-4)">
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🍇</span><div><strong>Vineyards &amp; orchards</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">High-carbon biochar from hardwood or nut shell feedstock. Look for carbon content above 70% and pH 7.5–8.5 to improve drainage in heavy soils.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌽</span><div><strong>Row crops &amp; grains</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Rice husk or corn stover biochar works well. Focus on surface area above 300 m²/g for nutrient holding. Apply at 5–10 tonnes/acre before planting.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🥬</span><div><strong>Organic vegetables</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">OMRI-certified biochar only. Low ash content (under 10%) reduces risk of heavy metals. Forestry feedstock biochar is a reliable choice.</p></div></div>
+            <div style="display:flex;gap:var(--space-4)"><span style="font-size:1.25rem">🌿</span><div><strong>Pasture &amp; forage</strong><p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:4px">Moisture retention is the primary benefit. Biochar with low electrical conductivity (under 1 dS/m) reduces salinity risk in irrigated pasture.</p></div></div>
+            <div style="margin-top:var(--space-2)"><a href="crops.html" style="color:var(--color-accent);font-weight:var(--font-weight-semibold);font-size:var(--font-size-sm)">View full crop guide →</a></div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -400,6 +413,17 @@
               <option value="rating-desc">Rating</option>
             </select>
             <div id="ms-cert"></div>
+            <div style="display:flex;align-items:center;gap:var(--space-2)">
+              <input id="filter-buyer-zip" type="text" maxlength="5" placeholder="Your ZIP" style="width:90px;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit" />
+              <select id="filter-radius" style="height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit;background:var(--color-surface)">
+                <option value="0">Any distance</option>
+                <option value="25">Within 25 mi</option>
+                <option value="50">Within 50 mi</option>
+                <option value="100">Within 100 mi</option>
+                <option value="250">Within 250 mi</option>
+              </select>
+              <span id="buyer-zip-status" style="font-size:var(--font-size-sm);font-weight:600;min-width:16px"></span>
+            </div>
             <button id="reset-filters" class="btn-secondary">Reset all</button>
           </div>
           <script>buildStateSelect(document.getElementById('filter-state'), false)</script>

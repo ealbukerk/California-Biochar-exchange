@@ -457,43 +457,59 @@
       '<div class="compare-corner">' +
       '<input type="checkbox" class="compare-check" data-id="' + htmlEscape(listing.id) + '"' +
       (compareList.indexOf(listing.id) !== -1 ? " checked" : "") +
-      ">" +
-      '<label class="compare-label">Compare</label>' +
-      "</div>" +
-      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%">' +
-      '<div class="listing-top-row"><h3 style="margin:0;">' + htmlEscape(listing.producerName) + '</h3>' + (verifiedBadge ? verifiedBadge : "") + "</div>" +
-      '<div class="listing-subtitle">' + htmlEscape(listing.region || listing.state || "") + "</div>" +
-      '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + "</span>" +
-      '<div class="listing-summary-price">' +
-      '<div class="price-row"><span class="price-value">$' + htmlEscape(listing.pricePerTonne) + '</span><span class="price-unit">/tonne</span></div>' +
-      '<span class="card-detail">Available: ' + htmlEscape(listing.availableTonnes) + " tonnes</span>" +
-      "</div>" +
-      '<div class="scorecard-section">' +
-      '<div class="scorecard-inline">' +
-      '<span class="scorecard-badge">' + htmlEscape(listing.scorecard.carbonContent) + '% C</span>' +
-      '<span class="scorecard-badge">pH ' + htmlEscape(listing.scorecard.pH) + "</span>" +
-      '<span class="scorecard-badge">' + htmlEscape(listing.scorecard.surfaceArea) + " m²/g</span>" +
-      "</div>" +
-      "</div>" +
-      '<div class="suitable-row" style="margin-top:var(--space-3);">' + suitableTags + "</div>" +
-      '<p class="card-detail">Min order: ' + htmlEscape(listing.minOrderTonnes) + " tonnes</p>" +
-      '<p class="card-detail ' + lead.className + '">' + htmlEscape(lead.text) + "</p>" +
-      '<div class="rating-row"><span>' + htmlEscape(listing.transactionsCompleted) + " transactions</span><span>·</span><span>" + htmlEscape(ratingText) + "</span>" + (stars ? '<span class="star-rating">' + htmlEscape(stars) + "</span>" : "") + '<span>·</span><span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span></div>' +
-      '<div class="delivered-cost-inline" id="dc-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-muted)"></div>' +
-      (typeof extraScore === "number"
-        ? '<p class="card-detail" style="margin-top:var(--space-2);">Match score: ' + htmlEscape(extraScore) + '%</p>' +
-          '<div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
-          '<p class="card-detail" style="margin-top:var(--space-2);">' + htmlEscape(explanation || "") + "</p>"
-        : "") +
-      '<div class="listing-actions" style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:var(--space-3);">' +
-      '<span class="btn btn-primary">Make an offer</span>' +
-      '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button></div>' +
-      '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-3);display:none;gap:var(--space-2);">' +
-      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(autoVolume) + '" style="max-width:130px;" />' +
-      '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm purchase</button>' +
-      "</div>" +
-      "</a>" +
-      "</div>"
+      '><label class="compare-label">Compare</label>' +
+      '</div>' +
+      '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;padding:0">' +
+
+      '<div style="width:100%;height:160px;background:linear-gradient(135deg,var(--color-accent-light),var(--color-border));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
+      (listing.feedstock && listing.feedstock.toLowerCase().indexOf('almond') !== -1 ? '🌰' :
+       listing.feedstock && listing.feedstock.toLowerCase().indexOf('rice') !== -1 ? '🌾' :
+       listing.feedstock && listing.feedstock.toLowerCase().indexOf('wood') !== -1 ? '🪵' :
+       listing.feedstock && listing.feedstock.toLowerCase().indexOf('forest') !== -1 ? '🌲' :
+       listing.feedstock && listing.feedstock.toLowerCase().indexOf('walnut') !== -1 ? '🌰' :
+       listing.feedstock && listing.feedstock.toLowerCase().indexOf('corn') !== -1 ? '🌽' : '⚗️') +
+      '</div>' +
+
+      '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
+
+      '<div>' +
+      '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + '</span>' +
+      '<h3 style="margin:var(--space-2) 0 0;font-size:var(--font-size-lg)">' + htmlEscape(listing.producerName) + (verifiedBadge ? ' ' + verifiedBadge : '') + '</h3>' +
+      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + htmlEscape(listing.county || listing.region || listing.state || '') + '</div>' +
+      '</div>' +
+
+      '<div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">' +
+      '<div><span style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-text-primary)">$' + htmlEscape(listing.pricePerTonne) + '</span><span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">/tonne</span></div>' +
+      '<div class="delivered-cost-inline" id="dc-' + htmlEscape(listing.id) + '" style="font-size:var(--font-size-sm);color:var(--color-accent);font-weight:600;text-align:right"></div>' +
+      '</div>' +
+
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">' +
+      '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3)"><div style="font-size:0.65rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Carbon</div><div style="font-size:var(--font-size-sm);font-weight:700;color:var(--color-text-primary);margin-top:2px">' + htmlEscape(listing.scorecard.carbonContent) + '%</div></div>' +
+      '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3)"><div style="font-size:0.65rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Ash</div><div style="font-size:var(--font-size-sm);font-weight:700;color:var(--color-text-primary);margin-top:2px">' + htmlEscape(listing.scorecard.ashContent) + '%</div></div>' +
+      '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3)"><div style="font-size:0.65rem;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.04em;font-weight:600">EC</div><div style="font-size:var(--font-size-sm);font-weight:700;color:var(--color-text-primary);margin-top:2px">' + htmlEscape(listing.scorecard.electricalConductivity) + ' dS/m</div></div>' +
+      '</div>' +
+
+      '<div style="display:flex;align-items:center;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted)">' +
+      '<span>' + htmlEscape(listing.transactionsCompleted) + ' transactions · ' + htmlEscape(ratingText) + (stars ? ' ' + htmlEscape(stars) : '') + '</span>' +
+      '<span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span>' +
+      '</div>' +
+
+      (typeof extraScore === 'number'
+        ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div></div>'
+        : '') +
+
+      '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:auto">' +
+      '<span class="btn btn-primary" style="flex:1;text-align:center">Make an offer</span>' +
+      '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button>' +
+      '</div>' +
+      '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-2);display:none;gap:var(--space-2)">' +
+      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(autoVolume) + '" style="max-width:130px" />' +
+      '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm</button>' +
+      '</div>' +
+
+      '</div>' +
+      '</a>' +
+      '</div>'
     );
   }
 
@@ -607,6 +623,9 @@
     var stateValue = (document.getElementById("filter-state") ? document.getElementById("filter-state").value : "").trim();
     var sort = document.getElementById("filter-sort").value;
 
+    var radiusEl = document.getElementById('filter-radius');
+    var radiusMiles = radiusEl ? Number(radiusEl.value) : 0;
+
     var filtered = listings.filter(function (listing) {
       var matchesSearch =
         !search ||
@@ -632,6 +651,14 @@
         !stateActive ||
         listingState.indexOf(stateNeedle) !== -1 ||
         listingRegion.indexOf(stateNeedle) !== -1;
+
+      if (radiusMiles > 0 && buyerGeo.lat && listing.producerZip) {
+        var cached = buyerGeo['_zip_' + listing.producerZip];
+        if (cached === undefined) return true;
+        if (cached === null) return true;
+        var dist = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
+        if (dist > radiusMiles) return false;
+      }
 
       return matchesSearch && matchesFeedstock && matchesRegion && matchesCert && matchesState;
     });
@@ -971,9 +998,60 @@
     if (banner) banner.classList.remove('hidden');
   }
 
+  var buyerGeo = { lat: null, lng: null };
+
+  function haversineB(lat1, lng1, lat2, lng2) {
+    var R = 3958.8;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+            Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+            Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function geocodeBuyerZip(zip) {
+    return fetch('https://api.zippopotam.us/us/' + zip)
+      .then(function(r) { if (!r.ok) throw new Error('bad zip'); return r.json(); })
+      .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+  }
+
+  function bindDistanceFilter() {
+    var zipInput = document.getElementById('filter-buyer-zip');
+    var radiusSelect = document.getElementById('filter-radius');
+    var statusEl = document.getElementById('buyer-zip-status');
+    if (!zipInput || !radiusSelect) return;
+
+    zipInput.addEventListener('change', function() {
+      var z = this.value.trim();
+      if (z.length !== 5) return;
+      geocodeBuyerZip(z).then(function(c) {
+        buyerGeo.lat = c.lat;
+        buyerGeo.lng = c.lng;
+        if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = 'var(--color-accent)'; }
+        renderBrowseListings();
+      }).catch(function() {
+        if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = 'red'; }
+      });
+    });
+
+    radiusSelect.addEventListener('change', function() {
+      if (buyerGeo.lat) renderBrowseListings();
+    });
+  }
+
   function init() {
     initAuthState();
     initBrowseFilters();
+    bindDistanceFilter();
+    (window.LISTINGS || []).forEach(function(l) {
+      if (l.producerZip && buyerGeo['_zip_' + l.producerZip] === undefined) {
+        buyerGeo['_zip_' + l.producerZip] = null;
+        geocodeBuyerZip(l.producerZip).then(function(c) {
+          buyerGeo['_zip_' + l.producerZip] = c;
+        }).catch(function() {});
+      }
+    });
     renderBrowseListings();
     initMap();
     var logoutBtn = document.getElementById("nav-logout");
