@@ -106,6 +106,7 @@
       (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
       '</span></p>' +
       '<div id="top-card-actions"></div>' +
+      '<div id="complete-loop-banner"></div>' +
       "</section>" +
       '<section class="scorecard-section">' +
       '<div class="section-title-row"><h2>Lab Scorecard</h2><span class="verify-badge ' +
@@ -348,6 +349,25 @@
             '<a href="auth.html?role=buyer" class="btn btn-primary">Create free account</a>' +
             '<p style="margin-top:var(--space-3);font-size:var(--font-size-sm)"><a href="auth.html" style="color:var(--color-accent)">Already have an account? Log in</a></p>' +
           "</div>";
+      }
+
+      var profile = window.AuthState.profile;
+      if (profile && profile.hasBiomassAvailable && profile._biomassListings && profile._biomassListings.length) {
+        var banner = document.getElementById('complete-loop-banner');
+        if (banner) {
+          var biomassNames = profile._biomassListings.slice(0, 2).map(function(l) {
+            return (l.biomassType || 'biomass').replace(/_/g, ' ');
+          }).join(', ');
+          banner.innerHTML =
+            '<div style="margin-top:12px;padding:14px 18px;background:linear-gradient(135deg,#ECFDF5,#F0FDF4);border:1px solid #6EE7B7;border-radius:10px;display:flex;align-items:flex-start;gap:12px">' +
+              '<span style="font-size:1.4rem;flex-shrink:0">🔄</span>' +
+              '<div style="flex:1">' +
+                '<div style="font-weight:700;font-size:14px;color:#065F46;margin-bottom:4px">Complete the loop — reduce your net transport cost</div>' +
+                '<div style="font-size:13px;color:#047857;margin-bottom:10px">You have <strong>' + biomassNames + '</strong> listed on the Biomass Market. A producer picking up this biochar order could collect your biomass on the same run — cutting net transport cost for both parties.</div>' +
+                '<a href="feedstock.html" style="font-size:12px;font-weight:600;color:#065F46;background:white;border:1px solid #6EE7B7;padding:5px 14px;border-radius:20px;text-decoration:none;display:inline-block">View your feedstock listings →</a>' +
+              '</div>' +
+            '</div>';
+        }
       }
     });
   });

@@ -61,7 +61,25 @@
               window.AuthState.profile = doc.exists ? doc.data() : null;
               var role = window.AuthState.profile ? window.AuthState.profile.role : 'buyer';
               updateAuthNav(user, role);
-              if (cb) cb(user, window.AuthState.profile);
+              if (window.AuthState.profile && window.AuthState.profile.role === 'buyer') {
+                firebase.firestore().collection('feedstock_listings')
+                  .where('supplierUID', '==', user.uid)
+                  .where('status', '==', 'active')
+                  .get()
+                  .then(function(snap) {
+                    window.AuthState.profile.hasBiomassAvailable = !snap.empty;
+                    window.AuthState.profile._biomassListings = [];
+                    snap.forEach(function(d) {
+                      var data = d.data();
+                      data._id = d.id;
+                      window.AuthState.profile._biomassListings.push(data);
+                    });
+                    if (cb) cb(user, window.AuthState.profile);
+                  })
+                  .catch(function() { if (cb) cb(user, window.AuthState.profile); });
+              } else {
+                if (cb) cb(user, window.AuthState.profile);
+              }
             })
             .catch(function () {
               updateAuthNav(user, 'buyer');

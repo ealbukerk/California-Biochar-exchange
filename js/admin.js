@@ -260,10 +260,112 @@
     document.getElementById("signal-county").textContent = mostFrequent(listings, "county");
   }
 
+  var db = firebase.firestore();
+
+  function loadPendingListings() {
+    var wrap = document.getElementById('pending-listings-wrap');
+    var countEl = document.getElementById('pending-count');
+    if (!wrap) return;
+
+    db.collection('listings').where('status', '==', 'pending_review').orderBy('createdAt', 'desc').get()
+      .then(function(snap) {
+        if (snap.empty) {
+          wrap.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm);padding:var(--space-4) 0">No listings pending review.</p>';
+          if (countEl) countEl.textContent = '0 pending';
+          return;
+        }
+        if (countEl) countEl.textContent = snap.size + ' pending';
+        var rows = [];
+        snap.forEach(function(doc) {
+          var d = doc.data();
+          var id = doc.id;
+          var feedstocks = Array.isArray(d.feedstock) ? d.feedstock.join(', ') : (d.feedstock || '—');
+          var created = d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().toLocaleDateString() : '—';
+          rows.push(
+            '<div id="pending-row-' + id + '" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-4)">' +
+              '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);flex-wrap:wrap">' +
+                '<div style="flex:1;min-width:240px">' +
+                  '<div style="font-weight:700;font-size:var(--font-size-base)">' + (d.producerName || '—') + '</div>' +
+                  '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + (d.contactEmail || '—') + ' · ' + (d.state || '—') + ' · Submitted ' + created + '</div>' +
+                  '<div style="margin-top:var(--space-3);display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3)">' +
+                    '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Feedstock</div><div style="font-weight:600;font-size:var(--font-size-sm);margin-top:2px">' + feedstocks + '</div></div>' +
+                    '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Price</div><div style="font-weight:600;font-size:var(--font-size-sm);margin-top:2px">$' + (d.pricePerTonne || '—') + '/t</div></div>' +
+                    '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Volume</div><div style="font-weight:600;font-size:var(--font-size-sm);margin-top:2px">' + (d.availableTonnes || '—') + 't</div></div>' +
+                    '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">EIN</div><div style="font-weight:600;font-size:var(--font-size-sm);margin-top:2px">' + (d.ein || '—') + '</div></div>' +
+                  '</div>' +
+                  (d.description ? '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:1.6">' + d.description.slice(0, 200) + (d.description.length > 200 ? '…' : '') + '</div>' : '') +
+                '</div>' +
+                '<div style="display:flex;flex-direction:column;gap:var(--space-2);min-width:140px">' +
+                  '<button onclick="approveListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:var(--color-accent);color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✓ Approve</button>' +
+                  '<button onclick="rejectListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:none;border:1px solid #DC2626;color:#DC2626;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✗ Reject</button>' +
+                '</div>' +
+              '</div>' +
+              '<div id="pending-status-' + id + '" style="margin-top:var(--space-2);font-size:var(--font-size-sm)"></div>' +
+            '</div>'
+          );
+        });
+        wrap.innerHTML = rows.join('');
+      })
+      .catch(function(err) {
+        wrap.innerHTML = '<p style="color:#DC2626;font-size:var(--font-size-sm)">Error loading listings: ' + err.message + '</p>';
+      });
+  }
+
+  window.approveListing = function(id, email) {
+    var statusEl = document.getElementById('pending-status-' + id);
+    if (statusEl) { statusEl.textContent = 'Approving…'; statusEl.style.color = 'var(--color-text-muted)'; }
+    db.collection('listings').doc(id).update({ status: 'active', approvedAt: firebase.firestore.FieldValue.serverTimestamp() })
+      .then(function() {
+        var row = document.getElementById('pending-row-' + id);
+        if (row) {
+          row.style.opacity = '0.5';
+          row.style.pointerEvents = 'none';
+        }
+        if (statusEl) { statusEl.textContent = '✓ Approved — listing is now live.'; statusEl.style.color = 'var(--color-accent)'; }
+        var countEl = document.getElementById('pending-count');
+        if (countEl) {
+          var n = parseInt(countEl.textContent) || 1;
+          countEl.textContent = Math.max(0, n - 1) + ' pending';
+        }
+      })
+      .catch(function(err) {
+        if (statusEl) { statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = '#DC2626'; }
+      });
+  };
+
+  window.rejectListing = function(id, email) {
+    var reason = prompt('Optional: enter a reason for rejection (shown in status, not emailed yet):');
+    if (reason === null) return;
+    var statusEl = document.getElementById('pending-status-' + id);
+    if (statusEl) { statusEl.textContent = 'Rejecting…'; statusEl.style.color = 'var(--color-text-muted)'; }
+    db.collection('listings').doc(id).update({
+      status: 'rejected',
+      rejectedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      rejectionReason: reason || 'Did not meet listing requirements'
+    })
+      .then(function() {
+        var row = document.getElementById('pending-row-' + id);
+        if (row) {
+          row.style.opacity = '0.5';
+          row.style.pointerEvents = 'none';
+        }
+        if (statusEl) { statusEl.textContent = '✗ Rejected' + (reason ? ' — ' + reason : '') + '.'; statusEl.style.color = '#DC2626'; }
+        var countEl = document.getElementById('pending-count');
+        if (countEl) {
+          var n = parseInt(countEl.textContent) || 1;
+          countEl.textContent = Math.max(0, n - 1) + ' pending';
+        }
+      })
+      .catch(function(err) {
+        if (statusEl) { statusEl.textContent = 'Failed: ' + err.message; statusEl.style.color = '#DC2626'; }
+      });
+  };
+
   document.addEventListener("DOMContentLoaded", function () {
     initMap();
     bindSorting();
     renderTable();
     renderSignals();
+    loadPendingListings();
   });
 })();

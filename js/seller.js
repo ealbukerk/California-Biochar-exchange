@@ -314,7 +314,20 @@
       .get()
       .then(function (snapshot) {
         if (snapshot.empty) {
-          container.innerHTML = '<p class="muted">Your application is under review. We will notify you when your listing goes live.</p>';
+          var statusLabel = '';
+          var statusColor = 'var(--color-text-muted)';
+          if (listing.status === 'pending_review') {
+            statusLabel = '⏳ Under review — we\\'ll notify you when your listing goes live.';
+          } else if (listing.status === 'active') {
+            statusLabel = '✓ Live';
+            statusColor = 'var(--color-accent)';
+          } else if (listing.status === 'rejected') {
+            statusLabel = '✗ Rejected' + (listing.rejectionReason ? ' — ' + listing.rejectionReason : '') + '. Contact support to resubmit.';
+            statusColor = '#DC2626';
+          } else {
+            statusLabel = listing.status || 'Unknown status';
+          }
+          container.innerHTML = '<p style="color:' + statusColor + ';font-size:var(--font-size-sm)">' + statusLabel + '</p>';
           return;
         }
 

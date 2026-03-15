@@ -773,11 +773,18 @@
         applicationRate: appRate,
         spreadCostPerTonne: spreadCost
       }).then(function(result) {
+        var backhaulSaving = '';
+        if (result.backhaulNote && state.profile && state.profile.hasBiomassAvailable) {
+          var savedCPT = Math.round(result.transportCostPerTonne * 0.35);
+          var netCPT = Math.round(result.deliveredPerTonne - savedCPT);
+          backhaulSaving = ' <span style="font-size:var(--font-size-xs);background:#ECFDF5;color:#065F46;border-radius:20px;padding:2px 8px;font-weight:600;white-space:nowrap">🔄 ~$' + netCPT + '/t with backhaul</span>';
+        }
         el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
           Math.round(result.deliveredPerTonne) +
           '/t delivered</strong>' +
           (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
-          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>';
+          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>' +
+          backhaulSaving;
       }).catch(function() {
         el.textContent = '';
       });
