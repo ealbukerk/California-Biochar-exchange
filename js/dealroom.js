@@ -418,6 +418,102 @@ window.getDealHeaderDisplay = function(deal) {
   }
 }
 
+function openRatingModal(dealId, raterUID) {
+  var existing = document.getElementById('dr-rating-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.id = 'dr-rating-modal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2000;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML =
+    '<div style="background:var(--color-surface);border-radius:12px;padding:32px;max-width:400px;width:90%;text-align:center">' +
+      '<div style="font-size:2.5rem;margin-bottom:12px">⭐</div>' +
+      '<h3 style="margin:0 0 8px 0">Rate this transaction</h3>' +
+      '<p style="font-size:14px;color:var(--color-text-muted);margin-bottom:24px">Your rating helps other buyers and sellers make confident decisions.</p>' +
+      '<div id="dr-star-row" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px">' +
+        [1,2,3,4,5].map(function(n) {
+          return '<button data-star="' + n + '" style="font-size:2rem;background:none;border:none;cursor:pointer;color:#D1D5DB;transition:color 0.1s" onmouseover="document.querySelectorAll(\'#dr-star-row button\').forEach(function(b){b.style.color=Number(b.dataset.star)<=' + n + '?\'#F59E0B\':\'#D1D5DB\'})" onmouseout="var sel=document.getElementById(\'dr-rating-selected\');var v=sel?Number(sel.value):0;document.querySelectorAll(\'#dr-star-row button\').forEach(function(b){b.style.color=Number(b.dataset.star)<=v?\'#F59E0B\':\'#D1D5DB\'})">★</button>';
+        }).join('') +
+      '</div>' +
+      '<input type="hidden" id="dr-rating-selected" value="0" />' +
+      '<textarea id="dr-rating-note" placeholder="Optional: leave a note for the other party" style="width:100%;height:72px;resize:none;border:1px solid var(--color-border);border-radius:8px;padding:10px;font-size:14px;font-family:var(--font-sans);box-sizing:border-box;margin-bottom:16px"></textarea>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button id="dr-rating-skip" style="flex:1;padding:10px;background:none;border:1px solid var(--color-border);border-radius:8px;cursor:pointer;font-size:14px">Skip</button>' +
+        '<button id="dr-rating-submit" style="flex:1;padding:10px;background:var(--color-accent);color:white;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">Submit rating</button>' +
+      '</div>' +
+      '<p id="dr-rating-error" style="font-size:12px;color:#DC2626;margin-top:8px;display:none">Please select a star rating first.</p>' +
+    '</div>';
+
+  document.body.appendChild(modal);
+
+  modal.querySelectorAll('#dr-star-row button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var val = Number(btn.dataset.star);
+      document.getElementById('dr-rating-selected').value = val;
+      modal.querySelectorAll('#dr-star-row button').forEach(function(b) {
+        b.style.color = Number(b.dataset.star) <= val ? '#F59E0B' : '#D1D5DB';
+      });
+    });
+  });
+
+  document.getElementById('dr-rating-skip').addEventListener('click', function() {
+    modal.remove();
+  });
+
+  document.getElementById('dr-rating-submit').addEventListener('click', async function() {
+    var stars = Number(document.getElementById('dr-rating-selected').value);
+    var note = document.getElementById('dr-rating-note').value.trim();
+    var errEl = document.getElementById('dr-rating-error');
+    if (!stars) { errEl.style.display = 'block'; return; }
+    errEl.style.display = 'none';
+
+    try {
+      await db.collection('ratings').add({
+        dealId: dealId,
+        raterUID: raterUID,
+        stars: stars,
+        note: note || null,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      var dealSnap = await db.collection('deals').doc(dealId).get();
+      if (dealSnap.exists) {
+        var deal = dealSnap.data();
+        var ratedUID = raterUID === deal.buyerUID ? deal.producerUID : deal.buyerUID;
+        if (ratedUID) {
+          var existingRatings = await db.collection('ratings')
+            .where('ratedUID', '==', ratedUID)
+            .get();
+          var total = stars;
+          var count = 1;
+          existingRatings.forEach(function(d) { if (d.data().stars) { total += d.data().stars; count++; } });
+          var newAvg = Math.round((total / count) * 10) / 10;
+          await db.collection('users').doc(ratedUID).update({
+            averageRating: newAvg,
+            ratingsCount: count
+          });
+          await db.collection('ratings').add({
+            dealId: dealId,
+            raterUID: raterUID,
+            ratedUID: ratedUID,
+            stars: stars,
+            note: note || null,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        }
+      }
+      modal.remove();
+      var toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#065F46;color:white;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;z-index:3000';
+      toast.textContent = '✓ Rating submitted — thank you!';
+      document.body.appendChild(toast);
+      setTimeout(function() { toast.remove(); }, 3000);
+    } catch(err) {
+      if (errEl) { errEl.textContent = 'Failed to submit: ' + (err.message || 'Try again.'); errEl.style.display = 'block'; }
+    }
+  });
+}
+
 let __dealRoomUnsub = null
 
 function renderDealRoom(dealId, user) {
@@ -847,12 +943,113 @@ function renderDealRoom(dealId, user) {
           })
         }
 
-        if (e.target.id === 'dr-confirm-delivery') {
-          await db.collection('deals').doc(dealId).update({
-            deliveryConfirmed: true,
-            status: 'Complete',
-            completedAt: firebase.firestore.FieldValue.serverTimestamp()
+        if (e.target.id === 'dr-counter-btn') {
+          var panel = document.getElementById('dr-bid-panel')
+          if (!panel) return
+          var ld = getListingData(currentDeal)
+          var minOrder = ld.minOrderTonnes || 1
+          var currentPrice = pendingBid.pricePerTonne || ''
+          var currentVolume = pendingBid.volumeTonnes || minOrder
+          panel.innerHTML =
+            '<h3 style="margin:0 0 4px 0;font-size:16px">Counter offer</h3>' +
+            '<p style="font-size:12px;color:var(--color-text-muted);margin:0 0 16px 0">Their offer: $' + pendingBid.pricePerTonne + '/t · ' + pendingBid.volumeTonnes + ' tonnes. Enter your counter terms below.</p>' +
+            '<div style="display:flex;flex-direction:column;gap:12px">' +
+              '<div>' +
+                '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Counter price ($/t) <span style="color:var(--color-accent)">*</span></label>' +
+                '<input id="dr-counter-price" type="number" min="0" step="0.01" value="' + currentPrice + '" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Counter volume (tonnes)</label>' +
+                '<input id="dr-counter-volume" type="number" min="' + minOrder + '" value="' + currentVolume + '" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
+              '</div>' +
+              '<div>' +
+                '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Notes (optional)</label>' +
+                '<textarea id="dr-counter-notes" placeholder="Explain your counter offer..." style="width:100%;height:60px;resize:none;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px;font-family:var(--font-sans)"></textarea>' +
+              '</div>' +
+              '<p id="dr-counter-error" style="font-size:12px;color:#DC2626;display:none;margin:0"></p>' +
+              '<div style="display:flex;gap:8px">' +
+                '<button id="dr-counter-cancel" class="btn btn-secondary" style="flex:1">Cancel</button>' +
+                '<button id="dr-counter-submit" class="btn btn-primary" style="flex:1">Send counter</button>' +
+              '</div>' +
+            '</div>'
+
+          document.getElementById('dr-counter-cancel').addEventListener('click', function() {
+            renderBidPanel(currentDeal, currentBids)
           })
+
+          document.getElementById('dr-counter-submit').addEventListener('click', async function() {
+            var counterPrice = parseFloat(document.getElementById('dr-counter-price').value)
+            var counterVolume = parseFloat(document.getElementById('dr-counter-volume').value)
+            var counterNotes = document.getElementById('dr-counter-notes').value.trim()
+            var errEl = document.getElementById('dr-counter-error')
+
+            if (!counterPrice || counterPrice <= 0) {
+              errEl.textContent = 'Please enter a valid counter price.'
+              errEl.style.display = 'block'
+              return
+            }
+            if (!counterVolume || counterVolume < minOrder) {
+              errEl.textContent = 'Minimum volume is ' + minOrder + ' tonnes.'
+              errEl.style.display = 'block'
+              return
+            }
+            errEl.style.display = 'none'
+
+            try {
+              var submitBtn = document.getElementById('dr-counter-submit')
+              if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…' }
+
+              await respondToBid(
+                dealId,
+                pendingBid.id,
+                user.uid,
+                'counter',
+                counterVolume,
+                counterPrice,
+                pendingBid.deliveryMethod || 'buyer_collects',
+                pendingBid.deliveryDate || '',
+                counterNotes
+              )
+
+              db.collection('deals').doc(dealId).collection('messages').add({
+                senderUID: user.uid,
+                senderName: 'System',
+                text: '↩ Counter offer sent: $' + counterPrice + '/t · ' + counterVolume + ' tonnes',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+              })
+            } catch(err) {
+              var errEl2 = document.getElementById('dr-counter-error')
+              if (errEl2) {
+                errEl2.textContent = err.message || 'Failed to send counter offer.'
+                errEl2.style.display = 'block'
+              }
+              var submitBtn2 = document.getElementById('dr-counter-submit')
+              if (submitBtn2) { submitBtn2.disabled = false; submitBtn2.textContent = 'Send counter' }
+            }
+          })
+        }
+
+        if (e.target.id === 'dr-confirm-delivery') {
+          const btn = document.getElementById('dr-confirm-delivery')
+          if (btn) { btn.disabled = true; btn.textContent = 'Confirming…'; }
+          try {
+            const txSnap = await db.collection('transactions')
+              .where('dealId', '==', dealId)
+              .limit(1)
+              .get()
+            if (!txSnap.empty) {
+              await window.confirmDealDelivery(txSnap.docs[0].id, user.uid)
+            }
+            await db.collection('deals').doc(dealId).update({
+              deliveryConfirmed: true,
+              status: 'Complete',
+              completedAt: firebase.firestore.FieldValue.serverTimestamp()
+            })
+            openRatingModal(dealId, user.uid)
+          } catch(err) {
+            if (btn) { btn.disabled = false; btn.textContent = 'Confirm delivery received'; }
+            alert('Failed to confirm delivery: ' + (err.message || 'Please try again.'))
+          }
         }
       })
     }
