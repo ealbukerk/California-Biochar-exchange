@@ -49,6 +49,7 @@ function saveStep1() {
     businessWebsite: document.getElementById('w-website').value.trim(),
     yearsInOperation: document.getElementById('w-years').value,
     equipmentType: document.getElementById('w-equipment').value,
+    pyroTech: document.getElementById('w-equipment').value,
     annualCapacity: document.getElementById('w-capacity').value
   }
 }
@@ -660,7 +661,48 @@ async function prefillWizard() {
       const stateSelect = document.getElementById('w-state')
       if (stateSelect) stateSelect.value = p.state
     }
+    const equipmentEl = document.getElementById('w-equipment')
+    if (equipmentEl && p.pyroTech) equipmentEl.value = p.pyroTech
   } catch(e) {}
+}
+
+var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+var CLOUDINARY_PRESET = 'biochar_certs';
+var sellerPhotoFiles = [];
+
+document.addEventListener('DOMContentLoaded', function() {
+  var photoInput = document.getElementById('seller-photo-input');
+  var previews = document.getElementById('seller-photo-previews');
+  if (photoInput) {
+    photoInput.addEventListener('change', function(e) {
+      var files = Array.prototype.slice.call(e.target.files, 0, 5);
+      sellerPhotoFiles = files;
+      if (previews) {
+        previews.innerHTML = '';
+        files.forEach(function(file) {
+          var url = URL.createObjectURL(file);
+          var img = document.createElement('img');
+          img.src = url;
+          img.style.cssText = 'width:80px;height:80px;object-fit:cover;border-radius:6px;border:1px solid var(--color-border)';
+          previews.appendChild(img);
+        });
+      }
+    });
+  }
+});
+
+function uploadSellerPhotos() {
+  if (!sellerPhotoFiles.length) return Promise.resolve([]);
+  var promises = sellerPhotoFiles.map(function(file) {
+    var fd = new FormData();
+    fd.append('file', file);
+    fd.append('upload_preset', CLOUDINARY_PRESET);
+    return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(d) { return d.secure_url || null; })
+      .catch(function() { return null; });
+  });
+  return Promise.all(promises);
 }
 
 auth.onAuthStateChanged(function(user) {
@@ -696,6 +738,7 @@ document.addEventListener('click', function(e) {
   btn.disabled = true
   btn.textContent = 'Submitting…'
 
+  uploadSellerPhotos().then(function(photoUrls) {
   const listings = []
   wizardData.feedstocks.forEach(function(feedstock) {
     const props = wizardData.properties[feedstock] || {}
@@ -711,6 +754,7 @@ document.addEventListener('click', function(e) {
       businessWebsite: wizardData.business.businessWebsite,
       yearsInOperation: wizardData.business.yearsInOperation,
       equipmentType: wizardData.business.equipmentType,
+      pyroTech: wizardData.business.equipmentType,
       annualCapacity: wizardData.business.annualCapacity,
       feedstock: feedstock,
       scorecard: {
@@ -732,6 +776,7 @@ document.addEventListener('click', function(e) {
       leadTimeDays: parseFloat(avail.leadTimeDays) || null,
       deliveryMethods: avail.deliveryMethods || [],
       description: avail.description || '',
+      photos: photoUrls.filter(Boolean),
       status: 'pending_review',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     })
@@ -765,6 +810,7 @@ document.addEventListener('click', function(e) {
       btn.disabled = false
       btn.textContent = 'Submit application'
     })
+  }) // end uploadSellerPhotos
 })
 
 document.addEventListener('DOMContentLoaded', function() {
