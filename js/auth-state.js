@@ -4,16 +4,19 @@
   var ROLE_NAV = {
     buyer: [
       { label: 'Biochar Market', href: 'buyer.html' },
-      { label: 'Biomass Market', href: 'feedstock.html' }
+      { label: 'Biomass Market', href: 'feedstock.html' },
+      { label: 'Carriers', href: 'carriers.html' }
     ],
     seller: [
       { label: 'Find Feedstock', href: 'feedstock.html' },
       { label: 'Post Demand', href: 'producer-demand.html' },
-      { label: 'My Listings', href: 'seller.html' }
+      { label: 'My Listings', href: 'seller.html' },
+      { label: 'Carriers', href: 'carriers.html' }
     ],
     third_party: [
       { label: 'Feedstock', href: 'feedstock.html' },
-      { label: 'Demand', href: 'producer-demand-browse.html' }
+      { label: 'Demand', href: 'producer-demand-browse.html' },
+      { label: 'My Profile', href: 'carriers.html' }
     ]
   };
 

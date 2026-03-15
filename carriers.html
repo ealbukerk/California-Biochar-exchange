@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carriers & Logistics — Biochar.market</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    .carriers-hero { background: var(--color-accent); padding: var(--space-10) 0; color: white; }
+    .carriers-hero h1 { font-size: var(--font-size-2xl); font-weight: 700; }
+    .carriers-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-lg); }
+    .carrier-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-5); margin-top: var(--space-8); }
+    .carrier-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-3); transition: box-shadow 0.15s; }
+    .carrier-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .carrier-stat { display: flex; flex-direction: column; gap: 2px; }
+    .carrier-stat-label { font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; }
+    .carrier-stat-val { font-weight: 600; font-size: var(--font-size-sm); }
+    .equip-chip { display: inline-block; font-size: 11px; padding: 2px 8px; background: var(--color-accent-light); color: var(--color-accent); border-radius: 20px; margin: 2px; }
+    .filter-row { display: flex; gap: var(--space-3); align-items: center; flex-wrap: wrap; margin-bottom: var(--space-6); }
+  </style>
+</head>
+<body>
+  <nav style="background:var(--color-surface);border-bottom:1px solid var(--color-border)">
+    <div class="container" style="height:64px;display:flex;align-items:center;justify-content:space-between">
+      <a href="index.html" style="color:var(--color-accent);font-size:var(--font-size-lg);font-weight:700;text-decoration:none">Biochar.market</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
+        <a id="nav-login" href="auth.html" class="btn btn-secondary">Login</a>
+        <a id="nav-profile" href="profile.html" class="btn btn-secondary hidden" style="display:none">Profile</a>
+        <a id="nav-settings" href="settings.html" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500" class="hidden">Settings</a>
+        <button id="nav-logout" class="btn btn-primary hidden" style="display:none" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <section class="carriers-hero">
+    <div class="container-narrow" style="text-align:center">
+      <h1>Carriers & Logistics</h1>
+      <p>Third-party freight operators available on the platform. Contact directly or they'll be matched to your deal when you select third-party freight.</p>
+    </div>
+  </section>
+
+  <section style="padding:var(--space-12) 0;background:var(--color-bg)">
+    <div class="container">
+
+      <div class="filter-row">
+        <input id="carrier-zip" type="text" maxlength="5" placeholder="Your ZIP for distance" style="width:130px;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
+        <select id="carrier-type" style="height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+          <option value="">All types</option>
+          <option value="logistics">Logistics / Hauling</option>
+          <option value="broker">Broker / Aggregator</option>
+          <option value="both">Logistics + Broker</option>
+        </select>
+        <select id="carrier-sort" style="height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+          <option value="newest">Newest</option>
+          <option value="closest">Closest to my ZIP</option>
+          <option value="capacity">Largest capacity</option>
+        </select>
+        <span id="carrier-count" style="font-size:var(--font-size-sm);color:var(--color-text-muted)"></span>
+      </div>
+
+      <div id="carrier-grid" class="carrier-grid"></div>
+      <div id="carrier-empty" style="display:none;text-align:center;padding:var(--space-12) 0">
+        <p style="color:var(--color-text-muted)">No carriers found matching your filters.</p>
+        <p style="margin-top:var(--space-3)"><a href="auth.html?role=third_party" style="color:var(--color-accent);font-weight:600">Register as a carrier →</a></p>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>© 2026 Biochar.market</span>
+    </div>
+  </footer>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script>
+    var db = firebase.firestore();
+    var allCarriers = [];
+    var buyerCoords = null;
+
+    var TYPE_LABELS = { logistics: 'Logistics / Hauling', broker: 'Broker / Aggregator', both: 'Logistics + Broker' };
+    var EQUIP_LABELS = { walking_floor: 'Walking floor', dump_trailer: 'Dump trailer', flatbed: 'Flatbed', hopper: 'Hopper' };
+
+    function haversine(a, b) {
+      var R = 3958.8, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+      var x = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+      return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+    }
+
+    function geocodeZip(zip) {
+      return fetch('https://api.zippopotam.us/us/' + zip)
+        .then(function(r) { return r.json(); })
+        .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+    }
+
+    function cardHtml(c) {
+      var equip = (c.tpEquipment || []).map(function(e) {
+        return '<span class="equip-chip">' + (EQUIP_LABELS[e] || e.replace(/_/g,' ')) + '</span>';
+      }).join('');
+      var distLine = c._dist !== undefined
+        ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">' + c._dist + ' mi from your ZIP</div>'
+        : '';
+      var radius = c.serviceRadius === 'national' ? 'National' : (c.serviceRadius ? c.serviceRadius + ' mi radius' : '—');
+      return '<div class="carrier-card">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:var(--font-size-base)">' + (c.businessName || c.name || 'Carrier') + '</div>' +
+          '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + (TYPE_LABELS[c.thirdPartyType] || '—') + '</div>' +
+          distLine +
+        '</div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
+          '<div class="carrier-stat"><div class="carrier-stat-label">Service area</div><div class="carrier-stat-val">' + radius + '</div></div>' +
+          '<div class="carrier-stat"><div class="carrier-stat-label">Load capacity</div><div class="carrier-stat-val">' + (c.loadCapacity ? c.loadCapacity + ' tons' : '—') + '</div></div>' +
+          '<div class="carrier-stat"><div class="carrier-stat-label">Location</div><div class="carrier-stat-val">' + (c.state || c.zipcode || '—') + '</div></div>' +
+          '<div class="carrier-stat"><div class="carrier-stat-label">Completed jobs</div><div class="carrier-stat-val">' + (c.transactionsCompleted || '0') + '</div></div>' +
+        '</div>' +
+        (equip ? '<div>' + equip + '</div>' : '') +
+        (c.businessWebsite ? '<a href="' + c.businessWebsite + '" target="_blank" style="font-size:var(--font-size-xs);color:var(--color-accent)">' + c.businessWebsite + '</a>' : '') +
+        '<a href="mailto:' + (c.email || '') + '" class="btn btn-primary" style="text-align:center;font-size:var(--font-size-sm)">Contact carrier</a>' +
+      '</div>';
+    }
+
+    function applyFilters() {
+      var typeFilter = document.getElementById('carrier-type').value;
+      var sort = document.getElementById('carrier-sort').value;
+      var list = allCarriers.slice();
+
+      if (typeFilter) list = list.filter(function(c) { return c.thirdPartyType === typeFilter; });
+
+      if (sort === 'closest' && buyerCoords) {
+        list.sort(function(a, b) { return (a._dist || 9999) - (b._dist || 9999); });
+      } else if (sort === 'capacity') {
+        list.sort(function(a, b) { return (b.loadCapacity || 0) - (a.loadCapacity || 0); });
+      }
+
+      var grid = document.getElementById('carrier-grid');
+      var empty = document.getElementById('carrier-empty');
+      var countEl = document.getElementById('carrier-count');
+      if (countEl) countEl.textContent = list.length + ' carrier' + (list.length !== 1 ? 's' : '');
+
+      if (!list.length) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+      } else {
+        empty.style.display = 'none';
+        grid.innerHTML = list.map(cardHtml).join('');
+      }
+    }
+
+    function computeDistances() {
+      if (!buyerCoords) return;
+      allCarriers.forEach(function(c) {
+        if (c._coords) c._dist = Math.round(haversine(buyerCoords, c._coords));
+      });
+    }
+
+    function loadCarriers() {
+      db.collection('users').where('role', '==', 'third_party').get()
+        .then(function(snap) {
+          var carriers = [];
+          var geoPromises = [];
+          snap.forEach(function(doc) {
+            var d = doc.data();
+            d._uid = doc.id;
+            carriers.push(d);
+            if (d.zipcode) {
+              geoPromises.push(
+                geocodeZip(d.zipcode).then(function(coords) { d._coords = coords; }).catch(function() {})
+              );
+            }
+          });
+          Promise.all(geoPromises).then(function() {
+            allCarriers = carriers;
+            computeDistances();
+            applyFilters();
+          });
+        })
+        .catch(function() {
+          document.getElementById('carrier-grid').innerHTML = '<p style="color:var(--color-text-muted)">Could not load carriers.</p>';
+        });
+    }
+
+    document.getElementById('carrier-type').addEventListener('change', applyFilters);
+    document.getElementById('carrier-sort').addEventListener('change', applyFilters);
+
+    document.getElementById('carrier-zip').addEventListener('change', function() {
+      var zip = this.value.trim();
+      if (zip.length !== 5) return;
+      geocodeZip(zip).then(function(coords) {
+        buyerCoords = coords;
+        computeDistances();
+        applyFilters();
+      }).catch(function() {});
+    });
+
+    window.AuthState.onReady(function(user, profile) {
+      document.getElementById('nav-logout').addEventListener('click', function() {
+        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
+      });
+      if (profile && profile.zipcode) {
+        document.getElementById('carrier-zip').value = profile.zipcode;
+        geocodeZip(profile.zipcode).then(function(coords) {
+          buyerCoords = coords;
+          loadCarriers();
+        }).catch(function() { loadCarriers(); });
+      } else {
+        loadCarriers();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -292,6 +292,13 @@
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Service radius</div><div style="margin-top:4px;font-weight:600">' + (profile.serviceRadius === 'national' ? 'National' : (profile.serviceRadius || '?') + ' miles') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Load capacity</div><div style="margin-top:4px;font-weight:600">' + (profile.loadCapacity ? profile.loadCapacity + ' tons' : 'Not specified') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Equipment</div><div style="margin-top:4px;text-transform:capitalize">' + equip + '</div></div>' +
+      '</div>' +
+      '<div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border)">' +
+        '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600;margin-bottom:var(--space-2)">Your public profile</div>' +
+        '<div style="display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap">' +
+          '<a href="carriers.html" style="font-size:var(--font-size-sm);color:var(--color-accent);font-weight:600">View carrier directory →</a>' +
+          '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Your profile appears in the carrier directory when your account is complete.</span>' +
+        '</div>' +
       '</div>';
   }
 
