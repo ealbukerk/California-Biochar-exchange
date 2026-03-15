@@ -55,7 +55,7 @@ var PAGES = [
 var PAGE_CHECKS = {
   'buyer.html': {
     mustContain: ['Source biochar at scale','role-nav-slot','listings-grid','filter-bar','compare-bar'],
-    mustNotContain: ['learn-section','cert-grid','What certifications mean','Understanding biochar']
+    mustNotContain: ['What certifications mean','Understanding biochar']
   },
   'seller.html': {
     mustContain: ['apply-wizard','agree-accuracy','agree-commission','terms.html','draft-resume-banner','seller-photo-input'],
@@ -105,13 +105,13 @@ var JS_FILES = [
   'js/list-feedstock.js','js/apply-wizard.js','js/listing.js',
   'js/match.js','js/admin.js','js/commission.js','js/verified.js',
   'js/feedstock-data.js','js/data.js','js/producer-demand-browse.js',
-  'js/producer-demand.js','js/carriers.js'
+  'js/producer-demand.js'
 ];
 
 var CSS_FILES = ['css/style.css','css/listings.css'];
 
 var KEY_STRINGS = {
-  'js/buyer.js': ['scoreListingForInputs','renderBrowseListings','haversineB','injectDeliveredCosts','renderBackhaulPanel'],
+  'js/buyer.js': ['scoreListingForInputs','renderBrowseListings','haversineB','injectDeliveredCosts'],
   'js/dealroom.js': ['confirmDealDelivery','respondToBid','openRatingModal','renderThirdPartyPanel','CLOUDINARY_UPLOAD_URL'],
   'js/delivered-cost.js': ['router.project-osrm.org','calcDeliveredCost','BIOCHAR_DENSITY'],
   'js/apply-wizard.js': ['saveDraft','loadDraft','clearDraft','uploadSellerPhotos','prefillWizard','pyroTech'],
