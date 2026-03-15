@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Feedstock Listing — Biochar.market</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    .fs-detail-hero { background: #7A5C1E; padding: var(--space-10) 0; color: white; }
+    .fs-detail-hero h1 { font-size: var(--font-size-2xl); font-weight: 700; }
+    .fs-detail-hero p { color: rgba(255,255,255,0.8); margin-top: var(--space-2); }
+    .fs-detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--space-8); margin-top: var(--space-8); align-items: start; }
+    .fs-detail-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-5); }
+    .fs-detail-section h2 { font-size: var(--font-size-lg); font-weight: 600; margin-bottom: var(--space-4); }
+    .fs-spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .fs-spec-item .label { font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; }
+    .fs-spec-item .value { font-weight: 600; margin-top: 2px; }
+    .fs-tag-clean { color: var(--color-accent); }
+    .fs-tag-soil { color: var(--color-warning); }
+    .fs-photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
+    .fs-photo-gallery img { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+    .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); position: sticky; top: var(--space-6); }
+    .yield-box { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-4); }
+  </style>
+</head>
+<body>
+  <nav style="background:var(--color-surface);border-bottom:1px solid var(--color-border)">
+    <div class="container" style="height:64px;display:flex;align-items:center;justify-content:space-between">
+      <a href="index.html" style="color:var(--color-accent);font-size:var(--font-size-lg);font-weight:700;text-decoration:none">Biochar.market</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
+        <a id="nav-login" href="auth.html" class="btn btn-secondary">Login</a>
+        <a id="nav-profile" href="profile.html" class="btn btn-secondary hidden" style="display:none">Profile</a>
+        <a id="nav-settings" href="settings.html" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500" class="hidden">Settings</a>
+        <button id="nav-logout" class="btn btn-primary hidden" style="display:none" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+
+  <div style="background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:var(--space-3) 0">
+    <div class="container">
+      <button onclick="history.back()" style="background:none;border:none;cursor:pointer;font-size:var(--font-size-sm);color:var(--color-text-muted);padding:0">← Back to listings</button>
+    </div>
+  </div>
+
+  <div id="fs-detail-hero" class="fs-detail-hero">
+    <div class="container">
+      <div id="fs-hero-content"><p style="color:rgba(255,255,255,0.6)">Loading…</p></div>
+    </div>
+  </div>
+
+  <main class="container" style="padding-bottom:var(--space-12)">
+    <div class="fs-detail-grid">
+      <div id="fs-main-col">
+        <div id="fs-detail-body"></div>
+      </div>
+      <div id="fs-sidebar-col">
+        <div id="fs-sidebar"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>© 2026 Biochar.market</span>
+    </div>
+  </footer>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script src="js/delivered-cost.js"></script>
+  <script src="js/feedstock-data.js"></script>
+  <script>
+    var BIOMASS_LABELS = {
+      orchard_prunings:'Orchard Prunings', almond_shells:'Almond Shells',
+      pistachio_shells:'Pistachio Shells', walnut_shells:'Walnut Shells',
+      corn_stover:'Corn Stover', rice_husks:'Rice Husks',
+      forestry_slash:'Forestry Slash', logging_residue:'Logging Residue',
+      thinning_material:'Thinning Material', clean_wood_waste:'Clean Wood Waste',
+      construction_wood:'Construction Wood', tree_service_chips:'Tree Service Chips'
+    };
+    var MOISTURE_LABELS = { under_20:'Under 20%', '20_30':'20–30%', '30_40':'30–40%', over_40:'Over 40%' };
+    var CONTAMINATION_LABELS = { clean:'Clean', possible_soil:'Possible soil', mixed_debris:'Mixed debris' };
+    var PARTICLE_LABELS = { chipped:'Chipped', whole_limbs:'Whole limbs', mixed:'Mixed' };
+    var SUPPLIER_LABELS = { farmer:'Farmer', sawmill:'Sawmill', forestry_operator:'Forestry Operator', tree_service:'Tree Service', recycler:'Recycler' };
+    var LOADING_LABELS = { pile:'Pile (bring your own loader)', loader_onsite:'Loader on site', conveyor:'Conveyor available', forklift:'Forklift available' };
+    var AGE_LABELS = { fresh:'Fresh (this season)', less_6mo:'Less than 6 months', '6_12mo':'6–12 months', over_1yr:'Over 1 year' };
+
+    var db = firebase.firestore();
+
+    function getParam(name) {
+      return new URLSearchParams(window.location.search).get(name);
+    }
+
+    function renderListing(l) {
+      var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
+      var yieldRatio = (window.FEEDSTOCK_YIELD_RATIOS || {})[l.biomassType];
+      var yieldTons = yieldRatio ? Math.round(l.estimatedQuantityTons * yieldRatio) : null;
+
+      // Hero
+      document.getElementById('fs-hero-content').innerHTML =
+        '<h1>' + biomassLabel + '</h1>' +
+        '<p>' + (l.company || l.supplierName || '') + ' · ' + (SUPPLIER_LABELS[l.supplierType] || '') + ' · ZIP ' + (l.locationZip || '') + '</p>';
+
+      // Photo gallery
+      var photoHtml = '';
+      if (l.photos && l.photos.length) {
+        photoHtml = '<div class="fs-photo-gallery">' +
+          l.photos.map(function(p) { return '<img src="' + p + '" alt="Material photo">'; }).join('') +
+        '</div>';
+      } else {
+        photoHtml = '<div style="width:100%;height:180px;background:linear-gradient(135deg,#f0e8d8,#e0d4b8);display:flex;align-items:center;justify-content:center;font-size:4rem;border-radius:var(--radius-lg);margin-bottom:var(--space-4)">🌾</div>';
+      }
+
+      // Main body
+      document.getElementById('fs-detail-body').innerHTML =
+
+        photoHtml +
+
+        '<div class="fs-detail-section">' +
+          '<h2>Material specs</h2>' +
+          '<div class="fs-spec-grid">' +
+            '<div class="fs-spec-item"><div class="label">Biomass type</div><div class="value">' + biomassLabel + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Quantity available</div><div class="value">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Minimum pickup</div><div class="value">' + l.minimumPickupTons + ' tons</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Price</div><div class="value">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton' + (l.negotiable ? ' (negotiable)' : '')) + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Moisture content</div><div class="value">' + (MOISTURE_LABELS[l.moistureContent] || l.moistureContent || '—') + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Particle size</div><div class="value">' + (PARTICLE_LABELS[l.particleSize] || l.particleSize || '—') + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Contamination risk</div><div class="value ' + (l.contaminationRisk === 'clean' ? 'fs-tag-clean' : 'fs-tag-soil') + '">' + (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—') + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Age of material</div><div class="value">' + (AGE_LABELS[l.ageOfMaterial] || l.ageOfMaterial || '—') + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Loading</div><div class="value">' + (LOADING_LABELS[l.loadingType] || l.loadingType || '—') + '</div></div>' +
+            '<div class="fs-spec-item"><div class="label">Availability</div><div class="value">' + (l.availabilityWindow || '—') + '</div></div>' +
+          '</div>' +
+        '</div>' +
+
+        (l.notes ? '<div class="fs-detail-section"><h2>Supplier notes</h2><p style="line-height:1.7;color:var(--color-text-secondary)">' + l.notes + '</p></div>' : '') +
+
+        (yieldTons ? '<div class="fs-detail-section"><h2>Pyrolysis yield estimate</h2>' +
+          '<div class="yield-box">' +
+            '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">At ' + Math.round((yieldRatio||0)*100) + '% yield ratio for ' + biomassLabel.toLowerCase() + ':</div>' +
+            '<div style="font-size:var(--font-size-xl);font-weight:700;color:var(--color-accent);margin-top:var(--space-2)">' + yieldTons.toLocaleString() + ' tonnes of biochar</div>' +
+            '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">from ' + l.estimatedQuantityTons.toLocaleString() + ' tons of feedstock</div>' +
+          '</div>' +
+        '</div>' : '') +
+
+        '<div class="fs-detail-section" id="fs-cost-section">' +
+          '<h2>Delivered cost estimate</h2>' +
+          '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">' +
+            '<input id="fs-buyer-zip" type="text" maxlength="5" placeholder="Your ZIP code" style="width:120px;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />' +
+            '<button id="fs-calc-btn" class="btn btn-primary" style="height:40px">Calculate</button>' +
+          '</div>' +
+          '<div id="fs-cost-result" style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Enter your ZIP to estimate transport cost.</div>' +
+        '</div>';
+
+      // Sidebar
+      document.getElementById('fs-sidebar').innerHTML =
+        '<div class="fs-sidebar-card">' +
+          '<div style="font-size:var(--font-size-2xl);font-weight:700;color:#7A5C1E">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton') + '</div>' +
+          (l.negotiable ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:4px">Price negotiable</div>' : '') +
+          '<div style="margin:var(--space-4) 0;border-top:1px solid var(--color-border);padding-top:var(--space-4)">' +
+            '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Available</span><span style="font-weight:600">' + l.estimatedQuantityTons.toLocaleString() + ' tons</span></div>' +
+            '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Min pickup</span><span style="font-weight:600">' + l.minimumPickupTons + ' tons</span></div>' +
+            (l.harvestDate ? '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Harvest date</span><span style="font-weight:600">' + l.harvestDate + '</span></div>' : '') +
+            (l.availabilityWindow ? '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm)"><span style="color:var(--color-text-muted)">Available</span><span style="font-weight:600">' + l.availabilityWindow + '</span></div>' : '') +
+          '</div>' +
+          '<a id="fs-contact-btn" href="mailto:' + (l.contactEmail || '') + '" class="btn btn-primary" style="width:100%;text-align:center;display:block;margin-bottom:var(--space-3)">Contact supplier</a>' +
+          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:center">Listing price excludes transport. Use cost calculator to estimate delivered price.</p>' +
+        '</div>' +
+
+        '<div class="fs-sidebar-card" style="background:linear-gradient(135deg,#7A5C1E15,#7A5C1E08)">' +
+          '<p style="font-size:var(--font-size-sm);font-weight:600;margin-bottom:var(--space-2)">🔥 Are you a biochar producer?</p>' +
+          '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)">Post a demand listing to get matched with feedstock suppliers in your area.</p>' +
+          '<a href="producer-demand.html" class="btn btn-secondary" style="width:100%;text-align:center;display:block;font-size:var(--font-size-sm)">Post demand listing</a>' +
+        '</div>';
+
+      // Cost calculator
+      document.getElementById('fs-calc-btn').addEventListener('click', function() {
+        var zip = document.getElementById('fs-buyer-zip').value.trim();
+        var resultEl = document.getElementById('fs-cost-result');
+        if (!zip || zip.length !== 5) { resultEl.textContent = 'Please enter a valid 5-digit ZIP.'; return; }
+        if (!l.locationZip) { resultEl.textContent = 'Supplier ZIP not available for this listing.'; return; }
+        resultEl.textContent = 'Calculating…';
+        window.DeliveredCost.calc({
+          producerZip: l.locationZip,
+          buyerZip: zip,
+          pricePerTonne: l.pricePerTon,
+          tonnes: l.minimumPickupTons,
+          isBiochar: false,
+          feedstockType: l.biomassType
+        }).then(function(r) {
+          resultEl.innerHTML =
+            '<strong style="font-size:var(--font-size-lg);color:#7A5C1E">~$' + Math.round(r.deliveredPerTonne) + '/ton delivered</strong>' +
+            '<div style="margin-top:var(--space-2);color:var(--color-text-muted)">' +
+              'Material $' + Math.round(r.materialCost).toLocaleString() +
+              ' &nbsp;+&nbsp; Transport $' + Math.round(r.transportCost).toLocaleString() +
+              ' &nbsp;(' + r.distance + ' mi · ' + r.truckloads + ' truckload' + (r.truckloads > 1 ? 's' : '') + ')' +
+            '</div>';
+        }).catch(function() { resultEl.textContent = 'Could not calculate — check ZIP codes.'; });
+      });
+    }
+
+    window.AuthState.onReady(function(user, profile) {
+      document.getElementById('nav-logout').addEventListener('click', function() {
+        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
+      });
+
+      var id = getParam('id');
+      if (!id) { document.getElementById('fs-detail-body').innerHTML = '<p>Listing not found.</p>'; return; }
+
+      // Try demo data first
+      var demo = (window.FEEDSTOCK_LISTINGS || []).find(function(l) { return String(l._id) === String(id); });
+      if (demo) { renderListing(demo); return; }
+
+      // Fall back to Firestore
+      db.collection('feedstock_listings').doc(id).get()
+        .then(function(doc) {
+          if (!doc.exists) { document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Listing not found</h1>'; return; }
+          var l = doc.data();
+          l._id = doc.id;
+          renderListing(l);
+        })
+        .catch(function() { document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Error loading listing</h1>'; });
+    });
+  </script>
+</body>
+</html>

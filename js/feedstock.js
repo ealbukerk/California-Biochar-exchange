@@ -180,7 +180,10 @@
         notesHtml +
         yieldHtml(l) +
 
-        '<button class="fs-contact-btn" data-id="' + l._id + '">Request Feedstock</button>' +
+        '<div style="display:flex;gap:var(--space-2);margin-top:auto">' +
+          '<a href="feedstock-listing.html?id=' + l._id + '" style="flex:1;text-align:center;padding:var(--space-3);background:var(--color-accent);color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-sm);font-weight:600">View details</a>' +
+          '<button class="fs-contact-btn" data-id="' + l._id + '" style="flex:1;padding:var(--space-3);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer;color:var(--color-text-primary)">Request</button>' +
+        '</div>' +
         '</div>' +
       '</div>' +
     '</div>';
@@ -221,6 +224,53 @@
 
   function closeModal() {
     document.getElementById('contact-modal').classList.add('hidden');
+  }
+
+  function renderDemandPreview() {
+    var grid = document.getElementById('demand-preview-grid');
+    if (!grid) return;
+    var listings = (window.PRODUCER_DEMAND_LISTINGS || []).slice(0, 3);
+    if (!listings.length) {
+      document.getElementById('demand-preview').style.display = 'none';
+      return;
+    }
+    var BIOMASS_LABELS_D = {
+      orchard_prunings: 'Orchard Prunings', almond_shells: 'Almond Shells',
+      pistachio_shells: 'Pistachio Shells', walnut_shells: 'Walnut Shells',
+      corn_stover: 'Corn Stover', rice_husks: 'Rice Husks',
+      forestry_slash: 'Forestry Slash', logging_residue: 'Logging Residue',
+      thinning_material: 'Thinning Material', clean_wood_waste: 'Clean Wood Waste',
+      construction_wood: 'Construction Wood', tree_service_chips: 'Tree Service Chips'
+    };
+    var PERIOD_LABELS_D = { per_week: '/week', per_month: '/month', per_year: '/year', one_time: 'one-time' };
+    grid.innerHTML = listings.map(function(l) {
+      var types = (l.acceptedBiomassTypes || []).slice(0, 3).map(function(t) {
+        return '<span style="font-size:11px;padding:2px 8px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:20px;display:inline-block">' + (BIOMASS_LABELS_D[t] || t) + '</span>';
+      }).join(' ');
+      var period = PERIOD_LABELS_D[l.volumePeriod] || '';
+      return '<a href="producer-demand-browse.html" style="text-decoration:none;color:inherit">' +
+        '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3);transition:box-shadow 0.15s;cursor:pointer" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'\'">' +
+          '<div style="display:flex;align-items:center;gap:var(--space-2)">' +
+            '<span style="font-size:1.5rem">🔥</span>' +
+            '<div>' +
+              '<div style="font-weight:600;font-size:var(--font-size-sm)">' + (l.company || l.producerName) + '</div>' +
+              '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + (l.locationZip || '') + '</div>' +
+            '</div>' +
+          '</div>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-1)">' + types + '</div>' +
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">' +
+            '<div style="font-size:var(--font-size-xs)">' +
+              '<div style="color:var(--color-text-muted)">Volume needed</div>' +
+              '<div style="font-weight:600">' + (l.volumeNeeded || '?') + 't' + period + '</div>' +
+            '</div>' +
+            '<div style="font-size:var(--font-size-xs)">' +
+              '<div style="color:var(--color-text-muted)">Max price</div>' +
+              '<div style="font-weight:600">' + (l.pricePerTonMax ? '$' + l.pricePerTonMax + '/ton' : 'Negotiable') + '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</a>';
+    }).join('');
   }
 
   function submitRequest(user) {
@@ -370,6 +420,7 @@
       }
       loadListings();
     });
+    renderDemandPreview();
   }
 
   document.addEventListener('DOMContentLoaded', init);
