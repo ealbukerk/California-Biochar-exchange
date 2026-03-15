@@ -356,14 +356,22 @@
           </div>
           <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)" id="pref-apprate-display"></div>
         </div>
-        <div id="top-matches-block" class="hidden">
-          <h2>Your top matches</h2>
-          <p>Ranked by compatibility with your soil profile and crop types.</p>
-          <div id="matched-grid" class="listings-grid" style="margin-top: var(--space-8);"></div>
-          <hr id="matches-divider" style="border: none; border-top: 2px solid var(--color-border); margin: var(--space-12) 0;" />
+    <section style="background:var(--color-surface);border-bottom:1px solid var(--color-border);padding:var(--space-8) 0">
+      <div class="container">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);max-width:800px;margin:0 auto">
+          <a href="how-it-works.html" style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);display:flex;align-items:center;gap:var(--space-3);text-decoration:none;transition:box-shadow 0.15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">📋</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">How does it work?</span>
+          </a>
+          <a href="crops.html" style="background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);display:flex;align-items:center;gap:var(--space-3);text-decoration:none;transition:box-shadow 0.15s" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:1.25rem">🌱</span>
+            <span style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);color:var(--color-text-primary)">What's the right feedstock for me?</span>
+          </a>
         </div>
-
-        <h2>All listings</h2>
+      </div>
+    </section>
+        <h2 id="listings-heading">All listings</h2>
+        <p id="listings-subhead" style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-top:var(--space-1);margin-bottom:0"></p>
 
         <div id="filter-bar" class="filter-bar">
           <div class="filter-search-row">

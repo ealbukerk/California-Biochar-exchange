@@ -544,37 +544,7 @@
   }
 
   function renderTopMatchesBlock() {
-    var block = document.getElementById("top-matches-block");
-    var grid = document.getElementById("matched-grid");
-    if (!block || !grid) return;
-
-    var hasSavedCrops =
-      !!state.user &&
-      state.profile &&
-      Array.isArray(state.profile.cropTypes) &&
-      state.profile.cropTypes.length > 0;
-
-    if (!state.user) {
-      block.classList.add("hidden");
-      grid.innerHTML = "";
-      return;
-    }
-
-    block.classList.remove("hidden");
-    var ranked = (window.LISTINGS || [])
-      .map(function (listing) {
-        return scoreListingForInputs(listing, state.profile);
-      })
-      .sort(function (a, b) {
-        return b.score - a.score;
-      })
-      .slice(0, 6);
-
-    grid.innerHTML = ranked
-      .map(function (item) {
-        return listingCardHtml(item.listing, item.score, item.explanation, { expanded: true, includeCompare: true });
-      })
-      .join("");
+    // consolidated into renderBrowseListings
   }
 
   function renderHeroSlot() {
@@ -692,9 +662,32 @@
       return;
     }
 
-    grid.innerHTML = filtered.map(function (listing) { return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true }); }).join("");
-    updateCompareBar();
+    var heading = document.getElementById("listings-heading");
+    var subhead = document.getElementById("listings-subhead");
 
+    var hasProfile = state.user && state.profile && Array.isArray(state.profile.cropTypes) && state.profile.cropTypes.length > 0;
+
+    if (hasProfile) {
+      var scored = filtered.map(function(listing) {
+        return scoreListingForInputs(listing, state.profile);
+      }).sort(function(a, b) { return b.score - a.score; });
+
+      if (heading) heading.textContent = "Listings ranked for you";
+      if (subhead) subhead.textContent = "Sorted by compatibility with your soil profile and crop types.";
+
+      grid.innerHTML = scored.map(function(item, idx) {
+        return listingCardHtml(item.listing, item.score, item.explanation, { expanded: idx < 3, includeCompare: true });
+      }).join("");
+    } else {
+      if (heading) heading.textContent = "All listings";
+      if (subhead) subhead.textContent = "";
+
+      grid.innerHTML = filtered.map(function(listing) {
+        return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true });
+      }).join("");
+    }
+
+    updateCompareBar();
   }
 
   function renderListings() {
