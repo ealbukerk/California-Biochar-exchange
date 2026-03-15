@@ -33,10 +33,12 @@
     var login = document.getElementById('nav-login');
     var profile = document.getElementById('nav-profile');
     var logout = document.getElementById('nav-logout');
+    var settings = document.getElementById('nav-settings');
     if (user) {
       if (login) { login.style.display = 'none'; login.classList.add('hidden'); }
       if (profile) { profile.style.display = 'inline-flex'; profile.classList.remove('hidden'); }
       if (logout) { profile.style.display = 'inline-flex'; logout.classList.remove('hidden'); }
+      if (settings) { settings.style.display = 'inline-flex'; settings.classList.remove('hidden'); }
       insertRoleNav(role || 'buyer');
     } else {
       if (login) { login.style.display = 'inline-flex'; login.classList.remove('hidden'); }

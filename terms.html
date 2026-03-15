@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — Biochar.market</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <nav style="background:var(--color-surface);border-bottom:1px solid var(--color-border)">
+    <div class="container" style="height:64px;display:flex;align-items:center;justify-content:space-between">
+      <a href="index.html" style="color:var(--color-accent);font-size:var(--font-size-lg);font-weight:700;text-decoration:none">Biochar.market</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
+        <a id="nav-login" href="auth.html" class="btn btn-primary">Sign in</a>
+        <a id="nav-profile" href="profile.html" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500" class="hidden">Profile</a>
+        <a id="nav-settings" href="settings.html" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500" class="hidden">Settings</a>
+        <button id="nav-logout" style="display:none;background:none;border:none;cursor:pointer;font-size:var(--font-size-sm);color:var(--color-text-secondary)" class="hidden">Sign out</button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container-narrow" style="padding:var(--space-12) var(--space-4)">
+    <h1 style="font-size:var(--font-size-2xl);font-weight:700;margin-bottom:var(--space-2)">Terms of Service</h1>
+    <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-bottom:var(--space-10)">Last updated: March 2026. This is a working document — full legal terms will be published prior to commercial launch.</p>
+
+    <div style="display:grid;gap:var(--space-8);line-height:1.7;color:var(--color-text-primary)">
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">1. What Biochar.market is</h2>
+        <p>Biochar.market is a B2B marketplace connecting US biochar producers with agricultural buyers and biomass feedstock suppliers. The platform facilitates introductions, negotiations, and transaction coordination. It does not take title to any goods.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">2. Eligibility</h2>
+        <p>You must be a US-based business or sole proprietor to list products or transact on this platform. By creating an account you confirm that the information you provide, including your EIN and business details, is accurate and up to date.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">3. Commission</h2>
+        <p>Biochar.market charges a commission on completed transactions. The commission rate is calculated dynamically based on deal size, typically between 3.5% and 4%. Commission is charged to the seller and deducted at the time of transaction confirmation. No commission is charged on deals that do not complete.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">4. Listings and accuracy</h2>
+        <p>Sellers are responsible for the accuracy of all listing information including pricing, volume, certifications, and lab data. Biochar.market reserves the right to remove listings that contain inaccurate or misleading information.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">5. Transactions and delivery</h2>
+        <p>Biochar.market coordinates introductions and deal terms but is not a party to the physical transaction. Delivery, quality verification, and payment are the responsibility of the buyer and seller. Delivery confirmation on the platform triggers commission calculation.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">6. Data and privacy</h2>
+        <p>We collect business contact information, EINs, and transaction data to operate the marketplace. We do not sell personal data to third parties. EINs are stored securely and used only for transaction verification purposes. Full privacy policy to follow.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">7. Limitation of liability</h2>
+        <p>Biochar.market is not liable for disputes between buyers and sellers, product quality issues, delivery failures, or any consequential damages arising from use of the platform. Use of this platform is at your own risk.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">8. Changes to these terms</h2>
+        <p>These terms may be updated as the platform develops. Continued use of the platform after changes are posted constitutes acceptance of the updated terms.</p>
+      </section>
+
+      <section>
+        <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">9. Contact</h2>
+        <p>Questions about these terms can be directed to the platform operator via the contact form on the homepage.</p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>© 2026 Biochar.market</span>
+      <span><a href="terms.html" style="color:var(--color-text-muted)">Terms</a></span>
+    </div>
+  </footer>
+
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script>
+    window.AuthState.onReady(function(user, profile) {
+      document.getElementById('nav-logout').addEventListener('click', function() {
+        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
+      });
+    });
+  </script>
+</body>
+</html>
