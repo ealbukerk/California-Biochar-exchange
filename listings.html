@@ -19,18 +19,14 @@
     <link rel="stylesheet" href="css/listings.css" />
   </head>
   <body>
-    <nav>
-      <div class="container nav-inner">
-        <a class="nav-logo" href="index.html">BM</a>
-        <ul class="nav-links">
-          <li><a href="listings.html">Listings</a></li>
-          <li><a href="match.html">Soil Match</a></li>
-          <li><a href="learn.html">Learn</a></li>
-          <li><a href="producers.html">For Producers</a></li>
-          <li><a href="buyers.html">For Buyers</a></li>
-          <li><a href="admin.html">Dashboard</a></li>
-        </ul>
-        <a class="nav-cta" href="producers.html">List Your Biochar</a>
+    <nav class="buyer-nav">
+      <div class="container buyer-nav-inner">
+        <a class="buyer-nav-logo" href="index.html">BM</a>
+        <div class="buyer-nav-links">
+          <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+          <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+          <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
+        </div>
       </div>
     </nav>
 

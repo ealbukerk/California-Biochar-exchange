@@ -667,6 +667,106 @@ auth.onAuthStateChanged(function(user) {
   if (user) prefillWizard()
 })
 
+document.addEventListener('click', function(e) {
+  if (e.target.id !== 'wizard-submit-btn') return
+
+  const agreeAccuracy = document.getElementById('agree-accuracy')
+  const agreeCommission = document.getElementById('agree-commission')
+  const errorEl = document.getElementById('submit-error')
+
+  if (!agreeAccuracy || !agreeAccuracy.checked) {
+    errorEl.textContent = 'Please confirm that all information is accurate.'
+    errorEl.style.display = 'block'
+    return
+  }
+  if (!agreeCommission || !agreeCommission.checked) {
+    errorEl.textContent = 'Please confirm you understand the commission structure.'
+    errorEl.style.display = 'block'
+    return
+  }
+  errorEl.style.display = 'none'
+
+  if (!window.currentUser) {
+    errorEl.textContent = 'You must be logged in to submit a listing.'
+    errorEl.style.display = 'block'
+    return
+  }
+
+  const btn = document.getElementById('wizard-submit-btn')
+  btn.disabled = true
+  btn.textContent = 'Submitting…'
+
+  const listings = []
+  wizardData.feedstocks.forEach(function(feedstock) {
+    const props = wizardData.properties[feedstock] || {}
+    const avail = wizardData.availability[feedstock] || {}
+    listings.push({
+      producerUID: window.currentUser.uid,
+      producerName: wizardData.business.businessName,
+      contactName: wizardData.business.contactName,
+      contactEmail: wizardData.business.email,
+      state: wizardData.business.state,
+      zipcode: wizardData.business.zipcode,
+      ein: wizardData.business.ein,
+      businessWebsite: wizardData.business.businessWebsite,
+      yearsInOperation: wizardData.business.yearsInOperation,
+      equipmentType: wizardData.business.equipmentType,
+      annualCapacity: wizardData.business.annualCapacity,
+      feedstock: feedstock,
+      scorecard: {
+        carbonContent: parseFloat(props.carbonContent) || null,
+        pH: parseFloat(props.pH) || null,
+        moisture: parseFloat(props.moisture) || null,
+        surfaceArea: parseFloat(props.surfaceArea) || null,
+        particleSize: props.particleSize || null,
+        ashContent: parseFloat(props.ashContent) || null,
+        electricalConductivity: parseFloat(props.electricalConductivity) || null,
+        labVerified: !!props.labVerified
+      },
+      certifications: props.certifications || [],
+      pricePerTonne: parseFloat(avail.pricePerTonne) || null,
+      availableTonnes: parseFloat(avail.availableTonnes) || null,
+      minOrderTonnes: parseFloat(avail.minOrderTonnes) || null,
+      availableFrom: avail.availableFrom || null,
+      availableUntil: avail.availableUntil || null,
+      leadTimeDays: parseFloat(avail.leadTimeDays) || null,
+      deliveryMethods: avail.deliveryMethods || [],
+      description: avail.description || '',
+      status: 'pending_review',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    })
+  })
+
+  const promises = listings.map(function(listing) {
+    return db.collection('listings').add(listing)
+  })
+
+  Promise.all(promises)
+    .then(function() {
+      showStep(5)
+      const inner = document.querySelector('#step-5 .wizard-panel-inner')
+      if (inner) {
+        inner.innerHTML =
+          '<div style="text-align:center;padding:var(--space-12) 0">' +
+            '<div style="font-size:3rem">✅</div>' +
+            '<h2 style="font-size:var(--font-size-2xl);font-weight:700;margin-top:var(--space-4)">Application submitted!</h2>' +
+            '<p style="color:var(--color-text-secondary);margin-top:var(--space-2)">Your listing is under review. We\\'ll notify you at ' + wizardData.business.email + ' within 2 business days.</p>' +
+            '<div style="margin-top:var(--space-6);display:flex;gap:var(--space-4);justify-content:center">' +
+              '<a href="seller.html" class="btn btn-secondary">List another product</a>' +
+              '<a href="buyer.html" class="btn btn-primary">Browse marketplace</a>' +
+            '</div>' +
+          '</div>'
+      }
+    })
+    .catch(function(err) {
+      console.error(err)
+      errorEl.textContent = 'Submission failed: ' + (err.message || 'Please try again.')
+      errorEl.style.display = 'block'
+      btn.disabled = false
+      btn.textContent = 'Submit application'
+    })
+})
+
 document.addEventListener('DOMContentLoaded', function() {
   const stateEl = document.getElementById('w-state')
   if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true)

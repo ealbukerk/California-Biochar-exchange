@@ -147,29 +147,32 @@
               <h2 class="wizard-step-title">What material do you have?</h2>
               <p class="wizard-step-sub">Start with the basics — producers filter by type, location, and volume first.</p>
               <div class="wizard-form-grid">
-                <div class="form-group">
+                <div class="form-group full-width">
                   <label>Biomass type <span class="required-star">*</span></label>
-                  <select id="f-biomass-type">
-                    <option value="">Select type…</option>
-                    <optgroup label="Agricultural">
-                      <option value="orchard_prunings">Orchard prunings</option>
-                      <option value="almond_shells">Almond shells</option>
-                      <option value="pistachio_shells">Pistachio shells</option>
-                      <option value="walnut_shells">Walnut shells</option>
-                      <option value="corn_stover">Corn stover</option>
-                      <option value="rice_husks">Rice husks</option>
-                    </optgroup>
-                    <optgroup label="Forestry">
-                      <option value="forestry_slash">Forestry slash</option>
-                      <option value="logging_residue">Logging residue</option>
-                      <option value="thinning_material">Thinning material</option>
-                    </optgroup>
-                    <optgroup label="Urban / Industrial">
-                      <option value="clean_wood_waste">Clean wood waste</option>
-                      <option value="construction_wood">Construction wood (untreated only)</option>
-                      <option value="tree_service_chips">Tree service chips</option>
-                    </optgroup>
-                  </select>
+                  <p class="field-hint">Select all that apply — you can list multiple material types in one submission.</p>
+                  <div style="margin-top:var(--space-3)">
+                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Agricultural</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="orchard_prunings" style="accent-color:#7A5C1E" /> Orchard prunings</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="almond_shells" style="accent-color:#7A5C1E" /> Almond shells</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="pistachio_shells" style="accent-color:#7A5C1E" /> Pistachio shells</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="walnut_shells" style="accent-color:#7A5C1E" /> Walnut shells</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="corn_stover" style="accent-color:#7A5C1E" /> Corn stover</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="rice_husks" style="accent-color:#7A5C1E" /> Rice husks</label>
+                    </div>
+                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Forestry</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="forestry_slash" style="accent-color:#7A5C1E" /> Forestry slash</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="logging_residue" style="accent-color:#7A5C1E" /> Logging residue</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="thinning_material" style="accent-color:#7A5C1E" /> Thinning material</label>
+                    </div>
+                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Urban / Industrial</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3)">
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="clean_wood_waste" style="accent-color:#7A5C1E" /> Clean wood waste</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="construction_wood" style="accent-color:#7A5C1E" /> Construction wood (untreated only)</label>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="tree_service_chips" style="accent-color:#7A5C1E" /> Tree service chips</label>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label>Supplier type <span class="required-star">*</span></label>
