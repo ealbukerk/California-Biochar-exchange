@@ -855,6 +855,12 @@
       </div>
     </section>
 
+    <section class="profile-section" id="seller-scheduled-section" style="display:none">
+      <h2>Incoming scheduled orders</h2>
+      <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-bottom:var(--space-4)">Buyers who have set up repeat deliveries from your listings.</p>
+      <div id="seller-scheduled-wrap"></div>
+    </section>
+
     <section id="listing-status-section" class="listing-status-section hidden">
       <div class="container">
         <h2>Your listing</h2>
@@ -915,6 +921,17 @@
                 <span class="dot-number">5</span>
                 <span class="dot-label">Review</span>
               </div>
+            </div>
+          </div>
+
+          <div id="draft-resume-banner" style="display:none;background:#FEF3C7;border:1px solid #FCD34D;border-radius:var(--radius-md);padding:var(--space-4) var(--space-5);margin-bottom:var(--space-5);display:none;align-items:center;justify-content:space-between;gap:var(--space-4)">
+            <div>
+              <strong style="font-size:var(--font-size-sm)">You have an unsaved draft</strong>
+              <span id="draft-saved-at" style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-left:var(--space-2)"></span>
+            </div>
+            <div style="display:flex;gap:var(--space-2)">
+              <button id="draft-resume-btn" class="btn btn-primary" style="font-size:var(--font-size-sm)">Resume draft</button>
+              <button id="draft-discard-btn" class="btn btn-secondary" style="font-size:var(--font-size-sm)">Discard</button>
             </div>
           </div>
 

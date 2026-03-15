@@ -550,6 +550,29 @@
       '<span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span>' +
       '</div>' +
 
+      (function() {
+        var staleHtml = '';
+        if (listing.availableUntil) {
+          var until = new Date(listing.availableUntil);
+          var now = new Date();
+          var daysLeft = Math.round((until - now) / (1000 * 60 * 60 * 24));
+          if (daysLeft < 0) {
+            staleHtml = '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:4px;padding:2px 8px;margin-top:4px;display:inline-block">⚠ Availability may have ended</div>';
+          } else if (daysLeft <= 30) {
+            staleHtml = '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:4px;padding:2px 8px;margin-top:4px;display:inline-block">⏳ Available for ' + daysLeft + ' more day' + (daysLeft !== 1 ? 's' : '') + '</div>';
+          }
+        }
+        if (listing.availableFrom) {
+          var from = new Date(listing.availableFrom);
+          var nowCheck = new Date();
+          var monthsOld = (nowCheck.getFullYear() - from.getFullYear()) * 12 + (nowCheck.getMonth() - from.getMonth());
+          if (monthsOld > 6 && !staleHtml) {
+            staleHtml = '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px;display:inline-block">Listed ' + monthsOld + ' months ago</div>';
+          }
+        }
+        return staleHtml;
+      })() +
+
       (typeof extraScore === 'number'
         ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div></div>'
         : '') +

@@ -692,6 +692,30 @@
         return;
       }
 
+      var today = new Date();
+      var soonThreshold = new Date();
+      soonThreshold.setDate(today.getDate() + 14);
+      var dueSoon = rows.filter(function(row) {
+        if ((row.data.status || '').toLowerCase() === 'cancelled') return false;
+        var d = row.data.nextOrderDate;
+        if (!d) return false;
+        var next = new Date(d);
+        return next <= soonThreshold && next >= today;
+      });
+      var reminderEl = document.getElementById('scheduled-reminder');
+      if (reminderEl) {
+        if (dueSoon.length) {
+          reminderEl.innerHTML =
+            '<div style="padding:12px 16px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:8px;margin-bottom:var(--space-4);font-size:var(--font-size-sm)">' +
+              '⏰ <strong>' + dueSoon.length + ' scheduled order' + (dueSoon.length > 1 ? 's' : '') + ' due within 14 days</strong> — ' +
+              dueSoon.map(function(r) { return (r.data.feedstock || 'order') + ' on ' + toDateLabel(r.data.nextOrderDate); }).join(', ') +
+            '</div>';
+          reminderEl.style.display = 'block';
+        } else {
+          reminderEl.style.display = 'none';
+        }
+      }
+
       wrap.innerHTML =
         '<div class="table-shell"><table><thead><tr><th>Producer</th><th>Feedstock</th><th>Tonnes</th><th>Frequency</th><th>Next Order Date</th><th>Status</th><th>Action</th></tr></thead><tbody>' +
         rows
@@ -740,15 +764,28 @@
       return;
     }
 
+    function advanceDateByFrequency(dateStr, freq) {
+      var d = new Date(dateStr);
+      if (freq === 'Monthly') d.setMonth(d.getMonth() + 1);
+      else if (freq === 'Quarterly') d.setMonth(d.getMonth() + 3);
+      else if (freq === 'Biannually') d.setMonth(d.getMonth() + 6);
+      else if (freq === 'Annually') d.setFullYear(d.getFullYear() + 1);
+      return d.toISOString().split('T')[0];
+    }
+
     await db.collection("scheduled_orders").add({
       userUID: state.user.uid,
+      buyerName: (state.profile && (state.profile.businessName || state.profile.name)) || state.user.email || 'Buyer',
+      producerUID: state.repeatTarget.producerUID || null,
       listingID: state.repeatTarget.listingID,
       producerName: state.repeatTarget.producerName,
       feedstock: state.repeatTarget.feedstock,
       tonnes: state.repeatTarget.tonnes,
       frequency: frequency,
       nextOrderDate: nextOrderDate,
-      status: "Scheduled"
+      nextAdvanceDate: advanceDateByFrequency(nextOrderDate, frequency),
+      status: "Scheduled",
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
 
     closeRepeatModal();

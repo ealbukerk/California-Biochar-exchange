@@ -812,6 +812,51 @@
     renderDealRoomsSection();
   }
 
+  function loadIncomingScheduled(producerUID) {
+    var db = firebase.firestore();
+    var section = document.getElementById('seller-scheduled-section');
+    if (!section) return;
+    section.style.display = 'block';
+    var wrap = document.getElementById('seller-scheduled-wrap');
+    if (!wrap) return;
+
+    db.collection('scheduled_orders')
+      .where('producerUID', '==', producerUID)
+      .where('status', '==', 'Scheduled')
+      .get()
+      .then(function(snap) {
+        if (snap.empty) {
+          wrap.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">No incoming scheduled orders.</p>';
+          return;
+        }
+        var rows = [];
+        snap.forEach(function(doc) {
+          var d = doc.data();
+          rows.push(d);
+        });
+        rows.sort(function(a, b) {
+          return (a.nextOrderDate || '') < (b.nextOrderDate || '') ? -1 : 1;
+        });
+        wrap.innerHTML =
+          '<div class="table-shell"><table><thead><tr>' +
+          '<th>Buyer</th><th>Feedstock</th><th>Tonnes</th><th>Frequency</th><th>Next Order Date</th>' +
+          '</tr></thead><tbody>' +
+          rows.map(function(r) {
+            return '<tr>' +
+              '<td>' + (r.buyerName || r.userUID || '—') + '</td>' +
+              '<td>' + (r.feedstock || '—') + '</td>' +
+              '<td>' + (r.tonnes || '—') + '</td>' +
+              '<td>' + (r.frequency || '—') + '</td>' +
+              '<td>' + (r.nextOrderDate || '—') + '</td>' +
+            '</tr>';
+          }).join('') +
+          '</tbody></table></div>';
+      })
+      .catch(function() {
+        wrap.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">Could not load scheduled orders.</p>';
+      });
+  }
+
   function initAuthWatcher() {
     auth.onAuthStateChanged(function (user) {
       state.user = user || null;
@@ -835,6 +880,9 @@
           updateHero();
           updateSectionVisibility();
           refreshLoggedInSections();
+          if (state.profile && state.profile.role === 'seller') {
+            loadIncomingScheduled(user.uid);
+          }
           refreshApplicationState();
           prefillApplicationForm().catch(function () { return null; });
         })
@@ -844,6 +892,9 @@
           updateHero();
           updateSectionVisibility();
           refreshLoggedInSections();
+          if (state.profile && state.profile.role === 'seller') {
+            loadIncomingScheduled(user.uid);
+          }
           refreshApplicationState();
           prefillApplicationForm().catch(function () { return null; });
         });

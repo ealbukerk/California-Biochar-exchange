@@ -20,7 +20,30 @@ function showStep(n) {
     if (s < n) dot.classList.add('complete')
   })
   currentStep = n
+  saveDraft()
   window.scrollTo({ top: document.getElementById('apply-wizard').offsetTop - 80, behavior: 'smooth' })
+}
+
+function saveDraft() {
+  try {
+    localStorage.setItem('biochar_wizard_draft', JSON.stringify({
+      wizardData: wizardData,
+      currentStep: currentStep,
+      savedAt: new Date().toISOString()
+    }));
+  } catch(e) {}
+}
+
+function loadDraft() {
+  try {
+    var raw = localStorage.getItem('biochar_wizard_draft');
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(e) { return null; }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem('biochar_wizard_draft'); } catch(e) {}
 }
 
 function validateStep1() {
@@ -101,6 +124,20 @@ function buildPropertiesTabs() {
         '<span>📊</span>' +
         '<p>Listings with complete lab data appear higher in search results and receive up to 3x more buyer inquiries. If you have a lab report upload it below — buyers can download it directly from your listing.</p>' +
       '</div>' +
+
+      '<details style="margin-bottom:var(--space-5);background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)">' +
+        '<summary style="font-size:var(--font-size-sm);font-weight:600;cursor:pointer;color:var(--color-accent)">🔬 Where do I get lab data?</summary>' +
+        '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:1.7">' +
+          '<p style="margin-bottom:var(--space-2)">These labs are commonly used by US biochar producers:</p>' +
+          '<ul style="margin:0;padding-left:var(--space-5);display:grid;gap:var(--space-2)">' +
+            '<li><strong>A&amp;L Western Laboratories</strong> — <a href="https://www.al-labs-west.com" target="_blank" style="color:var(--color-accent)">al-labs-west.com</a> · Full biochar panel ~$80–120</li>' +
+            '<li><strong>Waypoint Analytical</strong> — <a href="https://www.waypointanalytical.com" target="_blank" style="color:var(--color-accent)">waypointanalytical.com</a> · Ag-focused, fast turnaround</li>' +
+            '<li><strong>Soil Control Lab</strong> — <a href="https://www.soilcontrollab.com" target="_blank" style="color:var(--color-accent)">soilcontrollab.com</a> · California-based, biochar-familiar</li>' +
+            '<li><strong>Cornell Nutrient Analysis Lab</strong> — <a href="https://cnal.cals.cornell.edu" target="_blank" style="color:var(--color-accent)">cnal.cals.cornell.edu</a> · Research-grade, IBI-aligned panel</li>' +
+          '</ul>' +
+          '<p style="margin-top:var(--space-3);color:var(--color-text-muted)">Tip: Request a biochar-specific panel that includes carbon content, pH, surface area, ash content, EC, and particle size. Standard soil panels will not cover all fields.</p>' +
+        '</div>' +
+      '</details>' +
 
       '<div class="lab-fields-grid">' +
 
@@ -629,6 +666,7 @@ document.addEventListener('click', function(e) {
     if (from === 4) {
       if (!validateStep4()) return
       buildReviewStep()
+      clearDraft()
       showStep(5)
     }
   }
@@ -708,6 +746,28 @@ function uploadSellerPhotos() {
 auth.onAuthStateChanged(function(user) {
   if (user) prefillWizard()
 })
+
+document.addEventListener('DOMContentLoaded', function() {
+  var draft = loadDraft();
+  var banner = document.getElementById('draft-resume-banner');
+  if (draft && draft.wizardData && banner) {
+    var savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString() : '';
+    var savedAtEl = document.getElementById('draft-saved-at');
+    if (savedAtEl) savedAtEl.textContent = savedAt ? '· saved ' + savedAt : '';
+    banner.style.display = 'flex';
+
+    document.getElementById('draft-resume-btn').addEventListener('click', function() {
+      Object.assign(wizardData, draft.wizardData);
+      banner.style.display = 'none';
+      showStep(draft.currentStep || 1);
+    });
+
+    document.getElementById('draft-discard-btn').addEventListener('click', function() {
+      clearDraft();
+      banner.style.display = 'none';
+    });
+  }
+});
 
 document.addEventListener('click', function(e) {
   if (e.target.id !== 'wizard-submit-btn') return
