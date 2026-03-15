@@ -391,6 +391,36 @@
       reasons.push("available in sufficient volume");
     }
 
+    var soilType = profileLike.soilType || "";
+    var soilIssues = Array.isArray(profileLike.soilIssues) ? profileLike.soilIssues : [];
+
+    if (soilIssues.indexOf("Low water retention") !== -1 && listing.scorecard.surfaceArea >= 300) {
+      score += 10;
+      reasons.push("high surface area addresses water retention");
+    }
+    if (soilIssues.indexOf("High salinity") !== -1 && listing.scorecard.electricalConductivity <= 1.5) {
+      score += 10;
+      reasons.push("low EC safe for salt-sensitive conditions");
+    }
+    if (soilIssues.indexOf("Compaction") !== -1 && listing.scorecard.particleSize) {
+      var ps = parseFloat(listing.scorecard.particleSize);
+      if (ps >= 1 && ps <= 4) {
+        score += 8;
+        reasons.push("particle size good for compacted soils");
+      }
+    }
+    if (soilType === "Sandy" && listing.scorecard.surfaceArea >= 200) {
+      score += 8;
+      reasons.push("high surface area beneficial for sandy soil");
+    }
+    if (soilType === "Clay" && listing.scorecard.particleSize) {
+      var psC = parseFloat(listing.scorecard.particleSize);
+      if (psC >= 2 && psC <= 6) {
+        score += 8;
+        reasons.push("coarser particle improves clay drainage");
+      }
+    }
+
     if (listing.scorecard.carbonContent >= 70) {
       score += 10;
       reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
@@ -413,11 +443,37 @@
       reasons.push("organic-compatible certification");
     }
 
-    score += 10;
-
-    if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
-      reasons.push("regional proximity advantage");
+    var distanceScore = 0;
+    var profileZip = profileLike.zipcode || "";
+    if (profileZip && listing.producerZip) {
+      var cached = buyerGeo['_zip_' + listing.producerZip];
+      if (buyerGeo.lat && cached && cached.lat) {
+        var distMiles = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
+        if (distMiles <= 50) {
+          distanceScore = 20;
+          reasons.push("very close (" + Math.round(distMiles) + " mi away)");
+        } else if (distMiles <= 150) {
+          distanceScore = 15;
+          reasons.push("nearby (" + Math.round(distMiles) + " mi away)");
+        } else if (distMiles <= 300) {
+          distanceScore = 8;
+          reasons.push("regional distance (" + Math.round(distMiles) + " mi away)");
+        } else {
+          distanceScore = 2;
+          if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
+            reasons.push("regional proximity advantage");
+          }
+        }
+      } else {
+        distanceScore = 5;
+        if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
+          reasons.push("regional proximity advantage");
+        }
+      }
+    } else {
+      distanceScore = 5;
     }
+    score += distanceScore;
 
     var normalized = Math.min(score, 100);
     return { listing: listing, score: normalized, explanation: buildExplanation(normalized, reasons) };

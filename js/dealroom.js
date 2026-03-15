@@ -74,6 +74,64 @@ function getFairPriceRange(listing) {
   }
 }
 
+function renderThirdPartyPanel(producerZip, buyerZip) {
+  var panel = document.getElementById('dr-3pl-panel');
+  if (!panel) return;
+
+  function hav(a, b) {
+    var R = 3958.8, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+    var x = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
+  }
+
+  function geoZip(zip) {
+    return fetch('https://api.zippopotam.us/us/' + zip)
+      .then(function(r) { return r.json(); })
+      .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+  }
+
+  db.collection('users').where('role', '==', 'third_party').get()
+    .then(function(snap) {
+      if (snap.empty) return;
+      var carriers = [];
+      var checks = [];
+      snap.forEach(function(doc) {
+        var cd = doc.data();
+        if (!cd.zipcode) return;
+        checks.push(
+          geoZip(cd.zipcode).then(function(carrierCoords) {
+            return geoZip(producerZip).then(function(prodCoords) {
+              var dist = hav(carrierCoords, prodCoords);
+              if (dist <= (cd.serviceRadius || 200)) {
+                carriers.push({ data: cd, dist: Math.round(dist) });
+              }
+            });
+          }).catch(function() {})
+        );
+      });
+      Promise.all(checks).then(function() {
+        if (!carriers.length) {
+          panel.style.display = 'block';
+          panel.innerHTML = '<p style="font-size:13px;color:var(--color-text-muted);padding:8px 0">No platform carriers found in this area. Consider arranging independent freight.</p>';
+          return;
+        }
+        carriers.sort(function(a, b) { return a.dist - b.dist; });
+        panel.style.display = 'block';
+        panel.innerHTML =
+          '<div style="padding:14px 16px;background:var(--color-bg);border:1px solid var(--color-border);border-radius:8px">' +
+            '<p style="font-size:13px;font-weight:600;margin:0 0 10px 0">🚚 Available carriers on this platform</p>' +
+            carriers.slice(0, 3).map(function(c) {
+              return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--color-border);font-size:13px">' +
+                '<div><strong>' + (c.data.businessName || 'Carrier') + '</strong>' +
+                '<span style="color:var(--color-text-muted);margin-left:8px">' + c.dist + ' mi from producer</span></div>' +
+                '<div style="color:var(--color-text-muted)">' + (c.data.loadCapacity ? c.data.loadCapacity + 't cap' : 'Contact for capacity') + '</div>' +
+              '</div>';
+            }).join('') +
+          '</div>';
+      });
+    }).catch(function() {});
+}
+
 async function createDealRoom(listing, buyerProfile, buyerUID) {
   const complexity = getDealComplexity(listing)
   const fairPrice = getFairPriceRange(listing)
@@ -471,12 +529,78 @@ function renderDealRoom(dealId, user) {
               '<strong style="color:var(--color-text-primary)">Delivered cost: ~$' + Math.round(r.deliveredPerTonne) + '/t</strong>' +
               ' &nbsp;·&nbsp; <span>Material $' + Math.round(r.materialCost).toLocaleString() + '</span>' +
               ' &nbsp;·&nbsp; <span>Transport $' + Math.round(r.transportCost).toLocaleString() + ' (' + r.distance + ' mi, ' + r.truckloads + ' truck' + (r.truckloads > 1 ? 's' : '') + ')</span>' +
-              (r.backhaulNote ? '<div style="margin-top:8px;padding:8px 12px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">🔄 ' + r.backhaulNote + '</div>' : '') +
+              '<div id="dr-backhaul-panel"></div>' +
               ' &nbsp;·&nbsp; <span>Application $' + Math.round(r.applicationCost).toLocaleString() + '</span>' +
               (r.costPerAcre ? ' &nbsp;·&nbsp; <strong>$' + Math.round(r.costPerAcre).toLocaleString() + '/acre</strong>' : '');
+            renderBackhaulPanel(listing.producerZip, r.distance);
           }).catch(function() { el.textContent = ''; });
         });
       });
+    }
+
+    function renderBackhaulPanel(producerZip, distanceMiles) {
+      var panel = document.getElementById('dr-backhaul-panel');
+      if (!panel) return;
+
+      var allFeedstock = (window.FEEDSTOCK_LISTINGS || []).filter(function(fs) {
+        if (!fs.locationZip || !producerZip) return false;
+        var cached = window._backhaulGeo = window._backhaulGeo || {};
+        return true;
+      });
+
+      if (!allFeedstock.length) return;
+
+      var RETURN_RADIUS_MILES = Math.max(distanceMiles * 0.25, 30);
+
+      function geocodeZip(zip) {
+        if (window._backhaulGeo && window._backhaulGeo[zip]) return Promise.resolve(window._backhaulGeo[zip]);
+        return fetch('https://api.zippopotam.us/us/' + zip)
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            var c = { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) };
+            window._backhaulGeo = window._backhaulGeo || {};
+            window._backhaulGeo[zip] = c;
+            return c;
+          });
+      }
+
+      function haversineD(a, b) {
+        var R = 3958.8, dLat = (b.lat - a.lat) * Math.PI / 180, dLng = (b.lng - a.lng) * Math.PI / 180;
+        var x = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+        return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+      }
+
+      geocodeZip(producerZip).then(function(prodCoords) {
+        var checks = allFeedstock.map(function(fs) {
+          return geocodeZip(fs.locationZip).then(function(fsCoords) {
+            var d = haversineD(prodCoords, fsCoords);
+            return d <= RETURN_RADIUS_MILES ? fs : null;
+          }).catch(function() { return null; });
+        });
+
+        Promise.all(checks).then(function(results) {
+          var nearby = results.filter(Boolean);
+          if (!nearby.length) return;
+
+          var savingsEst = Math.round(distanceMiles * 3.25 * 0.35);
+          panel.innerHTML =
+            '<div style="margin-top:12px;padding:14px 16px;background:#ECFDF5;border:1px solid #6EE7B7;border-radius:8px">' +
+              '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">' +
+                '<span style="font-size:1.1rem">🔄</span>' +
+                '<strong style="font-size:14px;color:#065F46">Available backhaul: ' + nearby.length + ' feedstock listing' + (nearby.length > 1 ? 's' : '') + ' within ' + Math.round(RETURN_RADIUS_MILES) + ' miles of your route</strong>' +
+              '</div>' +
+              '<p style="font-size:13px;color:#047857;margin:0 0 8px 0">Estimated net transport savings: ~$' + savingsEst.toLocaleString() + ' if combined with a return pickup.</p>' +
+              '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+                nearby.slice(0, 3).map(function(fs) {
+                  return '<a href="feedstock.html" style="font-size:12px;padding:4px 10px;background:white;border:1px solid #6EE7B7;border-radius:20px;color:#065F46;text-decoration:none">' +
+                    (fs.biomassType || 'Biomass').replace(/_/g, ' ') + ' · ' + fs.estimatedQuantityTons + 't' +
+                  '</a>';
+                }).join('') +
+                (nearby.length > 3 ? '<span style="font-size:12px;color:#047857;padding:4px 6px">+' + (nearby.length - 3) + ' more</span>' : '') +
+              '</div>' +
+            '</div>';
+        });
+      }).catch(function() {});
     }
 
     function renderMessages(msgs) {
@@ -582,6 +706,7 @@ function renderDealRoom(dealId, user) {
                 '<option value="producer_delivers">Producer delivers</option>' +
                 '<option value="third_party_freight">Third party logistics</option>' +
               '</select>' +
+              '<div id="dr-3pl-panel" style="margin-top:12px;display:none"></div>' +
             '</div>' +
             '<div>' +
               '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Target delivery date</label>' +
@@ -625,6 +750,19 @@ function renderDealRoom(dealId, user) {
           } else {
             deliveryEl.value = 'producer_delivers'
           }
+        }
+        if (deliveryEl) {
+          deliveryEl.addEventListener('change', function() {
+            var p3 = document.getElementById('dr-3pl-panel');
+            if (this.value === 'third_party_freight') {
+              var ld = d.listingData;
+              var producerZip = ld && ld.producerZip ? ld.producerZip : '';
+              var buyerZip = window.AuthState && window.AuthState.profile ? window.AuthState.profile.zipcode : '';
+              renderThirdPartyPanel(producerZip, buyerZip);
+            } else {
+              if (p3) p3.style.display = 'none';
+            }
+          });
         }
 
         document.getElementById('dr-submit-bid-btn').addEventListener('click', async function() {

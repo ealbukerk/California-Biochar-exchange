@@ -103,7 +103,23 @@
       getCoords(opts.producerZip),
       getCoords(opts.buyerZip)
     ]).then(function (coords) {
-      var distance = haversine(coords[0], coords[1]);
+      var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
+        coords[0].lng + ',' + coords[0].lat + ';' +
+        coords[1].lng + ',' + coords[1].lat +
+        '?overview=false';
+      return fetch(osrmUrl)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var metersToMiles = 0.000621371;
+          var roadDistance = (data.routes && data.routes[0])
+            ? data.routes[0].distance * metersToMiles
+            : haversine(coords[0], coords[1]);
+          return roadDistance;
+        })
+        .catch(function() {
+          return haversine(coords[0], coords[1]);
+        });
+    }).then(function(distance) {
       var ratePerMile = getTruckRate(distance);
       var truckloads = calcTruckloads(physicalTons, opts.feedstockType || 'default', isBiochar);
 
