@@ -470,7 +470,8 @@ function renderDealRoom(dealId, user) {
             el.innerHTML =
               '<strong style="color:var(--color-text-primary)">Delivered cost: ~$' + Math.round(r.deliveredPerTonne) + '/t</strong>' +
               ' &nbsp;·&nbsp; <span>Material $' + Math.round(r.materialCost).toLocaleString() + '</span>' +
-              ' &nbsp;·&nbsp; <span>Transport $' + Math.round(r.transportCost).toLocaleString() + ' (' + r.distance + ' mi)</span>' +
+              ' &nbsp;·&nbsp; <span>Transport $' + Math.round(r.transportCost).toLocaleString() + ' (' + r.distance + ' mi, ' + r.truckloads + ' truck' + (r.truckloads > 1 ? 's' : '') + ')</span>' +
+              (r.backhaulNote ? '<div style="margin-top:8px;padding:8px 12px;background:#FEF3C7;border-radius:6px;font-size:12px;color:#92400E">🔄 ' + r.backhaulNote + '</div>' : '') +
               ' &nbsp;·&nbsp; <span>Application $' + Math.round(r.applicationCost).toLocaleString() + '</span>' +
               (r.costPerAcre ? ' &nbsp;·&nbsp; <strong>$' + Math.round(r.costPerAcre).toLocaleString() + '/acre</strong>' : '');
           }).catch(function() { el.textContent = ''; });
@@ -577,9 +578,9 @@ function renderDealRoom(dealId, user) {
             '<div>' +
               '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Delivery method</label>' +
               '<select id="dr-delivery" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
-                '<option>Buyer collects</option>' +
-                '<option>Producer delivers</option>' +
-                '<option>Third party freight</option>' +
+                '<option value="buyer_collects">Buyer collects</option>' +
+                '<option value="producer_delivers">Producer delivers</option>' +
+                '<option value="third_party_freight">Third party logistics</option>' +
               '</select>' +
             '</div>' +
             '<div>' +
@@ -614,6 +615,17 @@ function renderDealRoom(dealId, user) {
 
         document.getElementById('dr-volume').addEventListener('input', updateTotal)
         document.getElementById('dr-price').addEventListener('input', updateTotal)
+
+        // Pre-select delivery method from buyer profile
+        var deliveryEl = document.getElementById('dr-delivery')
+        if (deliveryEl && window.AuthState && window.AuthState.profile) {
+          var prof = window.AuthState.profile
+          if (prof.canSelfPickup) {
+            deliveryEl.value = 'buyer_collects'
+          } else {
+            deliveryEl.value = 'producer_delivers'
+          }
+        }
 
         document.getElementById('dr-submit-bid-btn').addEventListener('click', async function() {
           const vol = parseFloat(document.getElementById('dr-volume').value)

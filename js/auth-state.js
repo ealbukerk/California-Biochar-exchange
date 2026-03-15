@@ -1,126 +1,76 @@
 (function () {
-  function ensureLoginLink(navLinks, isLoggedIn) {
-    if (!navLinks) {
-      return;
-    }
+  'use strict';
 
-    var existing = navLinks.querySelector('[data-auth-login="true"]');
+  var ROLE_NAV = {
+    buyer: [
+      { label: 'Biochar Market', href: 'buyer.html' },
+      { label: 'Biomass Market', href: 'feedstock.html' }
+    ],
+    seller: [
+      { label: 'Find Feedstock', href: 'feedstock.html' },
+      { label: 'Post Demand', href: 'producer-demand.html' },
+      { label: 'My Listings', href: 'seller.html' }
+    ],
+    third_party: [
+      { label: 'Feedstock', href: 'feedstock.html' },
+      { label: 'Demand', href: 'producer-demand-browse.html' }
+    ]
+  };
 
-    if (isLoggedIn) {
-      if (existing) {
-        existing.remove();
-      }
-      return;
-    }
+  function buildRoleNav(role) {
+    var links = ROLE_NAV[role] || ROLE_NAV['buyer'];
+    return links.map(function (l) {
+      return '<a href="' + l.href + '" style="font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500;padding:var(--space-1) var(--space-2);border-radius:var(--radius-md);transition:background 0.15s" onmouseover="this.style.background=\'var(--color-bg)\'" onmouseout="this.style.background=\'\'">' + l.label + '</a>';
+    }).join('');
+  }
 
-    if (!existing) {
-      var li = document.createElement("li");
-      li.setAttribute("data-auth-login", "true");
-      li.innerHTML = '<a href="auth.html">Log in</a>';
-      navLinks.appendChild(li);
+  function insertRoleNav(role) {
+    var slot = document.getElementById('role-nav-slot');
+    if (slot) slot.innerHTML = buildRoleNav(role);
+  }
+
+  function updateAuthNav(user, role) {
+    var login = document.getElementById('nav-login');
+    var profile = document.getElementById('nav-profile');
+    var logout = document.getElementById('nav-logout');
+    if (user) {
+      if (login) { login.style.display = 'none'; login.classList.add('hidden'); }
+      if (profile) { profile.style.display = 'inline-flex'; profile.classList.remove('hidden'); }
+      if (logout) { profile.style.display = 'inline-flex'; logout.classList.remove('hidden'); }
+      insertRoleNav(role || 'buyer');
+    } else {
+      if (login) { login.style.display = 'inline-flex'; login.classList.remove('hidden'); }
+      if (profile) { profile.style.display = 'none'; profile.classList.add('hidden'); }
+      if (logout) { logout.style.display = 'none'; logout.classList.add('hidden'); }
+      var slot = document.getElementById('role-nav-slot');
+      if (slot) slot.innerHTML = '';
     }
   }
 
-  function clearAuthControls(navInner) {
-    var controls = navInner.querySelector(".nav-auth-controls");
-    if (controls) {
-      controls.remove();
-    }
-  }
-
-  function renderLoggedOut(navInner, navLinks) {
-    clearAuthControls(navInner);
-    var cta = navInner.querySelector(".nav-cta");
-    if (cta) {
-      cta.style.display = "inline-flex";
-    }
-    ensureLoginLink(navLinks, false);
-  }
-
-  function renderLoggedIn(navInner, navLinks, profile) {
-    ensureLoginLink(navLinks, true);
-
-    var cta = navInner.querySelector(".nav-cta");
-    if (cta) {
-      cta.style.display = "none";
-    }
-
-    clearAuthControls(navInner);
-
-    var controls = document.createElement("div");
-    controls.className = "nav-auth-controls";
-    controls.style.display = "flex";
-    controls.style.alignItems = "center";
-    controls.style.gap = "var(--space-3)";
-
-    var business = document.createElement("span");
-    business.textContent = (profile && (profile.businessName || profile.name)) || "Account";
-    business.style.fontSize = "var(--font-size-sm)";
-    business.style.color = "var(--color-text-secondary)";
-
-    var profileLink = document.createElement("a");
-    profileLink.className = "btn btn-secondary";
-    profileLink.href = "profile.html";
-    profileLink.textContent = "Profile";
-
-    var logoutBtn = document.createElement("button");
-    logoutBtn.type = "button";
-    logoutBtn.className = "btn btn-primary";
-    logoutBtn.textContent = "Log out";
-    logoutBtn.addEventListener("click", function () {
-      auth.signOut();
-    });
-
-    controls.appendChild(business);
-    controls.appendChild(profileLink);
-    controls.appendChild(logoutBtn);
-    navInner.appendChild(controls);
-  }
-
-  function updateNavForState(isLoggedIn, profile) {
-    document.querySelectorAll("nav .nav-inner").forEach(function (navInner) {
-      var navLinks = navInner.querySelector(".nav-links");
-      if (isLoggedIn) {
-        renderLoggedIn(navInner, navLinks, profile);
-      } else {
-        renderLoggedOut(navInner, navLinks);
-      }
-    });
-  }
-
-  function startAuthStateWatcher() {
-    if (typeof auth === "undefined" || typeof db === "undefined") {
-      return;
-    }
-
-    auth.onAuthStateChanged(async function (user) {
-      if (user) {
-        window.currentUser = user.uid;
-
-        var profile = null;
-        try {
-          var doc = await db.collection("users").doc(user.uid).get();
-          profile = doc.exists ? doc.data() : null;
-        } catch (error) {
-          profile = null;
+  window.AuthState = {
+    user: null,
+    profile: null,
+    onReady: function (cb) {
+      firebase.auth().onAuthStateChanged(function (user) {
+        window.AuthState.user = user;
+        if (user) {
+          firebase.firestore().collection('users').doc(user.uid).get()
+            .then(function (doc) {
+              window.AuthState.profile = doc.exists ? doc.data() : null;
+              var role = window.AuthState.profile ? window.AuthState.profile.role : 'buyer';
+              updateAuthNav(user, role);
+              if (cb) cb(user, window.AuthState.profile);
+            })
+            .catch(function () {
+              updateAuthNav(user, 'buyer');
+              if (cb) cb(user, null);
+            });
+        } else {
+          window.AuthState.profile = null;
+          updateAuthNav(null, null);
+          if (cb) cb(null, null);
         }
-
-        var userProfile = profile;
-        window.userProfile = userProfile;
-        window.userVerified = userProfile && userProfile.verified === true;
-        updateNavForState(true, userProfile);
-      } else {
-        window.currentUser = null;
-        window.userProfile = null;
-        window.userVerified = false;
-        updateNavForState(false, null);
-      }
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", startAuthStateWatcher);
-  } else {
-    startAuthStateWatcher();
-  }
+      });
+    }
+  };
 })();

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Understanding Biochar — Biochar.market</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    .info-page { padding: var(--space-12) 0; max-width: 720px; margin: 0 auto; }
+    .info-page h1 { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .info-section { margin-top: var(--space-10); }
+    .info-section h2 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); }
+    .info-section p { font-size: var(--font-size-base); color: var(--color-text-secondary); margin-top: var(--space-3); line-height: var(--line-height-base); }
+    .stat-row { display: grid; grid-template-columns: repeat(3,1fr); gap: var(--space-4); margin-top: var(--space-6); }
+    .stat-box { background: var(--color-accent-light); border-radius: var(--radius-lg); padding: var(--space-5); text-align: center; }
+    .stat-box .num { font-size: var(--font-size-2xl); font-weight: 800; color: var(--color-accent); }
+    .stat-box .lbl { font-size: var(--font-size-sm); color: var(--color-text-secondary); margin-top: var(--space-1); }
+    .back-link { display: inline-flex; align-items: center; gap: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-sm); text-decoration: none; margin-bottom: var(--space-8); }
+    .back-link:hover { color: var(--color-text-primary); }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="container nav-inner">
+      <a class="nav-logo" href="index.html">BM</a>
+      <div style="display:flex;align-items:center;gap:var(--space-3)">
+        <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
+        <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
+        <a id="nav-profile" class="btn btn-secondary hidden" href="profile.html">Profile</a>
+        <button id="nav-logout" class="btn btn-primary hidden" type="button">Log out</button>
+      </div>
+    </div>
+  </nav>
+  <main>
+    <div class="container info-page">
+      <a href="buyer.html" class="back-link">← Back to marketplace</a>
+      <h1>Understanding biochar</h1>
+      <p style="color:var(--color-text-secondary);margin-top:var(--space-3)">The science, the history, and why it works for modern agriculture.</p>
+      <div class="stat-row">
+        <div class="stat-box"><div class="num">1000+</div><div class="lbl">years carbon stability in soil</div></div>
+        <div class="stat-box"><div class="num">3.67x</div><div class="lbl">CO₂ stored per tonne of carbon</div></div>
+        <div class="stat-box"><div class="num">350–700°C</div><div class="lbl">pyrolysis temperature range</div></div>
+      </div>
+      <div class="info-section">
+        <h2>What is biochar?</h2>
+        <p>Biochar is charcoal made from organic waste through a process called pyrolysis — heating biomass in a low-oxygen environment to temperatures between 350°C and 700°C. Without oxygen the material does not combust. Instead it carbonizes into a stable, porous, charcoal-like substance that can persist in soil for hundreds to thousands of years.</p>
+        <p>This is not a new or experimental technology. Biochar has been produced and used in agriculture for centuries. Ancient Amazonian civilizations created terra preta soils using charred organic material that remain extraordinarily fertile today. The modern commercial industry applies the same principle at industrial scale.</p>
+      </div>
+      <div class="info-section">
+        <h2>What it does in soil</h2>
+        <p>When incorporated into agricultural soil, biochar improves water retention — crops need less irrigation. It increases the soil's ability to hold nutrients like nitrogen and phosphorus rather than losing them to runoff. It raises soil pH in acidic soils and improves microbial activity. Because the carbon is chemically stable, it remains locked in soil rather than returning to the atmosphere as CO₂.</p>
+      </div>
+      <div class="info-section">
+        <h2>Reading the scorecard</h2>
+        <p><strong>Carbon content (%)</strong> — Higher is better. Above 70% qualifies for carbon credit programs. The most important single number.</p>
+        <p style="margin-top:var(--space-3)"><strong>Ash content (%)</strong> — Lower is better. Below 10% indicates high-carbon, low-contaminant biochar. High ash can indicate poor pyrolysis conditions.</p>
+        <p style="margin-top:var(--space-3)"><strong>Electrical conductivity (dS/m)</strong> — Lower is better for most crops. Below 1 dS/m is safe for all applications. Above 2 may stress salt-sensitive crops.</p>
+        <p style="margin-top:var(--space-3)"><strong>pH</strong> — Most biochar is alkaline (7.5–9). Beneficial for acidic soils. Check before applying to already-alkaline ground.</p>
+      </div>
+      <div style="margin-top:var(--space-8);display:flex;gap:var(--space-4)">
+        <a href="buyer.html" class="btn btn-primary">Browse listings →</a>
+        <a href="learn.html" class="btn btn-secondary">Full learning guide</a>
+      </div>
+    </div>
+  </main>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script>window.AuthState.onReady(function(){})</script>
+</body>
+</html>

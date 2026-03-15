@@ -714,6 +714,10 @@
       el.textContent = 'Calculating...';
       window.DeliveredCost.calc({
         producerZip: listing.producerZip,
+        moisturePercent: listing.scorecard ? listing.scorecard.moisture : 0,
+        feedstockType: listing.feedstock || 'default',
+        isBiochar: true,
+        hasBiomassBackhaul: state.profile && state.profile.role === 'buyer' && state.profile.hasBiomassAvailable,
         buyerZip: buyerZip,
         pricePerTonne: listing.pricePerTonne,
         tonnes: listing.minOrderTonnes,

@@ -181,23 +181,35 @@
       '<section class="description-section"><h2>About This Material</h2><p>' +
       listing.description +
       "</p></section>" +
-      '<section class="availability-section"><h2>Availability</h2><div class="availability-list">' +
-      "<p>Available From: " +
-      formatDate(listing.availableFrom) +
-      "</p>" +
-      "<p>Available Until: " +
-      formatDate(listing.availableUntil) +
-      "</p>" +
-      "<p>Available Tonnes: " +
-      listing.availableTonnes +
-      "</p>" +
-      "<p>Minimum order: " +
-      listing.minOrderTonnes +
-      " tonnes</p>" +
-      "<p>" +
-      leadTimeText +
-      "</p>" +
-      "</div></section>" +
+      '<section class="availability-section"><h2>Availability &amp; Delivery</h2><div class="availability-list">' +
+      "<p>Available From: " + formatDate(listing.availableFrom) + "</p>" +
+      "<p>Available Until: " + formatDate(listing.availableUntil) + "</p>" +
+      "<p>Available Tonnes: " + listing.availableTonnes + "</p>" +
+      "<p>Minimum order: " + listing.minOrderTonnes + " tonnes</p>" +
+      "<p>" + leadTimeText + "</p>" +
+      '</div>' +
+      '<div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--color-border)">' +
+        '<h3 style="font-size:var(--font-size-base);font-weight:var(--font-weight-semibold);margin-bottom:var(--space-4)">Delivery options</h3>' +
+        '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3)">' +
+          '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-4);text-align:center">' +
+            '<div style="font-size:1.5rem">🚜</div>' +
+            '<div style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);margin-top:var(--space-2)">Buyer collects</div>' +
+            '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">You arrange pickup from producer location</div>' +
+          '</div>' +
+          '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-4);text-align:center">' +
+            '<div style="font-size:1.5rem">🚚</div>' +
+            '<div style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);margin-top:var(--space-2)">Producer delivers</div>' +
+            '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">Producer arranges delivery to your farm</div>' +
+          '</div>' +
+          '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-4);text-align:center">' +
+            '<div style="font-size:1.5rem">🏢</div>' +
+            '<div style="font-size:var(--font-size-sm);font-weight:var(--font-weight-semibold);margin-top:var(--space-2)">Third party freight</div>' +
+            '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">Independent carrier coordinates transport</div>' +
+          '</div>' +
+        '</div>' +
+        '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-3)">Delivery method is agreed between buyer and producer in the deal room before confirming. Listing price does not include transport.</p>' +
+      '</div>' +
+      '</section>' +
       '<section class="inquiry-section">' +
       "<h2>Enter Deal Room</h2>" +
       '<div id="deal-entry"></div>' +

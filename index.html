@@ -336,7 +336,7 @@
     </footer>
     <script src="js/firebase-config.js"></script>
     <script>
-      auth.onAuthStateChanged(async function (user) {
+      window.AuthState.onReady(async function (user, profile) {
         var login = document.getElementById('nav-login')
         var profile = document.getElementById('nav-profile')
         var logout = document.getElementById('nav-logout')

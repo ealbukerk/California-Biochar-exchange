@@ -353,6 +353,7 @@
       <div class="container nav-inner">
         <a class="nav-logo" href="index.html">BM</a>
         <div style="display: flex; gap: var(--space-3); align-items: center;">
+          <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
           <a id="nav-login" class="btn btn-secondary" href="auth.html">Login</a>
           <a id="nav-profile" class="btn btn-secondary" href="profile.html" style="display: none;">Profile</a>
           <button id="nav-logout" class="btn btn-primary" type="button" style="display: none;">Log out</button>
@@ -386,7 +387,7 @@
     </script>
     <script src="js/dealroom.js"></script>
     <script>
-      auth.onAuthStateChanged(function (user) {
+      window.AuthState.onReady(function (user, profile) {
         var login = document.getElementById('nav-login')
         var profile = document.getElementById('nav-profile')
         var logout = document.getElementById('nav-logout')
