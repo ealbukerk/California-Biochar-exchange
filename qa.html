@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>QA Dashboard — Biochar.market</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: monospace; background: #0f1117; color: #e2e8f0; padding: 24px; }
+    h1 { font-size: 18px; color: #68d391; margin-bottom: 24px; letter-spacing: 0.05em; }
+    .section { margin-bottom: 32px; }
+    .section-title { font-size: 13px; font-weight: bold; color: #90cdf4; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; border-bottom: 1px solid #2d3748; padding-bottom: 6px; }
+    .row { display: flex; align-items: flex-start; gap: 12px; padding: 6px 0; border-bottom: 1px solid #1a202c; font-size: 12px; }
+    .row:last-child { border-bottom: none; }
+    .label { width: 220px; flex-shrink: 0; color: #a0aec0; }
+    .result { flex: 1; }
+    .pass { color: #68d391; }
+    .fail { color: #fc8181; }
+    .warn { color: #f6e05e; }
+    .pending { color: #718096; }
+    .summary { display: flex; gap: 24px; margin-bottom: 32px; padding: 16px; background: #1a202c; border-radius: 8px; }
+    .sum-item { text-align: center; }
+    .sum-num { font-size: 28px; font-weight: bold; }
+    .sum-label { font-size: 11px; color: #718096; margin-top: 2px; }
+    .pass-num { color: #68d391; }
+    .fail-num { color: #fc8181; }
+    .warn-num { color: #f6e05e; }
+    button { background: #2d3748; color: #e2e8f0; border: 1px solid #4a5568; padding: 8px 20px; border-radius: 6px; cursor: pointer; font-family: monospace; font-size: 13px; margin-bottom: 24px; }
+    button:hover { background: #4a5568; }
+    .error-detail { font-size: 11px; color: #fc8181; margin-top: 3px; white-space: pre-wrap; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>⚡ Biochar.market — QA Dashboard</h1>
+  <button onclick="runAll()">▶ Run all checks</button>
+  <div class="summary" id="summary" style="display:none">
+    <div class="sum-item"><div class="sum-num pass-num" id="sum-pass">0</div><div class="sum-label">PASS</div></div>
+    <div class="sum-item"><div class="sum-num fail-num" id="sum-fail">0</div><div class="sum-label">FAIL</div></div>
+    <div class="sum-item"><div class="sum-num warn-num" id="sum-warn">0</div><div class="sum-label">WARN</div></div>
+  </div>
+  <div id="output"></div>
+
+<script>
+var BASE = window.location.origin + window.location.pathname.replace('qa.html','');
+var results = { pass: 0, fail: 0, warn: 0 };
+
+var PAGES = [
+  'index.html','buyer.html','seller.html','auth.html','profile.html',
+  'listing.html','feedstock.html','feedstock-listing.html','list-feedstock.html',
+  'producer-demand.html','producer-demand-browse.html','dealroom.html',
+  'carriers.html','settings.html','terms.html','admin.html',
+  'how-it-works.html','certifications.html','understanding-biochar.html',
+  'crops.html','learn.html'
+];
+
+var PAGE_CHECKS = {
+  'buyer.html': {
+    mustContain: ['Source biochar at scale','role-nav-slot','listings-grid','filter-bar','compare-bar'],
+    mustNotContain: ['learn-section','cert-grid','What certifications mean','Understanding biochar']
+  },
+  'seller.html': {
+    mustContain: ['apply-wizard','agree-accuracy','agree-commission','terms.html','draft-resume-banner','seller-photo-input'],
+    mustNotContain: []
+  },
+  'feedstock.html': {
+    mustContain: ['demand-preview','fs-grid','list-feedstock.html','producer-demand-browse.html'],
+    mustNotContain: []
+  },
+  'feedstock-listing.html': {
+    mustContain: ['fs-detail-hero','fs-main-col','fs-sidebar','fs-calc-btn','feedstock-data.js'],
+    mustNotContain: []
+  },
+  'dealroom.html': {
+    mustContain: ['dealroom-container','delivered-cost.js','auth-state.js'],
+    mustNotContain: []
+  },
+  'settings.html': {
+    mustContain: ['s-name','s-business','s-password','save-account-btn','save-password-btn','notif-new-message','delete-account-btn'],
+    mustNotContain: []
+  },
+  'terms.html': {
+    mustContain: ['Terms of Service','Commission','Privacy'],
+    mustNotContain: []
+  },
+  'carriers.html': {
+    mustContain: ['carrier-grid','carrier-type','carrier-zip','auth-state.js'],
+    mustNotContain: []
+  },
+  'admin.html': {
+    mustContain: ['pending-listings-wrap','pending-count','listings-table'],
+    mustNotContain: []
+  },
+  'profile.html': {
+    mustContain: ['scheduled-section','repeat-modal-backdrop','carbon-dashboard-wrap','role-nav-slot'],
+    mustNotContain: []
+  },
+  'index.html': {
+    mustContain: ['hero','role-nav-slot'],
+    mustNotContain: []
+  }
+};
+
+var JS_FILES = [
+  'js/auth-state.js','js/buyer.js','js/seller.js','js/profile.js',
+  'js/dealroom.js','js/delivered-cost.js','js/feedstock.js',
+  'js/list-feedstock.js','js/apply-wizard.js','js/listing.js',
+  'js/match.js','js/admin.js','js/commission.js','js/verified.js',
+  'js/feedstock-data.js','js/data.js','js/producer-demand-browse.js',
+  'js/producer-demand.js','js/carriers.js'
+];
+
+var CSS_FILES = ['css/style.css','css/listings.css'];
+
+var KEY_STRINGS = {
+  'js/buyer.js': ['scoreListingForInputs','renderBrowseListings','haversineB','injectDeliveredCosts','renderBackhaulPanel'],
+  'js/dealroom.js': ['confirmDealDelivery','respondToBid','openRatingModal','renderThirdPartyPanel','CLOUDINARY_UPLOAD_URL'],
+  'js/delivered-cost.js': ['router.project-osrm.org','calcDeliveredCost','BIOCHAR_DENSITY'],
+  'js/apply-wizard.js': ['saveDraft','loadDraft','clearDraft','uploadSellerPhotos','prefillWizard','pyroTech'],
+  'js/auth-state.js': ['hasBiomassAvailable','ROLE_NAV','carriers.html'],
+  'js/feedstock.js': ['feedstock-listing.html','renderDemandPreview'],
+  'js/profile.js': ['scheduleRepeatOrder','loadScheduledOrders','advanceDateByFrequency'],
+  'js/admin.js': ['loadPendingListings','approveListing','rejectListing'],
+  'js/match.js': ['scoreListing','isBroadRegionMatch']
+};
+
+function addSection(id, title) {
+  var out = document.getElementById('output');
+  var sec = document.createElement('div');
+  sec.className = 'section';
+  sec.innerHTML = '<div class="section-title">' + title + '</div><div id="sec-' + id + '"></div>';
+  out.appendChild(sec);
+  return document.getElementById('sec-' + id);
+}
+
+function addRow(container, label, status, detail) {
+  results[status]++;
+  var row = document.createElement('div');
+  row.className = 'row';
+  var detailHtml = detail ? '<div class="error-detail">' + detail + '</div>' : '';
+  row.innerHTML = '<div class="label">' + label + '</div><div class="result"><span class="' + status + '">' +
+    (status === 'pass' ? '✓ OK' : status === 'fail' ? '✗ FAIL' : '⚠ WARN') + '</span>' + detailHtml + '</div>';
+  container.appendChild(row);
+}
+
+async function fetchText(url) {
+  try {
+    var r = await fetch(url + '?_=' + Date.now());
+    if (!r.ok) return null;
+    return await r.text();
+  } catch(e) { return null; }
+}
+
+async function checkPages(container) {
+  for (var i = 0; i < PAGES.length; i++) {
+    var page = PAGES[i];
+    var url = BASE + page;
+    var html = await fetchText(url);
+    if (!html) {
+      addRow(container, page, 'fail', 'Could not fetch — page may not exist');
+      continue;
+    }
+    var checks = PAGE_CHECKS[page];
+    if (!checks) { addRow(container, page, 'pass', null); continue; }
+    var errors = [];
+    var warns = [];
+    (checks.mustContain || []).forEach(function(str) {
+      if (html.indexOf(str) === -1) errors.push('Missing: ' + str);
+    });
+    (checks.mustNotContain || []).forEach(function(str) {
+      if (html.indexOf(str) !== -1) warns.push('Should not contain: ' + str);
+    });
+    if (errors.length) addRow(container, page, 'fail', errors.join('\n'));
+    else if (warns.length) addRow(container, page, 'warn', warns.join('\n'));
+    else addRow(container, page, 'pass', null);
+  }
+}
+
+async function checkJsFiles(container) {
+  for (var i = 0; i < JS_FILES.length; i++) {
+    var file = JS_FILES[i];
+    var url = BASE + file;
+    var text = await fetchText(url);
+    if (!text) {
+      addRow(container, file, 'warn', 'File not found or empty');
+      continue;
+    }
+    var keyChecks = KEY_STRINGS[file];
+    if (!keyChecks) { addRow(container, file, 'pass', null); continue; }
+    var missing = keyChecks.filter(function(s) { return text.indexOf(s) === -1; });
+    if (missing.length) addRow(container, file, 'fail', 'Missing functions/strings:\n' + missing.join('\n'));
+    else addRow(container, file, 'pass', null);
+  }
+}
+
+async function checkCssFiles(container) {
+  for (var i = 0; i < CSS_FILES.length; i++) {
+    var file = CSS_FILES[i];
+    var text = await fetchText(BASE + file);
+    if (!text) addRow(container, file, 'fail', 'File not found');
+    else if (text.length < 100) addRow(container, file, 'warn', 'File seems very small (' + text.length + ' bytes)');
+    else addRow(container, file, 'pass', null);
+  }
+}
+
+async function checkNavConsistency(container) {
+  var navRequired = ['role-nav-slot','nav-login','nav-profile','nav-logout'];
+  for (var i = 0; i < PAGES.length; i++) {
+    var page = PAGES[i];
+    var html = await fetchText(BASE + page);
+    if (!html) continue;
+    var missing = navRequired.filter(function(id) { return html.indexOf(id) === -1; });
+    if (missing.length) addRow(container, page, 'warn', 'Missing nav elements: ' + missing.join(', '));
+    else addRow(container, page, 'pass', null);
+  }
+}
+
+async function checkFirebaseScripts(container) {
+  var fbScripts = ['firebase-app-compat.js','firebase-auth-compat.js','firebase-firestore-compat.js'];
+  var criticalPages = ['buyer.html','seller.html','profile.html','dealroom.html','settings.html','admin.html','feedstock.html','carriers.html'];
+  for (var i = 0; i < criticalPages.length; i++) {
+    var page = criticalPages[i];
+    var html = await fetchText(BASE + page);
+    if (!html) continue;
+    var missing = fbScripts.filter(function(s) { return html.indexOf(s) === -1; });
+    if (missing.length) addRow(container, page, 'fail', 'Missing Firebase scripts: ' + missing.join(', '));
+    else addRow(container, page, 'pass', null);
+  }
+}
+
+async function checkDeliveredCostLoaded(container) {
+  var pages = ['buyer.html','dealroom.html','listing.html','feedstock-listing.html'];
+  for (var i = 0; i < pages.length; i++) {
+    var page = pages[i];
+    var html = await fetchText(BASE + page);
+    if (!html) continue;
+    if (html.indexOf('delivered-cost.js') === -1) addRow(container, page, 'fail', 'delivered-cost.js not loaded');
+    else addRow(container, page, 'pass', null);
+  }
+}
+
+async function runAll() {
+  results = { pass: 0, fail: 0, warn: 0 };
+  document.getElementById('output').innerHTML = '';
+  document.getElementById('summary').style.display = 'none';
+
+  var p1 = addSection('pages', '1 — Page existence + content checks');
+  await checkPages(p1);
+
+  var p2 = addSection('js', '2 — JS file existence + key function checks');
+  await checkJsFiles(p2);
+
+  var p3 = addSection('css', '3 — CSS files');
+  await checkCssFiles(p3);
+
+  var p4 = addSection('nav', '4 — Nav element consistency across pages');
+  await checkNavConsistency(p4);
+
+  var p5 = addSection('firebase', '5 — Firebase scripts on critical pages');
+  await checkFirebaseScripts(p5);
+
+  var p6 = addSection('dc', '6 — delivered-cost.js loaded where needed');
+  await checkDeliveredCostLoaded(p6);
+
+  document.getElementById('sum-pass').textContent = results.pass;
+  document.getElementById('sum-fail').textContent = results.fail;
+  document.getElementById('sum-warn').textContent = results.warn;
+  document.getElementById('summary').style.display = 'flex';
+}
+</script>
+</body>
+</html>

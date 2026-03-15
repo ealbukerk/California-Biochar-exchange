@@ -1,3 +1,6 @@
+var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+var CLOUDINARY_PRESET = 'biochar_certs';
+
 function getDealComplexity(listing) {
   const fullValue = listing.availableTonnes * listing.pricePerTonne
 
@@ -728,17 +731,42 @@ function renderDealRoom(dealId, user) {
       if (status === 'Agreed') {
         const ab = d.agreedBid || {}
         panel.innerHTML =
-          '<div style="text-align:center;padding:20px">' +
-            '<div style="font-size:40px;margin-bottom:12px">🎉</div>' +
-            '<h3 style="color:#2E7D32;margin:0 0 16px 0">Deal agreed!</h3>' +
-            '<div style="background:var(--color-bg);border-radius:8px;padding:16px;text-align:left;margin-bottom:16px">' +
+          '<div style="padding:20px">' +
+            '<div style="text-align:center;margin-bottom:16px">' +
+              '<div style="font-size:40px;margin-bottom:8px">🎉</div>' +
+              '<h3 style="color:#2E7D32;margin:0">Deal agreed!</h3>' +
+            '</div>' +
+            '<div style="background:var(--color-bg);border-radius:8px;padding:16px;margin-bottom:16px">' +
               '<p style="margin:0 0 8px 0;font-size:14px"><strong>Volume:</strong> ' + (ab.volumeTonnes || '—') + ' tonnes</p>' +
               '<p style="margin:0 0 8px 0;font-size:14px"><strong>Price:</strong> $' + (ab.pricePerTonne || '—') + '/tonne</p>' +
               '<p style="margin:0 0 8px 0;font-size:14px"><strong>Total:</strong> $' + (ab.volumeTonnes && ab.pricePerTonne ? (ab.volumeTonnes * ab.pricePerTonne).toLocaleString() : '—') + '</p>' +
               '<p style="margin:0;font-size:14px"><strong>Delivery:</strong> ' + (ab.deliveryMethod || '—') + '</p>' +
             '</div>' +
+            '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:8px;padding:14px;margin-bottom:16px">' +
+              '<p style="font-size:13px;font-weight:600;margin:0 0 4px 0">📄 Scale ticket / weight certificate</p>' +
+              '<p style="font-size:12px;color:var(--color-text-muted);margin:0 0 10px 0">Upload a certified scale ticket to confirm delivery weight. Required for carbon credit programs.</p>' +
+              '<div id="dr-scale-drop" style="border:2px dashed var(--color-border);border-radius:8px;padding:14px;text-align:center;cursor:pointer;background:var(--color-bg)" onclick="document.getElementById(\'dr-scale-input\').click()">' +
+                '<p style="font-size:12px;color:var(--color-text-muted);margin:0">Click to upload · JPG, PNG, or PDF</p>' +
+              '</div>' +
+              '<input type="file" id="dr-scale-input" accept="image/*,.pdf" style="display:none" />' +
+              '<div id="dr-scale-preview" style="margin-top:8px;font-size:12px;color:var(--color-accent)"></div>' +
+            '</div>' +
             '<button id="dr-confirm-delivery" class="btn btn-primary" style="width:100%;margin-bottom:8px">Confirm delivery received</button>' +
+            '<p style="font-size:11px;color:var(--color-text-muted);text-align:center;margin:0">Both parties must confirm to complete the transaction.</p>' +
           '</div>'
+
+        var scaleInput = document.getElementById('dr-scale-input');
+        if (scaleInput) {
+          scaleInput.addEventListener('change', function() {
+            var file = scaleInput.files[0];
+            var preview = document.getElementById('dr-scale-preview');
+            if (file && preview) {
+              preview.textContent = '📎 ' + file.name + ' ready to upload';
+              var drop = document.getElementById('dr-scale-drop');
+              if (drop) drop.style.borderColor = 'var(--color-accent)';
+            }
+          });
+        }
         return
       }
 
@@ -1033,12 +1061,41 @@ function renderDealRoom(dealId, user) {
           const btn = document.getElementById('dr-confirm-delivery')
           if (btn) { btn.disabled = true; btn.textContent = 'Confirming…'; }
           try {
+            var scaleTicketUrl = null;
+            var scaleInput = document.getElementById('dr-scale-input');
+            if (scaleInput && scaleInput.files && scaleInput.files[0]) {
+              var fd = new FormData();
+              fd.append('file', scaleInput.files[0]);
+              fd.append('upload_preset', CLOUDINARY_PRESET);
+              try {
+                var uploadRes = await fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd });
+                var uploadData = await uploadRes.json();
+                scaleTicketUrl = uploadData.secure_url || null;
+              } catch(uploadErr) {
+                console.warn('Scale ticket upload failed, proceeding without it');
+              }
+            }
+
             const txSnap = await db.collection('transactions')
               .where('dealId', '==', dealId)
               .limit(1)
               .get()
+
             if (!txSnap.empty) {
-              await window.confirmDealDelivery(txSnap.docs[0].id, user.uid)
+              var txUpdates = {};
+              if (user.uid === txSnap.docs[0].data().buyerUID) txUpdates.confirmedByBuyer = true;
+              if (user.uid === txSnap.docs[0].data().producerUID) txUpdates.confirmedByProducer = true;
+              if (scaleTicketUrl) txUpdates.scaleTicketUrl = scaleTicketUrl;
+              await db.collection('transactions').doc(txSnap.docs[0].id).update(txUpdates);
+
+              const updatedSnap = await db.collection('transactions').doc(txSnap.docs[0].id).get();
+              const updated = updatedSnap.data();
+              if (updated.confirmedByBuyer && updated.confirmedByProducer) {
+                if (window.updateVerifiedStatus) {
+                  if (updated.buyerUID) await window.updateVerifiedStatus(updated.buyerUID);
+                  if (updated.producerUID) await window.updateVerifiedStatus(updated.producerUID);
+                }
+              }
             }
             await db.collection('deals').doc(dealId).update({
               deliveryConfirmed: true,
