@@ -183,7 +183,7 @@
     </footer>
 
     <script>
-      auth.onAuthStateChanged(function (user) {
+      firebase.auth().onAuthStateChanged(function (user) {
         var login = document.getElementById('nav-login')
         var profile = document.getElementById('nav-profile')
         var logout = document.getElementById('nav-logout')
@@ -199,7 +199,7 @@
         }
       })
       document.getElementById('nav-logout').addEventListener('click', function () {
-        auth.signOut()
+        firebase.auth().signOut()
       })
     </script>
   </body>

@@ -855,7 +855,7 @@ document.addEventListener('click', function(e) {
           '<div style="text-align:center;padding:var(--space-12) 0">' +
             '<div style="font-size:3rem">✅</div>' +
             '<h2 style="font-size:var(--font-size-2xl);font-weight:700;margin-top:var(--space-4)">Application submitted!</h2>' +
-            '<p style="color:var(--color-text-secondary);margin-top:var(--space-2)">Your listing is under review. We\\'ll notify you at ' + wizardData.business.email + ' within 2 business days.</p>' +
+            '<p style="color:var(--color-text-secondary);margin-top:var(--space-2)">Your listing is under review. We\'ll notify you at ' + wizardData.business.email + ' within 2 business days.</p>' +
             '<div style="margin-top:var(--space-6);display:flex;gap:var(--space-4);justify-content:center">' +
               '<a href="seller.html" class="btn btn-secondary">List another product</a>' +
               '<a href="buyer.html" class="btn btn-primary">Browse marketplace</a>' +

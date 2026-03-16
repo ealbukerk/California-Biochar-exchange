@@ -90,7 +90,6 @@
     var LOADING_LABELS = { pile:'Pile (bring your own loader)', loader_onsite:'Loader on site', conveyor:'Conveyor available', forklift:'Forklift available' };
     var AGE_LABELS = { fresh:'Fresh (this season)', less_6mo:'Less than 6 months', '6_12mo':'6–12 months', over_1yr:'Over 1 year' };
 
-    var db = firebase.firestore();
 
     function getParam(name) {
       return new URLSearchParams(window.location.search).get(name);

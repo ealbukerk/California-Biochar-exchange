@@ -317,7 +317,7 @@
           var statusLabel = '';
           var statusColor = 'var(--color-text-muted)';
           if (listing.status === 'pending_review') {
-            statusLabel = '⏳ Under review — we\\'ll notify you when your listing goes live.';
+            statusLabel = '⏳ Under review — we\'ll notify you when your listing goes live.';
           } else if (listing.status === 'active') {
             statusLabel = '✓ Live';
             statusColor = 'var(--color-accent)';
