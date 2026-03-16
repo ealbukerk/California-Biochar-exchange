@@ -40,7 +40,7 @@
     if (user) {
       if (login) { login.style.display = 'none'; login.classList.add('hidden'); }
       if (profile) { profile.style.display = 'inline-flex'; profile.classList.remove('hidden'); }
-      if (logout) { profile.style.display = 'inline-flex'; logout.classList.remove('hidden'); }
+      if (logout) { logout.style.display = 'inline-flex'; logout.classList.remove('hidden'); }
       if (settings) { settings.style.display = 'inline-flex'; settings.classList.remove('hidden'); }
       insertRoleNav(role || 'buyer');
     } else {

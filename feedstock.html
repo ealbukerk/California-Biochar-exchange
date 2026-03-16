@@ -180,6 +180,16 @@
 
       <h2 style="margin-bottom:var(--space-6)">All feedstock listings</h2>
       <div id="fs-grid" class="listings-grid"></div>
+      <div id="fs-compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid #7A5C1E;padding:16px 32px;align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)">
+        <span id="fs-compare-count" style="font-weight:600;font-size:14px;color:#7A5C1E">0 listings selected</span>
+        <div style="display:flex;gap:12px;align-items:center">
+          <span style="font-size:13px;color:#666">Select up to 3 feedstock listings</span>
+          <button id="fs-compare-btn" style="background:#7A5C1E;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Compare selected</button>
+          <button id="fs-compare-clear" style="background:none;border:1px solid var(--color-border);padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer">Clear</button>
+        </div>
+      </div>
+
+      <div id="fs-comparison-view" class="hidden"></div>
       <div id="fs-empty" class="fs-empty" style="display:none">
         <p>No feedstock listings match your filters.</p>
         <p style="margin-top:var(--space-3)"><a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">Be the first to list material →</a></p>

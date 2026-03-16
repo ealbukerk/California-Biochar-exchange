@@ -154,25 +154,25 @@
                   <p class="field-hint">Select all that apply — you can list multiple material types in one submission.</p>
                   <div style="margin-top:var(--space-3)">
                     <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Agricultural</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="orchard_prunings" style="accent-color:#7A5C1E" /> Orchard prunings</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="almond_shells" style="accent-color:#7A5C1E" /> Almond shells</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="pistachio_shells" style="accent-color:#7A5C1E" /> Pistachio shells</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="walnut_shells" style="accent-color:#7A5C1E" /> Walnut shells</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="corn_stover" style="accent-color:#7A5C1E" /> Corn stover</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="rice_husks" style="accent-color:#7A5C1E" /> Rice husks</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-4)">
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="orchard_prunings" /><label>Orchard prunings</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="almond_shells" /><label>Almond shells</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="pistachio_shells" /><label>Pistachio shells</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="walnut_shells" /><label>Walnut shells</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="corn_stover" /><label>Corn stover</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="rice_husks" /><label>Rice husks</label></div>
                     </div>
                     <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Forestry</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-bottom:var(--space-4)">
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="forestry_slash" style="accent-color:#7A5C1E" /> Forestry slash</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="logging_residue" style="accent-color:#7A5C1E" /> Logging residue</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="thinning_material" style="accent-color:#7A5C1E" /> Thinning material</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-4)">
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="forestry_slash" /><label>Forestry slash</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="logging_residue" /><label>Logging residue</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="thinning_material" /><label>Thinning material</label></div>
                     </div>
                     <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Urban / Industrial</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3)">
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="clean_wood_waste" style="accent-color:#7A5C1E" /> Clean wood waste</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="construction_wood" style="accent-color:#7A5C1E" /> Construction wood (untreated only)</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-size:var(--font-size-sm);font-weight:400;cursor:pointer"><input type="checkbox" name="f-biomass-types" value="tree_service_chips" style="accent-color:#7A5C1E" /> Tree service chips</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="clean_wood_waste" /><label>Clean wood waste</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="construction_wood" /><label>Construction wood (untreated only)</label></div>
+                      <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="tree_service_chips" /><label>Tree service chips</label></div>
                     </div>
                   </div>
                 </div>
@@ -342,7 +342,7 @@
               <div style="margin-bottom:var(--space-4)">
                 <label style="display:flex;align-items:flex-start;gap:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-secondary);cursor:pointer">
                   <input type="checkbox" id="f-terms" style="margin-top:3px;accent-color:#7A5C1E;flex-shrink:0" />
-                  I confirm the information above is accurate. I understand that misrepresenting material quality may result in listing removal and I agree to the platform's <a href="learn.html" style="color:#7A5C1E">terms of use</a>.
+                  I confirm the information above is accurate. I understand that misrepresenting material quality may result in listing removal and I agree to the platform's <a href="terms.html" style="color:#7A5C1E">terms of use</a>.
                 </label>
               </div>
               <div class="wizard-nav">

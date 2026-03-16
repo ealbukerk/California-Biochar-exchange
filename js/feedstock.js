@@ -135,15 +135,17 @@
       : '';
 
     var deliveredHtml = l._delivered !== undefined
-      ? '<div class="fs-delivered">' +
-          '$' + l.pricePerTon + '/ton listing &nbsp;+&nbsp; $' + l._transport + '/ton est. trucking' +
-          '<br><strong>Delivered: ~$' + l._delivered + '/ton</strong>' +
+      ? '<div class="fs-delivered" style="background:var(--color-accent-light);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3);font-size:var(--font-size-sm)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center">' +
+            '<span style="color:var(--color-text-muted)">Listed</span>' +
+            '<strong>$' + l.pricePerTon + '/ton</strong>' +
+          '</div>' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">' +
+            '<span style="color:var(--color-text-muted)">Est. delivered</span>' +
+            '<strong style="color:var(--color-accent)">~$' + l._delivered + '/ton</strong>' +
+          '</div>' +
         '</div>'
-      : '';
-
-    var notesHtml = l.notes
-      ? '<div class="fs-card-notes">' + l.notes + '</div>'
-      : '';
+      : '<div style="font-size:var(--font-size-sm);font-weight:600">$' + (l.pricePerTon === 0 ? 'Free to haul' : l.pricePerTon + '/ton') + '</div>';
 
     var availHtml = l.availabilityWindow
       ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">📅 ' + l.availabilityWindow + '</div>'
@@ -177,7 +179,6 @@
         '</div>' +
 
         deliveredHtml +
-        notesHtml +
         yieldHtml(l) +
 
         '<div style="display:flex;gap:var(--space-2);margin-top:auto">' +
@@ -189,6 +190,78 @@
     '</div>';
   }
 
+  var fsCompareList = [];
+
+  function updateFsCompareBar() {
+    var bar = document.getElementById('fs-compare-bar');
+    var count = document.getElementById('fs-compare-count');
+    if (!bar || !count) return;
+    if (fsCompareList.length >= 2) {
+      bar.style.display = 'flex';
+      count.textContent = fsCompareList.length + ' listing' + (fsCompareList.length > 1 ? 's' : '') + ' selected';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+
+  function fsCompareCardHtml(l) {
+    var score = 0;
+    var fields = [
+      { label: 'Quantity', value: l.estimatedQuantityTons ? l.estimatedQuantityTons.toLocaleString() + ' tons' : '—', score: l.estimatedQuantityTons || 0, higherBetter: true },
+      { label: 'Min pickup', value: l.minimumPickupTons ? l.minimumPickupTons + ' tons' : '—', score: l.minimumPickupTons || 999, higherBetter: false },
+      { label: 'Price/ton', value: l.pricePerTon === 0 ? 'Free' : ('$' + l.pricePerTon + '/ton'), score: l.pricePerTon || 999, higherBetter: false },
+      { label: 'Moisture', value: (MOISTURE_LABELS && MOISTURE_LABELS[l.moistureContent]) || l.moistureContent || '—', score: 0, higherBetter: false },
+      { label: 'Contamination', value: (CONTAMINATION_LABELS && CONTAMINATION_LABELS[l.contaminationRisk]) || l.contaminationRisk || '—', score: l.contaminationRisk === 'clean' ? 1 : 0, higherBetter: true },
+      { label: 'Availability', value: l.availabilityWindow || '—', score: 0, higherBetter: false }
+    ];
+    return '<div style="flex:1;min-width:200px;max-width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5)">' +
+      '<div style="font-weight:700;font-size:var(--font-size-base);margin-bottom:var(--space-1)">' + (l.company || l.supplierName || '') + '</div>' +
+      '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-4)">' + (BIOMASS_LABELS[l.biomassType] || l.biomassType || '') + '</div>' +
+      fields.map(function(f) {
+        return '<div style="display:flex;justify-content:space-between;padding:var(--space-2) 0;border-bottom:1px solid var(--color-border);font-size:var(--font-size-sm)">' +
+          '<span style="color:var(--color-text-muted)">' + f.label + '</span>' +
+          '<span style="font-weight:600">' + f.value + '</span>' +
+        '</div>';
+      }).join('') +
+    '</div>';
+  }
+
+  function renderFsComparison() {
+    var view = document.getElementById('fs-comparison-view');
+    var grid = document.getElementById('fs-grid');
+    var bar = document.getElementById('fs-compare-bar');
+    if (!view) return;
+    var selected = fsCompareList.map(function(id) {
+      return state.listings.find(function(l) { return String(l._id) === String(id); });
+    }).filter(Boolean);
+    if (selected.length < 2) return;
+
+    if (grid) grid.classList.add('hidden');
+    if (bar) bar.style.display = 'none';
+    view.classList.remove('hidden');
+    view.innerHTML =
+      '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px">' +
+        '<div style="background:var(--color-bg);border-radius:var(--radius-lg);padding:var(--space-8);max-width:960px;width:100%">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6)">' +
+            '<h2 style="font-size:var(--font-size-xl);font-weight:700">Feedstock comparison</h2>' +
+            '<button id="fs-compare-close" style="background:none;border:1px solid var(--color-border);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:14px">✕ Close</button>' +
+          '</div>' +
+          '<div style="display:flex;gap:var(--space-4);flex-wrap:wrap">' +
+            selected.map(fsCompareCardHtml).join('') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    document.getElementById('fs-compare-close').addEventListener('click', function() {
+      view.classList.add('hidden');
+      view.innerHTML = '';
+      fsCompareList = [];
+      if (grid) grid.classList.remove('hidden');
+      updateFsCompareBar();
+      renderGrid();
+    });
+  }
+
   function renderGrid() {
     var grid = document.getElementById('fs-grid');
     var empty = document.getElementById('fs-empty');
@@ -198,9 +271,31 @@
       return;
     }
     empty.style.display = 'none';
-    grid.innerHTML = state.filtered.map(cardHtml).join('');
-    grid.querySelectorAll('.fs-contact-btn').forEach(function (btn) {
-      btn.addEventListener('click', function () { openModal(btn.getAttribute('data-id')); });
+    grid.innerHTML = state.filtered.map(function(l) {
+      var isSelected = fsCompareList.indexOf(String(l._id)) !== -1;
+      var card = cardHtml(l);
+      var compareBtn = '<button class="fs-compare-toggle" data-id="' + l._id + '" style="width:100%;padding:6px;background:' + (isSelected ? '#7A5C1E' : 'none') + ';color:' + (isSelected ? 'white' : '#7A5C1E') + ';border:1px solid #7A5C1E;border-radius:var(--radius-md);font-size:var(--font-size-xs);font-weight:600;cursor:pointer;margin-top:4px">' + (isSelected ? '✓ Selected for compare' : '+ Compare') + '</button>';
+      return card.replace('</div>\n    </div>', compareBtn + '</div>\n    </div>');
+    }).join('');
+
+    grid.querySelectorAll('.fs-contact-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() { openModal(btn.getAttribute('data-id')); });
+    });
+
+    grid.querySelectorAll('.fs-compare-toggle').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var id = String(btn.getAttribute('data-id'));
+        var idx = fsCompareList.indexOf(id);
+        if (idx !== -1) {
+          fsCompareList.splice(idx, 1);
+        } else if (fsCompareList.length < 3) {
+          fsCompareList.push(id);
+        }
+        updateFsCompareBar();
+        renderGrid();
+      });
     });
   }
 
@@ -391,6 +486,14 @@
   function init() {
     bindFilters();
     bindModal();
+    document.addEventListener('click', function(e) {
+      if (e.target.id === 'fs-compare-btn') renderFsComparison();
+      if (e.target.id === 'fs-compare-clear') {
+        fsCompareList = [];
+        updateFsCompareBar();
+        renderGrid();
+      }
+    });
     firebase.auth().onAuthStateChanged(function (user) {
       var login = document.getElementById('nav-login');
       var profile = document.getElementById('nav-profile');

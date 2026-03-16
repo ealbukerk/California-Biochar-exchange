@@ -1,3 +1,44 @@
+function makeDateSelect(id, labelText, required) {
+  var now = new Date();
+  var currentYear = now.getFullYear();
+  var nowMonth = String(now.getMonth() + 1).padStart(2, '0');
+  var nowDay = String(now.getDate()).padStart(2, '0');
+  var nowYear = String(currentYear);
+  var years = '';
+  for (var y = currentYear; y <= currentYear + 3; y++) {
+    var ys = String(y);
+    years += '<option value="' + y + '"' + (ys === nowYear ? ' selected' : '') + '>' + y + '</option>';
+  }
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m, i) {
+    var val = String(i + 1).padStart(2, '0');
+    return '<option value="' + val + '"' + (val === nowMonth ? ' selected' : '') + '>' + m + '</option>';
+  }).join('');
+  var days = '';
+  for (var d = 1; d <= 31; d++) {
+    var dv = String(d).padStart(2, '0');
+    days += '<option value="' + dv + '"' + (dv === nowDay ? ' selected' : '') + '>' + d + '</option>';
+  }
+  return '<div style="display:flex;gap:var(--space-2)">' +
+    '<select id="' + id + '-month" style="flex:1;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
+      '<option value="">Month</option>' + months +
+    '</select>' +
+    '<select id="' + id + '-day" style="flex:1;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
+      '<option value="">Day</option>' + days +
+    '</select>' +
+    '<select id="' + id + '-year" style="flex:1.2;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
+      '<option value="">Year</option>' + years +
+    '</select>' +
+  '</div>';
+}
+
+function getDateSelectValue(id) {
+  var m = document.getElementById(id + '-month');
+  var d = document.getElementById(id + '-day');
+  var y = document.getElementById(id + '-year');
+  if (!m || !d || !y || !m.value || !d.value || !y.value) return '';
+  return y.value + '-' + m.value + '-' + d.value;
+}
+
 const wizardData = {
   business: {},
   feedstocks: [],
@@ -196,7 +237,7 @@ function buildPropertiesTabs() {
       '<div class="lab-fields-grid">' +
         '<div class="form-group">' +
           '<label for="labreportdate-' + i + '">Lab report date <span class="required-star">*</span></label>' +
-          '<input type="date" id="labreportdate-' + i + '" required>' +
+          makeDateSelect('labreportdate-' + i, 'Lab report date') +
         '</div>' +
         '<div class="form-group">' +
           '<label for="labreport-' + i + '">Upload lab report <span class="required-star">*</span></label>' +
@@ -283,7 +324,7 @@ function savePropertiesData(index, feedstock) {
     ashContent: document.getElementById('ash-' + index) ? document.getElementById('ash-' + index).value : '',
     electricalConductivity: document.getElementById('ec-' + index) ? document.getElementById('ec-' + index).value : '',
     labVerified: document.getElementById('labverified-' + index) ? document.getElementById('labverified-' + index).checked : false,
-    labReportDate: document.getElementById('labreportdate-' + index) ? document.getElementById('labreportdate-' + index).value : '',
+    labReportDate: getDateSelectValue('labreportdate-' + index),
     certifications: certs
   }
 }
@@ -367,11 +408,11 @@ function buildAvailabilityTabs() {
         '</div>' +
         '<div class="form-group">' +
           '<label for="avail-from-' + i + '">Available from</label>' +
-          '<input type="date" id="avail-from-' + i + '">' +
+          makeDateSelect('avail-from-' + i, 'Available from') +
         '</div>' +
         '<div class="form-group">' +
           '<label for="avail-until-' + i + '">Available until</label>' +
-          '<input type="date" id="avail-until-' + i + '">' +
+          makeDateSelect('avail-until-' + i, 'Available until') +
         '</div>' +
       '</div>' +
       '<div class="form-group">' +
@@ -427,8 +468,8 @@ function saveAvailabilityData() {
       minOrderTonnes: document.getElementById('min-order-' + i) ? document.getElementById('min-order-' + i).value : '',
       pricePerTonne: document.getElementById('price-tonne-' + i) ? document.getElementById('price-tonne-' + i).value : '',
       leadTimeDays: document.getElementById('lead-time-' + i) ? document.getElementById('lead-time-' + i).value : '',
-      availableFrom: document.getElementById('avail-from-' + i) ? document.getElementById('avail-from-' + i).value : '',
-      availableUntil: document.getElementById('avail-until-' + i) ? document.getElementById('avail-until-' + i).value : '',
+      availableFrom: getDateSelectValue('avail-from-' + i),
+      availableUntil: getDateSelectValue('avail-until-' + i),
       hardFloor: document.getElementById('hard-floor-' + i) ? document.getElementById('hard-floor-' + i).value : '',
       deliveryMethods: Array.from(deliveryInputs).map(function(c) { return c.value }),
       regionsServed: Array.from(regionInputs).map(function(c) { return c.value })
@@ -727,6 +768,25 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  var stateEl = document.getElementById('w-state');
+  if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true);
+  var draft = loadDraft();
+  var banner = document.getElementById('draft-resume-banner');
+  if (draft && draft.wizardData && banner) {
+    var savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString() : '';
+    var savedAtEl = document.getElementById('draft-saved-at');
+    if (savedAtEl) savedAtEl.textContent = savedAt ? '· saved ' + savedAt : '';
+    banner.style.display = 'flex';
+    document.getElementById('draft-resume-btn').addEventListener('click', function() {
+      Object.assign(wizardData, draft.wizardData);
+      banner.style.display = 'none';
+      showStep(draft.currentStep || 1);
+    });
+    document.getElementById('draft-discard-btn').addEventListener('click', function() {
+      clearDraft();
+      banner.style.display = 'none';
+    });
+  }
 });
 
 function uploadSellerPhotos() {
@@ -743,31 +803,10 @@ function uploadSellerPhotos() {
   return Promise.all(promises);
 }
 
-auth.onAuthStateChanged(function(user) {
+firebase.auth().onAuthStateChanged(function(user) {
   if (user) prefillWizard()
 })
 
-document.addEventListener('DOMContentLoaded', function() {
-  var draft = loadDraft();
-  var banner = document.getElementById('draft-resume-banner');
-  if (draft && draft.wizardData && banner) {
-    var savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString() : '';
-    var savedAtEl = document.getElementById('draft-saved-at');
-    if (savedAtEl) savedAtEl.textContent = savedAt ? '· saved ' + savedAt : '';
-    banner.style.display = 'flex';
-
-    document.getElementById('draft-resume-btn').addEventListener('click', function() {
-      Object.assign(wizardData, draft.wizardData);
-      banner.style.display = 'none';
-      showStep(draft.currentStep || 1);
-    });
-
-    document.getElementById('draft-discard-btn').addEventListener('click', function() {
-      clearDraft();
-      banner.style.display = 'none';
-    });
-  }
-});
 
 document.addEventListener('click', function(e) {
   if (e.target.id !== 'wizard-submit-btn') return
@@ -871,9 +910,4 @@ document.addEventListener('click', function(e) {
       btn.textContent = 'Submit application'
     })
   }) // end uploadSellerPhotos
-})
-
-document.addEventListener('DOMContentLoaded', function() {
-  const stateEl = document.getElementById('w-state')
-  if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true)
 })

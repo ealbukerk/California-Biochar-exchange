@@ -748,6 +748,16 @@
 
   function openRepeatModal() {
     document.getElementById("repeat-modal-backdrop").style.display = "flex";
+    var today = new Date();
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var dd = String(today.getDate()).padStart(2, '0');
+    var yy = String(today.getFullYear());
+    var rdm = document.getElementById('repeat-date-month');
+    var rdd = document.getElementById('repeat-date-day');
+    var rdy = document.getElementById('repeat-date-year');
+    if (rdm && !rdm.value) rdm.value = mm;
+    if (rdd && !rdd.value) rdd.value = dd;
+    if (rdy && !rdy.value) rdy.value = yy;
   }
 
   function closeRepeatModal() {
@@ -758,7 +768,12 @@
     if (!state.repeatTarget) return;
 
     var frequency = document.getElementById("repeat-frequency").value;
-    var nextOrderDate = document.getElementById("repeat-date").value;
+    var rdm = document.getElementById('repeat-date-month');
+    var rdd = document.getElementById('repeat-date-day');
+    var rdy = document.getElementById('repeat-date-year');
+    var nextOrderDate = (rdy && rdy.value && rdm && rdm.value && rdd && rdd.value)
+      ? rdy.value + '-' + rdm.value + '-' + rdd.value
+      : '';
 
     if (!nextOrderDate) {
       return;
