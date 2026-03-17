@@ -15,8 +15,7 @@
     ],
     third_party: [
       { label: 'Feedstock', href: 'feedstock.html' },
-      { label: 'Demand', href: 'producer-demand-browse.html' },
-      { label: 'My Profile', href: 'carriers.html' }
+      { label: 'Demand', href: 'producer-demand-browse.html' }
     ]
   };
 

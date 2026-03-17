@@ -86,7 +86,7 @@
   }
 
   function validateStep2() {
-    var required = ['f-particle-size', 'f-contamination', 'f-moisture', 'f-age', 'f-loading'];
+  var required = ['f-particle-size', 'f-contamination-debris', 'f-contamination-ash', 'f-contamination-chemical', 'f-moisture', 'f-age', 'f-loading'];
     for (var i = 0; i < required.length; i++) {
       if (!val(required[i])) {
         document.getElementById(required[i]).focus();
@@ -107,7 +107,9 @@
       ['Min pickup', val('f-min-pickup') + ' tons'],
       ['Price', '$' + val('f-price') + '/ton' + (checked('f-negotiable') ? ' (negotiable)' : '')],
       ['Particle size', PARTICLE_LABELS[val('f-particle-size')] || val('f-particle-size')],
-      ['Contamination', CONTAMINATION_LABELS[val('f-contamination')] || val('f-contamination')],
+      ['Physical debris', 'Score ' + (val('f-contamination-debris') || '—') + '/5'],
+      ['Soil / ash', 'Score ' + (val('f-contamination-ash') || '—') + '/5'],
+      ['Chemical risk', 'Score ' + (val('f-contamination-chemical') || '—') + '/5'],
       ['Moisture', MOISTURE_LABELS[val('f-moisture')] || val('f-moisture')],
       ['Age', val('f-age').replace(/_/g, ' ')],
       ['Loading', LOADING_LABELS[val('f-loading')] || val('f-loading')],
@@ -174,7 +176,12 @@
         biomassTypes: Array.prototype.slice.call(document.querySelectorAll('input[name=\"f-biomass-types\"]:checked')).map(function(el) { return el.value; }),
         biomassType: Array.prototype.slice.call(document.querySelectorAll('input[name=\"f-biomass-types\"]:checked')).map(function(el) { return el.value; })[0] || '',
         particleSize: val('f-particle-size'),
-        contaminationRisk: val('f-contamination'),
+        contaminationDebris: val('f-contamination-debris'),
+        contaminationAsh: val('f-contamination-ash'),
+        contaminationChemical: val('f-contamination-chemical'),
+        contaminationRisk: [val('f-contamination-debris'), val('f-contamination-ash'), val('f-contamination-chemical')].filter(Boolean).length > 0
+          ? 'scored'
+          : 'unknown',
         ageOfMaterial: val('f-age'),
         moistureContent: val('f-moisture'),
         loadingType: val('f-loading'),

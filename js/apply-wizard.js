@@ -161,11 +161,6 @@ function buildPropertiesTabs() {
         '<span class="completeness-label" id="completeness-label-' + i + '">0% complete</span>' +
       '</div>' +
 
-      '<div class="wizard-notice wizard-notice-accent" style="margin-bottom:var(--space-5)">' +
-        '<span>📊</span>' +
-        '<p>Listings with complete lab data appear higher in search results and receive up to 3x more buyer inquiries. If you have a lab report upload it below — buyers can download it directly from your listing.</p>' +
-      '</div>' +
-
       '<details style="margin-bottom:var(--space-5);background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)">' +
         '<summary style="font-size:var(--font-size-sm);font-weight:600;cursor:pointer;color:var(--color-accent)">🔬 Where do I get lab data?</summary>' +
         '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:1.7">' +
@@ -281,7 +276,14 @@ function updateCompleteness(index, feedstock) {
 
   requiredIds.forEach(function(id) {
     const el = document.getElementById(id)
-    if (el && el.value) filledRequired++
+    if (!el) return
+    if (el.type === 'file') {
+      if (el.files && el.files.length > 0) filledRequired++
+    } else if (el.tagName === 'SELECT' || el.tagName === 'INPUT') {
+      if (el.value && el.value.trim() !== '') filledRequired++
+    } else {
+      if (el.value) filledRequired++
+    }
   })
 
   optionalIds.forEach(function(id) {

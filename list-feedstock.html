@@ -256,28 +256,72 @@
                     </optgroup>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Contamination level <span class="required-star">*</span></label>
-                  <p class="field-hint">Producers use this to assess pyrolysis suitability. Be accurate — misrepresentation may result in rejected loads.</p>
-                  <select id="f-contamination">
-                    <option value="">Select…</option>
-                    <optgroup label="Verified Clean">
-                      <option value="certified_clean">Certified clean — third-party verified, no contaminants</option>
-                      <option value="clean">Clean — visually confirmed, no soil, rocks, metals, or treated wood</option>
-                    </optgroup>
-                    <optgroup label="Minor Contamination">
-                      <option value="possible_soil">Possible soil contact — ground-piled, minor surface dirt only</option>
-                      <option value="bark_included">Bark / organic matter included — no inorganic contamination</option>
-                    </optgroup>
-                    <optgroup label="Moderate Contamination">
-                      <option value="some_soil">Some soil contamination — field residue, moderate dirt</option>
-                      <option value="possible_treated">Possible treated wood — unknown source mix, may include treated material</option>
-                    </optgroup>
-                    <optgroup label="High Contamination">
-                      <option value="mixed_debris">Mixed debris — rocks, wire, plastic, or unknown materials present</option>
-                      <option value="unknown">Unknown — source not verified, contamination level uncertain</option>
-                    </optgroup>
-                  </select>
+                <div class="form-group full-width" style="grid-column:1/-1">
+                  <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
+                    <label style="margin:0">Contamination assessment <span class="required-star">*</span></label>
+                    <button type="button" onclick="document.getElementById('contamination-explainer').style.display=document.getElementById('contamination-explainer').style.display==='none'?'block':'none'" style="background:none;border:1px solid var(--color-border);border-radius:20px;padding:2px 10px;font-size:11px;cursor:pointer;color:var(--color-text-muted)">? How do I know my contamination level</button>
+                  </div>
+
+                  <div id="contamination-explainer" style="display:none;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4);font-size:var(--font-size-sm)">
+                    <p style="font-weight:600;margin-bottom:var(--space-3)">There are three separate contamination risks producers care about. Answer each one honestly — misrepresentation can result in rejected loads, kiln damage, and listing removal.</p>
+                    <div style="display:grid;gap:var(--space-4)">
+                      <div>
+                        <div style="font-weight:600;color:var(--color-text-primary);margin-bottom:4px">1. Physical debris risk</div>
+                        <div style="color:var(--color-text-muted)">Rocks, wire, metal, plastic that can damage pyrolysis equipment. Verifiable by: visual inspection at delivery or weight ticket discrepancy.</div>
+                        <div style="margin-top:4px;color:var(--color-text-muted)">Score 1 = machine-sorted, no debris. Score 5 = unsorted, mixed material with visible debris.</div>
+                      </div>
+                      <div>
+                        <div style="font-weight:600;color:var(--color-text-primary);margin-bottom:4px">2. Soil / ash content</div>
+                        <div style="color:var(--color-text-muted)">Soil mixed into the material reduces char yield and carbon content. Verifiable by: ASTM E1755 ash content test (~$40 at A&L Western or Waypoint Analytical). Ask specifically for ash content on a dry basis.</div>
+                        <div style="margin-top:4px;color:var(--color-text-muted)">Score 1 = freshly harvested, never ground-contacted. Score 5 = heavily contaminated, requires screening.</div>
+                      </div>
+                      <div>
+                        <div style="font-weight:600;color:var(--color-text-primary);margin-bottom:4px">3. Chemical contamination risk</div>
+                        <div style="color:var(--color-text-muted)">Treated wood, pesticides, heavy metals that make output biochar unsafe for food crops. Verifiable by: EPA Method 3051A heavy metals scan (~$80–150). Ask your lab for the IBI-recommended metals panel.</div>
+                        <div style="margin-top:4px;color:var(--color-text-muted)">Score 1 = single-source agricultural material, no treatments known. Score 5 = mixed urban/industrial source, unknown history.</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4)">
+                    <div class="form-group" style="margin:0">
+                      <label style="font-size:var(--font-size-sm)">Physical debris <span class="required-star">*</span></label>
+                      <p class="field-hint">Rocks, wire, plastic, metal</p>
+                      <select id="f-contamination-debris">
+                        <option value="">Select…</option>
+                        <option value="1">1 — Machine-sorted, no visible debris</option>
+                        <option value="2">2 — Hand-sorted, minimal debris</option>
+                        <option value="3">3 — Field-piled, minor surface dirt only</option>
+                        <option value="4">4 — Ground contact, possible rocks or soil clods</option>
+                        <option value="5">5 — Unsorted, mixed material, debris present</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label style="font-size:var(--font-size-sm)">Soil / ash content <span class="required-star">*</span></label>
+                      <p class="field-hint">Impact on char yield</p>
+                      <select id="f-contamination-ash">
+                        <option value="">Select…</option>
+                        <option value="1">1 — Under 2% ash equivalent, freshly harvested</option>
+                        <option value="2">2 — 2–5%, minor soil contact, short ground storage</option>
+                        <option value="3">3 — 5–15%, moderate soil, extended ground storage</option>
+                        <option value="4">4 — 15–30%, significant soil mixed in</option>
+                        <option value="5">5 — 30%+, heavily contaminated, requires screening</option>
+                      </select>
+                    </div>
+                    <div class="form-group" style="margin:0">
+                      <label style="font-size:var(--font-size-sm)">Chemical risk <span class="required-star">*</span></label>
+                      <p class="field-hint">Treated wood, pesticides, metals</p>
+                      <select id="f-contamination-chemical">
+                        <option value="">Select…</option>
+                        <option value="1">1 — Single-source ag material, no treatments known</option>
+                        <option value="2">2 — Standard pesticide program, no preservatives</option>
+                        <option value="3">3 — Herbicide-treated or unknown treatment history</option>
+                        <option value="4">4 — Possible painted/stained wood in mix</option>
+                        <option value="5">5 — Mixed urban/industrial source, unknown history</option>
+                      </select>
+                    </div>
+                  </div>
+                  <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">All three scores are shown to producers on your listing. Scores above 3 on any dimension may reduce match rate. Scores can be verified via lab report — see explainer above.</p>
                 </div>
                 <div class="form-group">
                   <label>Moisture content estimate <span class="required-star">*</span></label>

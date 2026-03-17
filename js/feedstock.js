@@ -102,8 +102,15 @@
     var list = state.listings.slice();
     if (f.biomassType) list = list.filter(function (l) { return l.biomassType === f.biomassType; });
     if (f.maxPrice > 0) list = list.filter(function (l) { return l.pricePerTon <= f.maxPrice; });
-    if (f.contamination === 'clean') list = list.filter(function (l) { return l.contaminationRisk === 'clean'; });
-    if (f.contamination === 'possible_soil') list = list.filter(function (l) { return l.contaminationRisk !== 'mixed_debris'; });
+    if (f.contamination) {
+      var maxAllowed = parseInt(f.contamination);
+      list = list.filter(function(l) {
+        var d = parseInt(l.contaminationDebris || 1);
+        var a = parseInt(l.contaminationAsh || 1);
+        var c = parseInt(l.contaminationChemical || 1);
+        return Math.max(d, a, c) <= maxAllowed;
+      });
+    }
     if (f.minQty > 0) list = list.filter(function (l) { return l.estimatedQuantityTons >= f.minQty; });
 
     if (f.sort === 'closest' && state.buyerLat) {
@@ -150,7 +157,19 @@
     var moistureLabel = MOISTURE_LABELS[l.moistureContent] || l.moistureContent;
     var contamLabel = CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk;
     var particleLabel = PARTICLE_LABELS[l.particleSize] || l.particleSize;
-    var contamClass = 'contamination-' + (l.contaminationRisk || 'clean');
+    var hasScores = l.contaminationDebris || l.contaminationAsh || l.contaminationChemical;
+    var maxScore = hasScores ? Math.max(
+      parseInt(l.contaminationDebris || 1),
+      parseInt(l.contaminationAsh || 1),
+      parseInt(l.contaminationChemical || 1)
+    ) : null;
+    var contamClass = maxScore === null ? 'contamination-clean' :
+      maxScore <= 2 ? 'contamination-clean' :
+      maxScore <= 3 ? 'contamination-possible_soil' :
+      'contamination-mixed_debris';
+    var contamDisplay = hasScores
+      ? 'D:' + (l.contaminationDebris||'?') + ' A:' + (l.contaminationAsh||'?') + ' C:' + (l.contaminationChemical||'?')
+      : (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—');
     var negTag = l.negotiable ? '<span class="fs-tag fs-tag-neg">Negotiable</span>' : '';
     var freeTag = l.pricePerTon === 0 ? '<span class="fs-tag fs-tag-free">Free to haul</span>' : '';
     var priceDisplay = l.pricePerTon === 0 ? 'Free' : '$' + l.pricePerTon + '/ton';
@@ -200,7 +219,7 @@
         '<div class="fs-quality-row">' +
           '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
           '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val ' + contamClass + '">' + contamLabel + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val ' + contamClass + '" title="Physical debris / Soil-ash / Chemical risk (1=best, 5=worst)">' + contamDisplay + '</div></div>' +
         '</div>' +
 
         deliveredHtml +

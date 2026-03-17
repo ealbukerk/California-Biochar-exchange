@@ -20,7 +20,8 @@
     .fs-spec-item .label { font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; }
     .fs-spec-item .value { font-weight: 600; margin-top: 2px; }
     .fs-tag-clean { color: var(--color-accent); }
-    .fs-tag-soil { color: var(--color-warning); }
+    .fs-tag-soil { color: #DC2626; }
+    .fs-tag-warn { color: #B45309; }
     .fs-photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
     .fs-photo-gallery img { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
     .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); position: sticky; top: var(--space-6); }
@@ -147,7 +148,30 @@
             '<div class="fs-spec-item"><div class="label">Price</div><div class="value">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton' + (l.negotiable ? ' (negotiable)' : '')) + '</div></div>' +
             '<div class="fs-spec-item"><div class="label">Moisture content</div><div class="value">' + (MOISTURE_LABELS[l.moistureContent] || l.moistureContent || '—') + '</div></div>' +
             '<div class="fs-spec-item"><div class="label">Particle size</div><div class="value">' + (PARTICLE_LABELS[l.particleSize] || l.particleSize || '—') + '</div></div>' +
-            '<div class="fs-spec-item"><div class="label">Contamination risk</div><div class="value ' + (l.contaminationRisk === 'clean' ? 'fs-tag-clean' : 'fs-tag-soil') + '">' + (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—') + '</div></div>' +
+            (l.contaminationDebris || l.contaminationAsh || l.contaminationChemical
+              ? '<div class="fs-spec-item" style="grid-column:1/-1"><div class="label" style="margin-bottom:var(--space-2)">Contamination scores <span style="font-size:10px;color:var(--color-text-muted);font-weight:400">(1 = cleanest · 5 = highest risk)</span></div>' +
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-3)">' +
+                  '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-3)">' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Physical debris</div>' +
+                    '<div style="font-size:var(--font-size-xl);font-weight:700;color:' + (parseInt(l.contaminationDebris||1)<=2?'var(--color-accent)':parseInt(l.contaminationDebris||1)<=3?'#B45309':'#DC2626') + '">' + (l.contaminationDebris||'—') + '<span style="font-size:12px;color:var(--color-text-muted)">/5</span></div>' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">Rocks, wire, plastic</div>' +
+                    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:4px">Verify: visual inspection at delivery</div>' +
+                  '</div>' +
+                  '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-3)">' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Soil / ash content</div>' +
+                    '<div style="font-size:var(--font-size-xl);font-weight:700;color:' + (parseInt(l.contaminationAsh||1)<=2?'var(--color-accent)':parseInt(l.contaminationAsh||1)<=3?'#B45309':'#DC2626') + '">' + (l.contaminationAsh||'—') + '<span style="font-size:12px;color:var(--color-text-muted)">/5</span></div>' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">Impact on char yield</div>' +
+                    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:4px">Verify: ASTM E1755 ash test</div>' +
+                  '</div>' +
+                  '<div style="background:var(--color-bg);border-radius:var(--radius-md);padding:var(--space-3)">' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Chemical risk</div>' +
+                    '<div style="font-size:var(--font-size-xl);font-weight:700;color:' + (parseInt(l.contaminationChemical||1)<=2?'var(--color-accent)':parseInt(l.contaminationChemical||1)<=3?'#B45309':'#DC2626') + '">' + (l.contaminationChemical||'—') + '<span style="font-size:12px;color:var(--color-text-muted)">/5</span></div>' +
+                    '<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px">Treated wood, pesticides, metals</div>' +
+                    '<div style="font-size:10px;color:var(--color-text-muted);margin-top:4px">Verify: EPA 3051A metals panel</div>' +
+                  '</div>' +
+                '</div>' +
+              '</div>'
+              : '<div class="fs-spec-item"><div class="label">Contamination risk</div><div class="value">' + (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || 'Not scored') + '</div></div>') +
             '<div class="fs-spec-item"><div class="label">Age of material</div><div class="value">' + (AGE_LABELS[l.ageOfMaterial] || l.ageOfMaterial || '—') + '</div></div>' +
             '<div class="fs-spec-item"><div class="label">Loading</div><div class="value">' + (LOADING_LABELS[l.loadingType] || l.loadingType || '—') + '</div></div>' +
             '<div class="fs-spec-item"><div class="label">Availability</div><div class="value">' + (l.availabilityWindow || '—') + '</div></div>' +
