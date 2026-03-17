@@ -20,11 +20,36 @@
   };
 
   var CONTAMINATION_LABELS = {
-    clean: 'Clean', possible_soil: 'Possible soil', mixed_debris: 'Mixed debris'
+    certified_clean: '✓ Certified clean',
+    clean: 'Clean',
+    possible_soil: 'Possible soil contact',
+    bark_included: 'Bark / organic matter',
+    some_soil: 'Some soil contamination',
+    possible_treated: 'Possible treated wood',
+    mixed_debris: 'Mixed debris',
+    unknown: 'Unknown / unverified'
   };
 
   var PARTICLE_LABELS = {
-    chipped: 'Chipped', whole_limbs: 'Whole limbs', mixed: 'Mixed'
+    fine_dust: 'Fine dust / powder (<5mm)',
+    fine_chips: 'Fine chips (5–25mm)',
+    chipped: 'Chipped (25–75mm)',
+    shredded: 'Shredded / mulched',
+    coarse_chunks: 'Coarse chunks (75–150mm)',
+    whole_limbs: 'Whole limbs (150mm+)',
+    baled: 'Baled',
+    mixed: 'Mixed / unsorted'
+  };
+
+  var CONTAMINATION_RISK_LEVEL = {
+    certified_clean: 0,
+    clean: 1,
+    bark_included: 2,
+    possible_soil: 3,
+    some_soil: 4,
+    possible_treated: 5,
+    mixed_debris: 6,
+    unknown: 7
   };
 
   var state = {

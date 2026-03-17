@@ -84,8 +84,26 @@
       construction_wood:'Construction Wood', tree_service_chips:'Tree Service Chips'
     };
     var MOISTURE_LABELS = { under_20:'Under 20%', '20_30':'20–30%', '30_40':'30–40%', over_40:'Over 40%' };
-    var CONTAMINATION_LABELS = { clean:'Clean', possible_soil:'Possible soil', mixed_debris:'Mixed debris' };
-    var PARTICLE_LABELS = { chipped:'Chipped', whole_limbs:'Whole limbs', mixed:'Mixed' };
+    var CONTAMINATION_LABELS = {
+      certified_clean: '✓ Certified clean',
+      clean: 'Clean',
+      possible_soil: 'Possible soil contact',
+      bark_included: 'Bark / organic matter',
+      some_soil: 'Some soil contamination',
+      possible_treated: 'Possible treated wood',
+      mixed_debris: 'Mixed debris',
+      unknown: 'Unknown / unverified'
+    };
+    var PARTICLE_LABELS = {
+      fine_dust: 'Fine dust / powder (<5mm)',
+      fine_chips: 'Fine chips (5–25mm)',
+      chipped: 'Chipped (25–75mm)',
+      shredded: 'Shredded / mulched',
+      coarse_chunks: 'Coarse chunks (75–150mm)',
+      whole_limbs: 'Whole limbs (150mm+)',
+      baled: 'Baled',
+      mixed: 'Mixed / unsorted'
+    };
     var SUPPLIER_LABELS = { farmer:'Farmer', sawmill:'Sawmill', forestry_operator:'Forestry Operator', tree_service:'Tree Service', recycler:'Recycler' };
     var LOADING_LABELS = { pile:'Pile (bring your own loader)', loader_onsite:'Loader on site', conveyor:'Conveyor available', forklift:'Forklift available' };
     var AGE_LABELS = { fresh:'Fresh (this season)', less_6mo:'Less than 6 months', '6_12mo':'6–12 months', over_1yr:'Over 1 year' };
@@ -159,12 +177,15 @@
       document.getElementById('fs-sidebar').innerHTML =
         '<div class="fs-sidebar-card">' +
           '<div style="font-size:var(--font-size-2xl);font-weight:700;color:#7A5C1E">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton') + '</div>' +
-          (l.negotiable ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:4px">Price negotiable</div>' : '') +
-          '<div style="margin:var(--space-4) 0;border-top:1px solid var(--color-border);padding-top:var(--space-4)">' +
-            '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Available</span><span style="font-weight:600">' + l.estimatedQuantityTons.toLocaleString() + ' tons</span></div>' +
-            '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Min pickup</span><span style="font-weight:600">' + l.minimumPickupTons + ' tons</span></div>' +
-            (l.harvestDate ? '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm);margin-bottom:var(--space-2)"><span style="color:var(--color-text-muted)">Harvest date</span><span style="font-weight:600">' + l.harvestDate + '</span></div>' : '') +
-            (l.availabilityWindow ? '<div style="display:flex;justify-content:space-between;font-size:var(--font-size-sm)"><span style="color:var(--color-text-muted)">Available</span><span style="font-weight:600">' + l.availabilityWindow + '</span></div>' : '') +
+          (l.negotiable ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">Price negotiable</div>' : '') +
+          '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-muted)">' +
+            (l.availabilityWindow || '') +
+          '</div>' +
+          '<div style="margin:var(--space-4) 0;border-top:1px solid var(--color-border);padding-top:var(--space-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
+            '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Available</div><div style="font-weight:700;margin-top:2px">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
+            '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Min pickup</div><div style="font-weight:700;margin-top:2px">' + l.minimumPickupTons + ' tons</div></div>' +
+            (l.harvestDate ? '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Harvest date</div><div style="font-weight:600;margin-top:2px">' + l.harvestDate + '</div></div>' : '') +
+            '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Loading</div><div style="font-weight:600;margin-top:2px">' + (LOADING_LABELS[l.loadingType] || l.loadingType || '—') + '</div></div>' +
           '</div>' +
           '<a id="fs-contact-btn" href="mailto:' + (l.contactEmail || '') + '" class="btn btn-primary" style="width:100%;text-align:center;display:block;margin-bottom:var(--space-3)">Contact supplier</a>' +
           '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:center">Listing price excludes transport. Use cost calculator to estimate delivered price.</p>' +

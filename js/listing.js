@@ -93,13 +93,12 @@
       listing.feedstock +
       "</span></div>" +
       '<div class="headline-row">' +
-      '<span class="headline-price">$' +
-      listing.pricePerTonne +
-      '</span><span class="headline-unit">/tonne</span>' +
-      '<span class="headline-detail">' +
-      listing.availableTonnes +
-      " tonnes available</span>" +
-      "</div>" +
+      '<span class="headline-price">$' + listing.pricePerTonne + '</span><span class="headline-unit">/tonne</span>' +
+      '<span class="headline-detail">' + listing.availableTonnes + ' t available &nbsp;·&nbsp; Min order: ' + listing.minOrderTonnes + ' t</span>' +
+      '</div>' +
+      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-2)">' +
+      formatDate(listing.availableFrom) + ' — ' + formatDate(listing.availableUntil) +
+      '</div>' +
       '<p class="rating-line">' +
       ratingLine +
       '<span style="margin-left:12px;color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
@@ -176,17 +175,14 @@
       '<p id="dc-per-acre" style="font-size:var(--font-size-sm);font-weight:600;color:var(--color-accent);margin:4px 0 0"></p></div>' +
       '</div></div></div>' +
       '</section>' +
-      '<section class="suitability-section"><h2>Suitable For</h2><div class="suitable-tags">' +
+      '<section class="description-section">' +
+      '<h2>About this material</h2>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)">' +
       suitableTags +
-      "</div></section>" +
-      '<section class="description-section"><h2>About This Material</h2><p>' +
-      listing.description +
-      "</p></section>" +
-      '<section class="availability-section"><h2>Availability &amp; Delivery</h2><div class="availability-list">' +
-      "<p>Available From: " + formatDate(listing.availableFrom) + "</p>" +
-      "<p>Available Until: " + formatDate(listing.availableUntil) + "</p>" +
-      "<p>Available Tonnes: " + listing.availableTonnes + "</p>" +
-      "<p>Minimum order: " + listing.minOrderTonnes + " tonnes</p>" +
+      '</div>' +
+      '<p style="color:var(--color-text-secondary);line-height:1.7">' + listing.description + '</p>' +
+      '</section>' +
+      '<section class="availability-section"><h2>Delivery</h2><div class="availability-list">' +
       "<p>" + leadTimeText + "</p>" +
       '</div>' +
       '<div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--color-border)">' +

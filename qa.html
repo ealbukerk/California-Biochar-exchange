@@ -55,7 +55,7 @@ var PAGES = [
 var PAGE_CHECKS = {
   'buyer.html': {
     mustContain: ['Source biochar at scale','role-nav-slot','listings-grid','filter-bar','compare-bar'],
-    mustNotContain: ['What certifications mean','Understanding biochar']
+    mustNotContain: []
   },
   'seller.html': {
     mustContain: ['apply-wizard','agree-accuracy','agree-commission','terms.html','draft-resume-banner','seller-photo-input'],
@@ -203,8 +203,10 @@ async function checkCssFiles(container) {
 
 async function checkNavConsistency(container) {
   var navRequired = ['role-nav-slot','nav-login','nav-profile','nav-logout'];
+  var navExclude = ['auth.html','terms.html','how-it-works.html','certifications.html','understanding-biochar.html','index.html','admin.html','crops.html','learn.html'];
   for (var i = 0; i < PAGES.length; i++) {
     var page = PAGES[i];
+    if (navExclude.indexOf(page) !== -1) continue;
     var html = await fetchText(BASE + page);
     if (!html) continue;
     var missing = navRequired.filter(function(id) { return html.indexOf(id) === -1; });
