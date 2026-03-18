@@ -268,8 +268,8 @@ function buildPropertiesTabs() {
 }
 
 function updateCompleteness(index, feedstock) {
-  const requiredIds = ['carbon-' + index, 'ph-' + index, 'moisture-' + index, 'labreportdate-' + index, 'labreport-' + index]
-  const optionalIds = ['surface-' + index, 'particle-' + index, 'ash-' + index, 'ec-' + index]
+  const requiredIds = ['carbon-' + index, 'ph-' + index, 'moisture-' + index]
+  const optionalIds = ['surface-' + index, 'particle-' + index, 'ash-' + index, 'ec-' + index, 'labreportdate-' + index]
 
   let filledRequired = 0
   let filledOptional = 0
@@ -782,6 +782,41 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('draft-resume-btn').addEventListener('click', function() {
       Object.assign(wizardData, draft.wizardData);
       banner.style.display = 'none';
+      if (wizardData.feedstocks && wizardData.feedstocks.length) {
+        wizardData.feedstocks.forEach(function(feedstock, i) {
+          var checkbox = document.querySelector('input[name="feedstocks"][value="' + feedstock + '"]');
+          if (checkbox) checkbox.checked = true;
+        });
+        buildPropertiesTabs();
+        buildAvailabilityTabs();
+        var step = draft.currentStep || 1;
+        if (step >= 3) {
+          wizardData.feedstocks.forEach(function(feedstock, i) {
+            var props = wizardData.properties[feedstock] || {};
+            var fields = ['carbon','ph','moisture','surface','particle','ash','ec'];
+            fields.forEach(function(f) {
+              var el = document.getElementById(f + '-' + i);
+              if (el && props[f !== 'carbon' ? (f === 'ph' ? 'pH' : f === 'ec' ? 'electricalConductivity' : f === 'surface' ? 'surfaceArea' : f === 'particle' ? 'particleSize' : f === 'ash' ? 'ashContent' : f) : 'carbonContent'] !== undefined) {
+                el.value = props[f !== 'carbon' ? (f === 'ph' ? 'pH' : f === 'ec' ? 'electricalConductivity' : f === 'surface' ? 'surfaceArea' : f === 'particle' ? 'particleSize' : f === 'ash' ? 'ashContent' : f) : 'carbonContent'] || '';
+              }
+            });
+            var labVerified = document.getElementById('labverified-' + i);
+            if (labVerified && props.labVerified) labVerified.checked = true;
+          });
+        }
+      }
+      if (wizardData.business && Object.keys(wizardData.business).length) {
+        var fields = {
+          'w-businessName': 'businessName', 'w-contactName': 'contactName',
+          'w-email': 'email', 'w-zipcode': 'zipcode', 'w-ein': 'ein',
+          'w-website': 'businessWebsite', 'w-years': 'yearsInOperation',
+          'w-equipment': 'equipmentType', 'w-capacity': 'annualCapacity'
+        };
+        Object.keys(fields).forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el && wizardData.business[fields[id]]) el.value = wizardData.business[fields[id]];
+        });
+      }
       showStep(draft.currentStep || 1);
     });
     document.getElementById('draft-discard-btn').addEventListener('click', function() {

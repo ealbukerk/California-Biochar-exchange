@@ -579,13 +579,7 @@
 
       '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:auto">' +
       '<span class="btn btn-primary" style="flex:1;text-align:center">Make an offer</span>' +
-      '<button class="btn btn-secondary buy-now-toggle-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Buy now</button>' +
       '</div>' +
-      '<div class="buy-now-inline" id="buy-inline-' + htmlEscape(listing.id) + '" style="margin-top:var(--space-2);display:none;gap:var(--space-2)">' +
-      '<input type="number" min="' + htmlEscape(listing.minOrderTonnes) + '" value="' + htmlEscape(autoVolume) + '" style="max-width:130px" />' +
-      '<button class="btn btn-primary buy-now-confirm-btn" type="button" data-id="' + htmlEscape(listing.id) + '">Confirm</button>' +
-      '</div>' +
-
       '</div>' +
       '</a>' +
       '</div>'

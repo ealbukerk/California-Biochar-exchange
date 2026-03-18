@@ -320,7 +320,6 @@
           topCardActions.innerHTML =
             '<div style="display:flex;gap:var(--space-3);margin-top:var(--space-5)">' +
               '<a href="dealroom.html?listingId=' + listing.id + '" class="btn btn-primary">Make an offer</a>' +
-              '<a href="dealroom.html?listingId=' + listing.id + '&buynow=true" class="btn btn-secondary">Buy now at $' + listing.pricePerTonne + '/tonne</a>' +
             '</div>';
         } else {
           topCardActions.innerHTML =
@@ -336,7 +335,6 @@
           '<p style="color:var(--color-text-secondary);font-size:var(--font-size-sm);margin-bottom:var(--space-6)">Your inquiry goes directly to the producer. We introduce you within 24 hours.</p>' +
           '<div style="display:flex;gap:var(--space-4);flex-wrap:wrap">' +
             '<a href="dealroom.html?listingId=' + currentListing.id + '" class="btn btn-primary">Make an offer</a>' +
-            '<a href="dealroom.html?listingId=' + currentListing.id + '&buynow=true" class="btn btn-secondary">Buy now at $' + currentListing.pricePerTonne + '/tonne</a>' +
           "</div>";
       } else {
         dealEntryEl.innerHTML =
