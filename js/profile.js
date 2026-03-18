@@ -882,5 +882,12 @@
         window.location.href = "auth.html";
       });
     });
+
+    var signoutBtn = document.getElementById('profile-signout-btn');
+    if (signoutBtn) {
+      signoutBtn.addEventListener('click', function() {
+        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
+      });
+    }
   });
 })();

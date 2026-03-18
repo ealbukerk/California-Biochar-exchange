@@ -65,6 +65,43 @@ function showStep(n) {
   window.scrollTo({ top: document.getElementById('apply-wizard').offsetTop - 80, behavior: 'smooth' })
 }
 
+function loadPriceSuggestion(index, feedstockType) {
+  var el = document.getElementById('price-suggestion-' + index);
+  if (!el) return;
+  var MARKET_RANGES = {
+    'Almond Shell':    { min: 320, max: 480, median: 390 },
+    'Walnut Shell':    { min: 300, max: 460, median: 370 },
+    'Wood Chip':       { min: 280, max: 430, median: 350 },
+    'Forest Residue':  { min: 260, max: 400, median: 330 },
+    'Rice Husk':       { min: 240, max: 380, median: 310 },
+    'Corn Stover':     { min: 220, max: 360, median: 290 }
+  };
+  var range = MARKET_RANGES[feedstockType];
+  if (!range) {
+    db.collection('transactions')
+      .where('feedstock', '==', feedstockType)
+      .where('status', '==', 'Complete')
+      .orderBy('createdAt', 'desc')
+      .limit(10)
+      .get()
+      .then(function(snap) {
+        if (snap.empty) return;
+        var prices = [];
+        snap.forEach(function(d) { if (d.data().pricePerTonne) prices.push(d.data().pricePerTonne); });
+        if (!prices.length) return;
+        var sorted = prices.slice().sort(function(a,b){return a-b;});
+        var median = sorted[Math.floor(sorted.length/2)];
+        var lo = Math.round(median * 0.85);
+        var hi = Math.round(median * 1.15);
+        el.innerHTML = '📊 Market range based on ' + prices.length + ' recent transactions: <strong>$' + lo + '–$' + hi + '/t</strong>';
+        el.style.color = 'var(--color-accent)';
+      }).catch(function(){});
+    return;
+  }
+  el.innerHTML = '📊 Typical market range for ' + feedstockType + ': <strong>$' + range.min + '–$' + range.max + '/t</strong> · Median $' + range.median + '/t';
+  el.style.color = 'var(--color-accent)';
+}
+
 function saveDraft() {
   try {
     localStorage.setItem('biochar_wizard_draft', JSON.stringify({
@@ -402,6 +439,7 @@ function buildAvailabilityTabs() {
           '<label for="price-tonne-' + i + '">Price per tonne (USD) <span class="required-star">*</span></label>' +
           '<p class="field-hint">This is your listed price. Buyers can make offers above or below this.</p>' +
           '<input type="number" id="price-tonne-' + i + '" min="0" step="0.01" placeholder="e.g. 400" required>' +
+          '<div id="price-suggestion-' + i + '" style="margin-top:var(--space-2);font-size:var(--font-size-xs);color:var(--color-text-muted)"></div>' +
         '</div>' +
         '<div class="form-group">' +
           '<label for="lead-time-' + i + '">Lead time (days) <span class="required-star">*</span></label>' +
@@ -447,6 +485,7 @@ function buildAvailabilityTabs() {
         '<input type="number" id="hard-floor-' + i + '" min="0" step="0.01" placeholder="Optional — e.g. 320">' +
       '</div>'
 
+    setTimeout(function() { loadPriceSuggestion(i, feedstock); }, 100);
     panelsEl.appendChild(panel)
   })
 

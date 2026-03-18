@@ -147,6 +147,8 @@ async function createDealRoom(listing, buyerProfile, buyerUID) {
     producerUID: listing.producerUID || null,
     buyerUID: buyerUID,
     buyerName: buyerProfile.businessName,
+    buyerEmail: buyerProfile.email || '',
+    producerEmail: listing.contactEmail || '',
     feedstock: listing.feedstock,
     listedPricePerTonne: listing.pricePerTonne,
     availableTonnes: listing.availableTonnes,
@@ -247,6 +249,7 @@ async function respondToBid(dealId, bidId, responderUID, action, counterVolume, 
     }
     await dealRef.update({ status: 'Agreed', agreedTerms })
     await createTransactionFromDeal(dealId, deal, agreedTerms)
+    await sendDealConfirmationEmails(dealId, deal, agreedTerms)
     return { agreed: true }
   }
 
@@ -282,15 +285,66 @@ async function buyNow(dealId, buyerUID, buyerName, volume, deliveryMethod, deliv
   }
   await dealRef.update({ status: 'Agreed', agreedTerms })
   await createTransactionFromDeal(dealId, deal, agreedTerms)
+  await sendDealConfirmationEmails(dealId, deal, agreedTerms)
   return { agreed: true }
 }
 
-async function createTransactionFromDeal(dealId, deal, agreedTerms) {
-  if (typeof submitToAirtable !== 'function') {
-    console.log('Airtable not available - transaction saved to Firestore only')
-    return
-  }
+async function sendDealConfirmationEmails(dealId, deal, agreedTerms) {
+  try {
+    var deliveryMethodLabel = agreedTerms.deliveryMethod === 'buyer_collects' ? 'Buyer collects'
+      : agreedTerms.deliveryMethod === 'producer_delivers' ? 'Producer delivers'
+      : 'Third-party freight';
 
+    var totalFormatted = '$' + (agreedTerms.totalValue || 0).toLocaleString();
+    var commissionFormatted = '$' + (agreedTerms.commissionAmount || 0).toLocaleString();
+    var dealUrl = 'https://ealbukerk.github.io/California-Biochar-exchange/dealroom.html?id=' + dealId;
+
+    var sharedBody =
+      'Deal terms:\n' +
+      '  Feedstock: ' + (deal.feedstock || '—') + '\n' +
+      '  Volume: ' + (agreedTerms.volume || '—') + ' tonnes\n' +
+      '  Price: $' + (agreedTerms.pricePerTonne || '—') + '/tonne\n' +
+      '  Total value: ' + totalFormatted + '\n' +
+      '  Platform commission: ' + commissionFormatted + '\n' +
+      '  Delivery method: ' + deliveryMethodLabel + '\n' +
+      '  Delivery date: ' + (agreedTerms.deliveryDate || 'To be arranged') + '\n\n' +
+      'View your deal room: ' + dealUrl + '\n\n' +
+      'Next steps: Both parties must confirm delivery once the shipment is received. ' +
+      'If you need to arrange freight, visit the Carriers page on the platform.\n\n' +
+      '— Biochar.market';
+
+    var buyerEmail = {
+      to: deal.buyerEmail || '',
+      message: {
+        subject: 'Deal confirmed — ' + (deal.feedstock || 'Biochar') + ' · ' + (agreedTerms.volume || '') + 't',
+        text: 'Hi ' + (deal.buyerName || 'Buyer') + ',\n\n' +
+          'Your deal with ' + (deal.producerName || 'the producer') + ' has been confirmed.\n\n' +
+          'Producer contact: ' + (deal.producerEmail || 'Available in your deal room') + '\n\n' +
+          sharedBody
+      }
+    };
+
+    var producerEmail = {
+      to: deal.producerEmail || '',
+      message: {
+        subject: 'Deal confirmed — ' + (deal.feedstock || 'Biochar') + ' · ' + (agreedTerms.volume || '') + 't',
+        text: 'Hi ' + (deal.producerName || 'Producer') + ',\n\n' +
+          'Your deal with ' + (deal.buyerName || 'the buyer') + ' has been confirmed.\n\n' +
+          'Buyer contact: ' + (deal.buyerEmail || 'Available in your deal room') + '\n\n' +
+          sharedBody
+      }
+    };
+
+    var writes = [];
+    if (buyerEmail.to) writes.push(db.collection('mail').add(buyerEmail));
+    if (producerEmail.to) writes.push(db.collection('mail').add(producerEmail));
+    await Promise.all(writes);
+  } catch(err) {
+    console.warn('Email send failed (non-fatal):', err.message);
+  }
+}
+
+async function createTransactionFromDeal(dealId, deal, agreedTerms) {
   await db.collection('transactions').add({
     dealId,
     listingId: deal.listingId,
