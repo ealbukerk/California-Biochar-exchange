@@ -143,11 +143,12 @@
       }
 
       #buyer-map {
-        height: 500px;
+        height: 480px;
         width: 100%;
-        margin-top: var(--space-8);
         border-radius: var(--radius-lg);
         overflow: hidden;
+        border: 1px solid var(--color-border);
+        box-shadow: var(--shadow-md);
       }
 
       .map-legend {
@@ -409,8 +410,13 @@
 
     <section class="map-section">
       <div class="container">
-        <h2>Producers and buyers across the platform</h2>
-        <p>Green markers are producers. Red markers are buyers.</p>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
+          <div>
+            <h2>Producers near you</h2>
+            <p>Showing verified producers within 250 miles of your location. Updates as new listings go live.</p>
+          </div>
+          <span id="map-producer-count" style="font-size:var(--font-size-sm);color:var(--color-text-muted)"></span>
+        </div>
         <div id="buyer-map"></div>
       </div>
     </section>

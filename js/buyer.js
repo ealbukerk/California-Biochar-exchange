@@ -942,45 +942,113 @@
     var mapEl = document.getElementById("buyer-map");
     if (!mapEl || typeof L === "undefined") return;
 
-    var map = L.map("buyer-map").setView([39.5, -98.35], 4);
+    var defaultCenter = [36.7783, -119.4179];
+    var defaultZoom = 7;
+
+    var map = L.map("buyer-map", { zoomControl: true }).setView(defaultCenter, defaultZoom);
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap contributors"
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 13
     }).addTo(map);
 
-    (window.LISTINGS || []).forEach(function (listing) {
-      var coords = getProducerCoordinate(listing);
-      if (!coords) return;
+    var radiusCircle = null;
+    var producerLayer = L.layerGroup().addTo(map);
+    var buyerLayer = L.layerGroup().addTo(map);
 
-      L.circleMarker(coords, {
+    function metersFromMiles(miles) { return miles * 1609.34; }
+
+    function plotProducers(centerLat, centerLng) {
+      producerLayer.clearLayers();
+      var allListings = (window.LISTINGS || []);
+      var firestoreListings = window._firestoreListings || [];
+      var combined = allListings.concat(firestoreListings);
+      var geocodePromises = combined.map(function(listing) {
+        if (!listing.producerZip) return Promise.resolve(null);
+        var cached = buyerGeo['_zip_' + listing.producerZip];
+        if (cached && cached.lat) return Promise.resolve({ listing: listing, coords: cached });
+        return geocodeBuyerZip(listing.producerZip).then(function(c) {
+          buyerGeo['_zip_' + listing.producerZip] = c;
+          return c ? { listing: listing, coords: c } : null;
+        }).catch(function() { return null; });
+      });
+      Promise.all(geocodePromises).then(function(results) {
+        results.filter(Boolean).forEach(function(item) {
+          var l = item.listing;
+          var c = item.coords;
+          if (centerLat && centerLng) {
+            var dist = haversineB(centerLat, centerLng, c.lat, c.lng);
+            if (dist > 250) return;
+          }
+          L.circleMarker([c.lat, c.lng], {
+            radius: 10,
+            color: '#fff',
+            fillColor: '#3D6B45',
+            fillOpacity: 0.9,
+            weight: 2
+          }).bindPopup(
+            '<strong>' + htmlEscape(l.producerName) + '</strong><br>' +
+            htmlEscape(l.feedstock) + ' · $' + htmlEscape(l.pricePerTonne) + '/t<br>' +
+            htmlEscape(l.availableTonnes) + 't available<br>' +
+            '<a href="listing.html?id=' + encodeURIComponent(l.id) + '" style="color:#3D6B45;font-weight:600">View listing →</a>'
+          ).addTo(producerLayer);
+        });
+      });
+    }
+
+    function plotBuyerLocation(lat, lng, name) {
+      buyerLayer.clearLayers();
+      L.circleMarker([lat, lng], {
         radius: 10,
-        color: "#3D6B45",
-        fillColor: "#3D6B45",
-        fillOpacity: 0.95,
+        color: '#fff',
+        fillColor: '#B87333',
+        fillOpacity: 0.9,
         weight: 2
-      })
-        .addTo(map)
-        .bindPopup(
-          "<strong>Producer Name:</strong> " + htmlEscape(listing.producerName) + "<br>" +
-          "<strong>Feedstock:</strong> " + htmlEscape(listing.feedstock) + "<br>" +
-          "<strong>Available Tonnes:</strong> " + htmlEscape(listing.availableTonnes) + "<br>" +
-          "<strong>Price Per Tonne:</strong> $" + htmlEscape(listing.pricePerTonne) + "<br>" +
-          "<strong>Transactions Completed:</strong> " + htmlEscape(listing.transactionsCompleted)
-        );
-    });
+      }).bindPopup('<strong>Your location</strong><br>' + (name || '')).addTo(buyerLayer);
+      if (radiusCircle) map.removeLayer(radiusCircle);
+      radiusCircle = L.circle([lat, lng], {
+        radius: metersFromMiles(250),
+        color: '#3D6B45',
+        fillColor: '#3D6B45',
+        fillOpacity: 0.04,
+        weight: 1,
+        dashArray: '6 4'
+      }).addTo(map);
+      map.setView([lat, lng], 7);
+    }
 
-    plotBuyerMarkers(map).catch(function () {
-      return null;
-    });
-
-    var legend = L.control({ position: "bottomleft" });
-    legend.onAdd = function () {
-      var div = L.DomUtil.create("div", "map-legend");
+    var legendControl = L.control({ position: 'bottomleft' });
+    legendControl.onAdd = function() {
+      var div = L.DomUtil.create('div', 'map-legend');
       div.innerHTML =
-        '<div class="legend-item"><span class="legend-dot" style="background:#3D6B45;"></span> Producer</div>' +
-        '<div class="legend-item"><span class="legend-dot" style="background:#B87333;"></span> Buyer</div>';
+        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#3D6B45;display:inline-block"></span> Biochar producer</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#B87333;display:inline-block"></span> Your location</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px">Dashed circle = 250 mi radius</div>';
       return div;
     };
-    legend.addTo(map);
+    legendControl.addTo(map);
+
+    plotProducers(null, null);
+
+    if (state.profile && state.profile.zipcode) {
+      geocodeBuyerZip(state.profile.zipcode).then(function(c) {
+        if (!c) return;
+        buyerGeo.lat = c.lat;
+        buyerGeo.lng = c.lng;
+        plotBuyerLocation(c.lat, c.lng, state.profile.businessName || '');
+        plotProducers(c.lat, c.lng);
+      });
+    }
+
+    db.collection('listings').where('status', '==', 'active').onSnapshot(function(snap) {
+      window._firestoreListings = [];
+      snap.forEach(function(doc) {
+        var d = doc.data();
+        d.id = doc.id;
+        window._firestoreListings.push(d);
+      });
+      plotProducers(buyerGeo.lat, buyerGeo.lng);
+    }, function() {});
   }
 
   function initAuthState() {
