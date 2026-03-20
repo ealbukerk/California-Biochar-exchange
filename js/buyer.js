@@ -1030,15 +1030,20 @@
 
     plotProducers(null, null);
 
-    if (state.profile && state.profile.zipcode) {
-      geocodeBuyerZip(state.profile.zipcode).then(function(c) {
+    function centerMapOnUser() {
+      var zip = state.profile && state.profile.zipcode ? state.profile.zipcode : null;
+      if (!zip) return;
+      geocodeBuyerZip(zip).then(function(c) {
         if (!c) return;
         buyerGeo.lat = c.lat;
         buyerGeo.lng = c.lng;
-        plotBuyerLocation(c.lat, c.lng, state.profile.businessName || '');
+        plotBuyerLocation(c.lat, c.lng, (state.profile && state.profile.businessName) || '');
         plotProducers(c.lat, c.lng);
       });
     }
+
+    window._centerMapOnUser = centerMapOnUser;
+    centerMapOnUser();
 
     db.collection('listings').where('status', '==', 'active').onSnapshot(function(snap) {
       window._firestoreListings = [];
@@ -1108,6 +1113,7 @@
           updateTopNav();
           renderHeroSlot();
           renderTopMatchesBlock();
+          if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
           // Set slider and display from saved profile prefs
           var slider = document.getElementById('pref-spread-slider');
           var sliderVal = document.getElementById('pref-spread-val');

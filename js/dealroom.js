@@ -789,7 +789,7 @@ function renderDealRoom(dealId, user) {
             '<div style="text-align:center;margin-bottom:16px">' +
               '<div style="font-size:40px;margin-bottom:8px">✅</div>' +
               '<h3 style="color:#2E7D32;margin:0">Deal accepted</h3>' +
-              '<p style="font-size:13px;color:var(--color-text-muted);margin-top:6px">Both parties have agreed to terms. The platform will follow up with next steps for completing this transaction. Expect details within 1–2 business days.</p>' +
+              '<p style="font-size:13px;color:var(--color-text-muted);margin-top:6px">Both parties have agreed to terms. A confirmation email with full contact details, delivery terms, and next steps has been sent to both parties.</p>' +
             '</div>' +
             '<div style="background:var(--color-bg);border-radius:8px;padding:16px;margin-bottom:16px">' +
               '<p style="margin:0 0 8px 0;font-size:14px"><strong>Volume:</strong> ' + (ab.volumeTonnes || '—') + ' tonnes</p>' +

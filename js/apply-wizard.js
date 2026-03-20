@@ -306,7 +306,7 @@ function buildPropertiesTabs() {
 
 function updateCompleteness(index, feedstock) {
   const requiredIds = ['carbon-' + index, 'ph-' + index, 'moisture-' + index]
-  const optionalIds = ['surface-' + index, 'particle-' + index, 'ash-' + index, 'ec-' + index, 'labreportdate-' + index]
+  const optionalIds = ['surface-' + index, 'particle-' + index, 'ash-' + index, 'ec-' + index]
 
   let filledRequired = 0
   let filledOptional = 0
@@ -327,6 +327,12 @@ function updateCompleteness(index, feedstock) {
     const el = document.getElementById(id)
     if (el && el.value) filledOptional++
   })
+
+  var labDateVal = getDateSelectValue('labreportdate-' + index)
+  if (labDateVal) filledOptional++
+
+  var labFileEl = document.getElementById('labreport-' + index)
+  if (labFileEl && labFileEl.files && labFileEl.files.length > 0) filledOptional++
 
   const labVerified = document.getElementById('labverified-' + index)
   if (labVerified && labVerified.checked) filledOptional++
