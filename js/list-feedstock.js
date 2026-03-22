@@ -211,51 +211,48 @@
   }
 
   function init() {
-    firebase.auth().onAuthStateChanged(function (user) {
-      var login = document.getElementById('nav-login');
-      var profile = document.getElementById('nav-profile');
-      var logout = document.getElementById('nav-logout');
-
-      if (!user) {
+    document.getElementById('next-1').addEventListener('click', function () {
+      if (validateStep1()) goToStep(2);
+    });
+    document.getElementById('back-2').addEventListener('click', function () { goToStep(1); });
+    document.getElementById('next-2').addEventListener('click', function () {
+      if (validateStep2()) { buildReviewSummary(); goToStep(3); }
+    });
+    document.getElementById('back-3').addEventListener('click', function () { goToStep(2); });
+    document.getElementById('submit-btn').addEventListener('click', function () {
+      if (!window.AuthState || !window.AuthState.user) {
         document.getElementById('wizard-wrap').style.display = 'none';
         document.getElementById('auth-gate').style.display = 'block';
         return;
       }
+      submitListing(window.AuthState.user);
+    });
 
-      if (login) login.classList.add('hidden');
-      if (profile) profile.classList.remove('hidden');
-      if (logout) {
-        logout.classList.remove('hidden');
-        logout.addEventListener('click', function () {
-          firebase.auth().signOut().then(function () { window.location.href = 'index.html'; });
-        });
-      }
-
-      firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
-        if (doc.exists) {
-          var d = doc.data();
-          if (d.name) document.getElementById('f-name').value = d.name;
-          if (d.businessName) document.getElementById('f-company').value = d.businessName;
-          if (d.zipcode) document.getElementById('f-zip').value = d.zipcode;
-        }
-        document.getElementById('f-email').value = user.email || '';
-      });
-
-      document.getElementById('next-1').addEventListener('click', function () {
-        if (validateStep1()) goToStep(2);
-      });
-      document.getElementById('back-2').addEventListener('click', function () { goToStep(1); });
-      document.getElementById('next-2').addEventListener('click', function () {
-        if (validateStep2()) { buildReviewSummary(); goToStep(3); }
-      });
-      document.getElementById('back-3').addEventListener('click', function () { goToStep(2); });
-      document.getElementById('submit-btn').addEventListener('click', function () { submitListing(user); });
-
-      document.getElementById('photo-input').addEventListener('change', function (e) {
-        handlePhotoSelect(e.target.files);
-      });
+    document.getElementById('photo-input').addEventListener('change', function (e) {
+      handlePhotoSelect(e.target.files);
     });
   }
 
   document.addEventListener('DOMContentLoaded', init);
+  window.AuthState.onReady(function(user, profile) {
+    if (!user) {
+      document.getElementById('wizard-wrap').style.display = 'none';
+      document.getElementById('auth-gate').style.display = 'block';
+      return;
+    }
+    document.getElementById('wizard-wrap').style.display = 'block';
+    document.getElementById('auth-gate').style.display = 'none';
+    if (user && profile) {
+      var nameEl = document.getElementById('f-name');
+      var companyEl = document.getElementById('f-company');
+      var emailEl = document.getElementById('f-email');
+      var zipEl = document.getElementById('f-zip');
+      var supplierTypeEl = document.getElementById('f-supplier-type');
+      if (nameEl && profile.name) nameEl.value = profile.name;
+      if (companyEl && profile.businessName) companyEl.value = profile.businessName;
+      if (emailEl && profile.email) emailEl.value = profile.email;
+      if (zipEl && profile.zipcode) zipEl.value = profile.zipcode;
+      if (supplierTypeEl && profile.supplierType) supplierTypeEl.value = profile.supplierType;
+    }
+  });
 })();

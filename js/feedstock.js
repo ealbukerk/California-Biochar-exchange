@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var db = firebase.firestore();
+
   var BIOMASS_LABELS = {
     orchard_prunings: 'Orchard Prunings', almond_shells: 'Almond Shells',
     pistachio_shells: 'Pistachio Shells', walnut_shells: 'Walnut Shells',
@@ -366,51 +368,62 @@
     document.getElementById('contact-modal').classList.add('hidden');
   }
 
-  function renderDemandPreview() {
-    var grid = document.getElementById('demand-preview-grid');
+  function renderDemandTab() {
+    var grid = document.getElementById('demand-full-grid');
+    var empty = document.getElementById('demand-full-empty');
     if (!grid) return;
-    var listings = (window.PRODUCER_DEMAND_LISTINGS || []).slice(0, 3);
-    if (!listings.length) {
-      document.getElementById('demand-preview').style.display = 'none';
-      return;
-    }
+
     var BIOMASS_LABELS_D = {
-      orchard_prunings: 'Orchard Prunings', almond_shells: 'Almond Shells',
-      pistachio_shells: 'Pistachio Shells', walnut_shells: 'Walnut Shells',
-      corn_stover: 'Corn Stover', rice_husks: 'Rice Husks',
-      forestry_slash: 'Forestry Slash', logging_residue: 'Logging Residue',
-      thinning_material: 'Thinning Material', clean_wood_waste: 'Clean Wood Waste',
-      construction_wood: 'Construction Wood', tree_service_chips: 'Tree Service Chips'
+      orchard_prunings:'Orchard Prunings', almond_shells:'Almond Shells',
+      pistachio_shells:'Pistachio Shells', walnut_shells:'Walnut Shells',
+      corn_stover:'Corn Stover', rice_husks:'Rice Husks',
+      forestry_slash:'Forestry Slash', logging_residue:'Logging Residue',
+      thinning_material:'Thinning Material', clean_wood_waste:'Clean Wood Waste',
+      construction_wood:'Construction Wood', tree_service_chips:'Tree Service Chips'
     };
-    var PERIOD_LABELS_D = { per_week: '/week', per_month: '/month', per_year: '/year', one_time: 'one-time' };
-    grid.innerHTML = listings.map(function(l) {
-      var types = (l.acceptedBiomassTypes || []).slice(0, 3).map(function(t) {
-        return '<span style="font-size:11px;padding:2px 8px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:20px;display:inline-block">' + (BIOMASS_LABELS_D[t] || t) + '</span>';
-      }).join(' ');
-      var period = PERIOD_LABELS_D[l.volumePeriod] || '';
-      return '<a href="producer-demand-browse.html" style="text-decoration:none;color:inherit">' +
-        '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3);transition:box-shadow 0.15s;cursor:pointer" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(0,0,0,0.08)\'" onmouseout="this.style.boxShadow=\'\'">' +
-          '<div style="display:flex;align-items:center;gap:var(--space-2)">' +
-            '<span style="font-size:1.5rem">🔥</span>' +
-            '<div>' +
-              '<div style="font-weight:600;font-size:var(--font-size-sm)">' + (l.company || l.producerName) + '</div>' +
-              '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + (l.locationZip || '') + '</div>' +
+    var PERIOD_LABELS_D = { per_week:'/week', per_month:'/month', per_year:'/year', one_time:'one-time' };
+    var PYRO_LABELS_D = { kiln:'Kiln', retort:'Retort', continuous_reactor:'Continuous reactor', gasifier:'Gasifier', other:'Other' };
+
+    var listings = (window.PRODUCER_DEMAND_LISTINGS || []);
+
+    db.collection('feedstock_demand').where('status','==','active').get()
+      .then(function(snap) {
+        snap.forEach(function(doc) {
+          var d = doc.data(); d._id = doc.id;
+          listings = listings.concat([d]);
+        });
+      }).catch(function(){}).finally(function() {
+        if (!listings.length) {
+          if (empty) empty.style.display = 'block';
+          grid.innerHTML = '';
+          return;
+        }
+        if (empty) empty.style.display = 'none';
+        grid.innerHTML = listings.map(function(l) {
+          var types = (l.acceptedBiomassTypes || []).slice(0,4).map(function(t) {
+            return '<span style="font-size:11px;padding:2px 8px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:20px">' + (BIOMASS_LABELS_D[t]||t) + '</span>';
+          }).join(' ');
+          var period = PERIOD_LABELS_D[l.volumePeriod] || '';
+          var pyro = PYRO_LABELS_D[l.pyroTech] || '';
+          return '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">' +
+            '<div style="display:flex;align-items:flex-start;justify-content:space-between">' +
+              '<div>' +
+                '<div style="font-weight:700;font-size:var(--font-size-base)">' + (l.company||l.producerName||'') + '</div>' +
+                '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">' + (pyro ? pyro + ' · ' : '') + 'ZIP ' + (l.locationZip||'') + '</div>' +
+              '</div>' +
+              '<span style="font-size:11px;padding:3px 10px;background:var(--color-accent-light);color:var(--color-accent);border-radius:20px;font-weight:600">Seeking</span>' +
             '</div>' +
-          '</div>' +
-          '<div style="display:flex;flex-wrap:wrap;gap:var(--space-1)">' + types + '</div>' +
-          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">' +
-            '<div style="font-size:var(--font-size-xs)">' +
-              '<div style="color:var(--color-text-muted)">Volume needed</div>' +
-              '<div style="font-weight:600">' + (l.volumeNeeded || '?') + 't' + period + '</div>' +
+            '<div style="display:flex;flex-wrap:wrap;gap:4px">' + types + '</div>' +
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">' +
+              '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Volume needed</div><div style="font-weight:600">' + (l.volumeNeeded||'?') + 't' + period + '</div></div>' +
+              '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Max price</div><div style="font-weight:600">' + (l.pricePerTonMax ? '$'+l.pricePerTonMax+'/ton' : 'Negotiable') + '</div></div>' +
+              '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Min shipment</div><div style="font-weight:600">' + (l.minimumShipmentTons||'?') + 't</div></div>' +
+              '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Max distance</div><div style="font-weight:600">' + (l.maxSourcingDistance ? l.maxSourcingDistance+'mi' : 'Any') + '</div></div>' +
             '</div>' +
-            '<div style="font-size:var(--font-size-xs)">' +
-              '<div style="color:var(--color-text-muted)">Max price</div>' +
-              '<div style="font-weight:600">' + (l.pricePerTonMax ? '$' + l.pricePerTonMax + '/ton' : 'Negotiable') + '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>' +
-      '</a>';
-    }).join('');
+            '<a href="producer-demand-browse.html" class="btn btn-primary" style="text-align:center;font-size:var(--font-size-sm)">Contact producer →</a>' +
+          '</div>';
+        }).join('');
+      });
   }
 
   function submitRequest(user) {
@@ -568,7 +581,7 @@
       }
       loadListings();
     });
-    renderDemandPreview();
+    renderDemandTab();
   }
 
   document.addEventListener('DOMContentLoaded', init);

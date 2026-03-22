@@ -236,10 +236,6 @@
       });
     }
 
-    window.AuthState.onReady(function(user, profile) {
-        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
-      });
-
       var id = getParam('id');
       if (!id) { document.getElementById('fs-detail-body').innerHTML = '<p>Listing not found.</p>'; return; }
 
@@ -248,7 +244,7 @@
       if (demo) { renderListing(demo); return; }
 
       // Fall back to Firestore
-      db.collection('feedstock_listings').doc(id).get()
+      firebase.firestore().collection('feedstock_listings').doc(id).get()
         .then(function(doc) {
           if (!doc.exists) { document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Listing not found</h1>'; return; }
           var l = doc.data();

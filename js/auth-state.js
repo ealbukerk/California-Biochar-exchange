@@ -3,8 +3,7 @@
 
   var BUY_NAV = [
     { label: 'Browse Biochar', href: 'buyer.html', mode: 'buy' },
-    { label: 'Biomass Market', href: 'feedstock.html', mode: 'buy' },
-    { label: 'Carriers', href: 'carriers.html', mode: 'buy' }
+    { label: 'Biomass Market', href: 'feedstock.html', mode: 'buy' }
   ];
 
   var SELL_NAV = [

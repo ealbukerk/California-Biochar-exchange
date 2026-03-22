@@ -148,7 +148,7 @@ var PAGE_CHECKS = {
     mustNotContain: []
   },
   'feedstock.html': {
-    mustContain: ['demand-preview','fs-grid','list-feedstock.html','producer-demand-browse.html','bm-nav-placeholder'],
+    mustContain: ['fs-grid','list-feedstock.html','producer-demand.html','panel-demand','demand-full-grid','bm-nav-placeholder'],
     mustNotContain: []
   },
   'feedstock-listing.html': {
@@ -197,8 +197,8 @@ var KEY_STRINGS = {
   'js/dealroom.js': ['confirmDealDelivery','respondToBid','openRatingModal','renderThirdPartyPanel','CLOUDINARY_UPLOAD_URL'],
   'js/delivered-cost.js': ['router.project-osrm.org','calcDeliveredCost','BIOCHAR_DENSITY'],
   'js/apply-wizard.js': ['saveDraft','loadDraft','clearDraft','uploadSellerPhotos','prefillWizard','pyroTech'],
-  'js/auth-state.js': ['hasBiomassAvailable','ROLE_NAV','carriers.html'],
-  'js/feedstock.js': ['feedstock-listing.html','renderDemandPreview'],
+  'js/auth-state.js': ['BUY_NAV','SELL_NAV','buildNav','setMode','hasBiomassAvailable','onReady','bm-mode-buy','bm-avatar-btn'],
+  'js/feedstock.js': ['feedstock-listing.html','renderDemandTab'],
   'js/profile.js': ['scheduleRepeatOrder','loadScheduledOrders','advanceDateByFrequency'],
   'js/admin.js': ['loadPendingListings','approveListing','rejectListing'],
   'js/match.js': ['scoreListing','isBroadRegionMatch']
@@ -299,7 +299,7 @@ async function checkNavConsistency(container) {
 
 async function checkFirebaseScripts(container) {
   var fbScripts = ['firebase-app-compat.js','firebase-auth-compat.js','firebase-firestore-compat.js'];
-  var criticalPages = ['buyer.html','seller.html','profile.html','dealroom.html','settings.html','admin.html','feedstock.html','carriers.html'];
+  var criticalPages = ['buyer.html','seller.html','profile.html','dealroom.html','settings.html','admin.html','feedstock.html'];
   for (var i = 0; i < criticalPages.length; i++) {
     var page = criticalPages[i];
     var html = await fetchText(BASE + page);

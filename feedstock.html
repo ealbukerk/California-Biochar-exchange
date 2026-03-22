@@ -87,13 +87,19 @@
       <p>Browse agricultural, forestry, and wood waste material available for pyrolysis producers across the US.</p>
       <div class="buyer-hero-actions" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
         <a href="list-feedstock.html">+ List your material</a>
-        <a href="producer-demand-browse.html" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.4)">Who's buying? →</a>
+        <a href="producer-demand.html" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.4)">+ Post demand</a>
       </div>
     </div>
   </section>
 
   <section class="listings-section">
     <div class="container">
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--color-border);margin-bottom:var(--space-6)">
+        <button id="tab-supply" onclick="switchTab('supply')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:3px solid #7A5C1E;margin-bottom:-2px;font-size:var(--font-size-sm);font-weight:700;color:#7A5C1E;cursor:pointer">🌾 Available feedstock</button>
+        <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button>
+      </div>
+
+      <div id="panel-supply">
 
       <div class="filter-bar">
         <div class="filter-grid">
@@ -157,17 +163,6 @@
         </div>
       </div>
 
-      <div id="demand-preview" style="margin-bottom:var(--space-10)">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
-          <div>
-            <h2 style="margin-bottom:var(--space-1)">Producers actively seeking feedstock</h2>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">These producers have open demand listings and want to hear from suppliers.</p>
-          </div>
-          <a href="producer-demand-browse.html" style="font-size:var(--font-size-sm);font-weight:600;color:#7A5C1E;text-decoration:none;white-space:nowrap;margin-left:var(--space-6)">See all demand →</a>
-        </div>
-        <div id="demand-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)"></div>
-      </div>
-
       <div id="aggregator-section" style="margin-bottom:var(--space-8)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
           <div>
@@ -205,7 +200,40 @@
         <p>No feedstock listings match your filters.</p>
         <p style="margin-top:var(--space-3)"><a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">Be the first to list material →</a></p>
       </div>
+      </div>
+
+      <div id="panel-demand" style="display:none">
+        <div id="demand-full-grid" class="listings-grid" style="margin-top:var(--space-4)"></div>
+        <div id="demand-full-empty" style="display:none;text-align:center;padding:var(--space-12) 0">
+          <p style="color:var(--color-text-muted)">No demand listings yet.</p>
+          <a href="producer-demand.html" style="color:#7A5C1E;font-weight:600;display:inline-block;margin-top:var(--space-3)">Post a demand listing →</a>
+        </div>
+      </div>
     </div>
+    <script>
+      function switchTab(tab) {
+        var supply = document.getElementById('panel-supply');
+        var demand = document.getElementById('panel-demand');
+        var tabS = document.getElementById('tab-supply');
+        var tabD = document.getElementById('tab-demand');
+        if (tab === 'supply') {
+          supply.style.display = 'block';
+          demand.style.display = 'none';
+          tabS.style.borderBottomColor = '#7A5C1E';
+          tabS.style.color = '#7A5C1E';
+          tabD.style.borderBottomColor = 'transparent';
+          tabD.style.color = 'var(--color-text-muted)';
+        } else {
+          supply.style.display = 'none';
+          demand.style.display = 'block';
+          tabS.style.borderBottomColor = 'transparent';
+          tabS.style.color = 'var(--color-text-muted)';
+          tabD.style.borderBottomColor = '#7A5C1E';
+          tabD.style.color = '#7A5C1E';
+        }
+      }
+      if (window.location.search.indexOf('tab=demand') !== -1) switchTab('demand');
+    </script>
   </section>
 
   <!-- Contact modal -->
