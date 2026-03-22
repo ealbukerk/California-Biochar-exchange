@@ -46,7 +46,7 @@
 
   function buildNav(user, profile) {
     var existing = document.getElementById('bm-nav');
-    if (existing) return;
+    if (existing) existing.parentNode.removeChild(existing);
 
     var nav = document.createElement('nav');
     nav.className = 'bm-nav';
@@ -161,17 +161,28 @@
     }
   };
 
-  firebase.auth().onAuthStateChanged(function(user) {
-    if (user) {
-      firebase.firestore().collection('users').doc(user.uid).get()
-        .then(function(doc) {
-          var profile = doc.exists ? doc.data() : null;
-          buildNav(user, profile);
-        })
-        .catch(function() { buildNav(user, null); });
-    } else {
-      buildNav(null, null);
-    }
-  });
+  function initNavListener() {
+    firebase.auth().onAuthStateChanged(function(user) {
+      var existing = document.getElementById('bm-nav');
+      if (existing) existing.parentNode.removeChild(existing);
+
+      if (user) {
+        firebase.firestore().collection('users').doc(user.uid).get()
+          .then(function(doc) {
+            var profile = doc.exists ? doc.data() : null;
+            buildNav(user, profile);
+          })
+          .catch(function() { buildNav(user, null); });
+      } else {
+        buildNav(null, null);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initNavListener);
+  } else {
+    initNavListener();
+  }
 
 })();
