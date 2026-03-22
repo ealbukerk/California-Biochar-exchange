@@ -29,18 +29,7 @@
   </style>
 </head>
 <body>
-  <nav style="background:var(--color-surface);border-bottom:1px solid var(--color-border)">
-    <div class="container" style="height:64px;display:flex;align-items:center;justify-content:space-between">
-      <a href="index.html" style="color:var(--color-accent);font-size:var(--font-size-lg);font-weight:700;text-decoration:none">Biochar.market</a>
-      <div style="display:flex;align-items:center;gap:var(--space-3)">
-        <div id="role-nav-slot" style="display:flex;align-items:center;gap:var(--space-3)"></div>
-        <a id="nav-login" href="auth.html" class="btn btn-secondary">Login</a>
-        <a id="nav-profile" href="profile.html" class="btn btn-secondary hidden" style="display:none">Profile</a>
-        <a id="nav-settings" href="settings.html" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-secondary);text-decoration:none;font-weight:500" class="hidden">Settings</a>
-        <button id="nav-logout" class="btn btn-primary hidden" style="display:none" type="button">Log out</button>
-      </div>
-    </div>
-  </nav>
+  <nav id="bm-nav-placeholder" style="background:var(--color-surface);border-bottom:1px solid var(--color-border);height:60px"></nav>
 
   <div style="background:var(--color-bg);border-bottom:1px solid var(--color-border);padding:var(--space-3) 0">
     <div class="container">
@@ -248,7 +237,6 @@
     }
 
     window.AuthState.onReady(function(user, profile) {
-      document.getElementById('nav-logout').addEventListener('click', function() {
         firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
       });
 
