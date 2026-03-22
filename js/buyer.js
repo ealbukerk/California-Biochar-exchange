@@ -530,7 +530,7 @@
 
       '<div>' +
       '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + '</span>' +
-      '<h3 style="margin:var(--space-2) 0 0;font-size:var(--font-size-lg)">' + htmlEscape(listing.producerName) + (verifiedBadge ? ' ' + verifiedBadge : '') + '</h3>' +
+      '<h3 style="margin:var(--space-2) 0 0;font-size:var(--font-size-lg)">' + htmlEscape(listing.producerName) + (verifiedBadge ? ' ' + verifiedBadge : '') + (listing.verified === false ? ' <span style="font-size:10px;padding:2px 6px;background:#FEF3C7;color:#B45309;border-radius:4px;font-weight:600;vertical-align:middle">Unverified</span>' : '') + '</h3>' +
       '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + htmlEscape(listing.county || listing.region || listing.state || '') + '</div>' +
       '</div>' +
 
@@ -705,6 +705,10 @@
 
       return matchesSearch && matchesFeedstock && matchesRegion && matchesCert && matchesState;
     });
+    var verifiedOnly = document.getElementById('filter-verified-only');
+    if (verifiedOnly && verifiedOnly.checked) {
+      filtered = filtered.filter(function(l) { return l.verified === true; });
+    }
 
     filtered.sort(function (a, b) {
       if (sort === "price-asc") return a.pricePerTonne - b.pricePerTonne;
@@ -846,6 +850,8 @@
 
     document.getElementById("search").addEventListener("input", renderBrowseListings);
     document.getElementById("filter-sort").addEventListener("change", renderBrowseListings);
+    var verifiedCheck = document.getElementById('filter-verified-only');
+    if (verifiedCheck) verifiedCheck.addEventListener('change', renderBrowseListings);
     var stateSelect = document.getElementById("filter-state");
     if (stateSelect) {
       stateSelect.addEventListener("change", renderBrowseListings);

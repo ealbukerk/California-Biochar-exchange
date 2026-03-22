@@ -956,7 +956,8 @@ document.addEventListener('click', function(e) {
       deliveryMethods: avail.deliveryMethods || [],
       description: avail.description || '',
       photos: photoUrls.filter(Boolean),
-      status: 'pending_review',
+      status: 'active',
+      verified: false,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     })
   })

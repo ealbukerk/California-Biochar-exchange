@@ -267,7 +267,7 @@
     var countEl = document.getElementById('pending-count');
     if (!wrap) return;
 
-    db.collection('listings').where('status', '==', 'pending_review').orderBy('createdAt', 'desc').get()
+    db.collection('listings').where('verified', '==', false).orderBy('createdAt', 'desc').get()
       .then(function(snap) {
         if (snap.empty) {
           wrap.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm);padding:var(--space-4) 0">No listings pending review.</p>';
@@ -296,8 +296,8 @@
                   (d.description ? '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:1.6">' + d.description.slice(0, 200) + (d.description.length > 200 ? '…' : '') + '</div>' : '') +
                 '</div>' +
                 '<div style="display:flex;flex-direction:column;gap:var(--space-2);min-width:140px">' +
-                  '<button onclick="approveListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:var(--color-accent);color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✓ Approve</button>' +
-                  '<button onclick="rejectListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:none;border:1px solid #DC2626;color:#DC2626;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✗ Reject</button>' +
+                  '<button onclick="approveListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:var(--color-accent);color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✓ Verify</button>' +
+                  '<button onclick="rejectListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:none;border:1px solid #DC2626;color:#DC2626;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✗ Remove</button>' +
                 '</div>' +
               '</div>' +
               '<div id="pending-status-' + id + '" style="margin-top:var(--space-2);font-size:var(--font-size-sm)"></div>' +
@@ -314,7 +314,7 @@
   window.approveListing = function(id, email) {
     var statusEl = document.getElementById('pending-status-' + id);
     if (statusEl) { statusEl.textContent = 'Approving…'; statusEl.style.color = 'var(--color-text-muted)'; }
-    db.collection('listings').doc(id).update({ status: 'active', approvedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    db.collection('listings').doc(id).update({ status: 'active', verified: true, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() })
       .then(function() {
         var row = document.getElementById('pending-row-' + id);
         if (row) {
