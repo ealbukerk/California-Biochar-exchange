@@ -160,4 +160,18 @@
       });
     }
   };
+
+  firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+      firebase.firestore().collection('users').doc(user.uid).get()
+        .then(function(doc) {
+          var profile = doc.exists ? doc.data() : null;
+          buildNav(user, profile);
+        })
+        .catch(function() { buildNav(user, null); });
+    } else {
+      buildNav(null, null);
+    }
+  });
+
 })();
