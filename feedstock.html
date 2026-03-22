@@ -179,6 +179,27 @@
         <div id="demand-preview-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)"></div>
       </div>
 
+      <div id="aggregator-section" style="margin-bottom:var(--space-8)">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
+          <div>
+            <h2 style="margin-bottom:var(--space-1)">Aggregators & processors</h2>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">These suppliers collect, process, and test material from multiple farms — providing bulk loads with verified specs.</p>
+          </div>
+        </div>
+        <div id="aggregator-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)"></div>
+        <div id="aggregator-empty" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators listed in this area yet.</div>
+      </div>
+
+      <div style="background:linear-gradient(135deg,#7A5C1E12,#7A5C1E06);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-8);display:flex;align-items:center;justify-content:space-between;gap:var(--space-6)">
+        <div>
+          <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Are you a farmer with biomass to sell?</div>
+          <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Individual farm volumes are often too small for direct producer sales. Aggregators in your area collect, chip, and test material — then sell bulk loads to pyrolysis producers. List your material or find a local aggregator.</div>
+        </div>
+        <div style="display:flex;gap:var(--space-3);flex-shrink:0">
+          <a href="list-feedstock.html" class="btn btn-primary" style="font-size:var(--font-size-sm);white-space:nowrap">List my material</a>
+        </div>
+      </div>
+
       <h2 style="margin-bottom:var(--space-6)">All feedstock listings</h2>
       <div id="fs-grid" class="listings-grid"></div>
       <div id="fs-compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid #7A5C1E;padding:16px 32px;align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)">

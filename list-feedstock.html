@@ -180,11 +180,17 @@
                   <label>Supplier type <span class="required-star">*</span></label>
                   <select id="f-supplier-type">
                     <option value="">Select type…</option>
-                    <option value="farmer">Farmer</option>
-                    <option value="sawmill">Sawmill</option>
-                    <option value="forestry_operator">Forestry Operator</option>
-                    <option value="tree_service">Tree Service</option>
-                    <option value="recycler">Recycler / Processor</option>
+                    <optgroup label="Primary suppliers">
+                      <option value="farmer">Farmer / Grower</option>
+                      <option value="sawmill">Sawmill</option>
+                      <option value="forestry_operator">Forestry Operator</option>
+                      <option value="tree_service">Tree Service</option>
+                      <option value="recycler">Recycler / Waste processor</option>
+                    </optgroup>
+                    <optgroup label="Aggregators">
+                      <option value="aggregator">Aggregator / Processor — collects from multiple farms</option>
+                      <option value="broker">Broker — arranges supply, does not hold inventory</option>
+                    </optgroup>
                   </select>
                 </div>
                 <div class="form-group">

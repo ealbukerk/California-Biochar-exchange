@@ -12,7 +12,8 @@
 
   var SUPPLIER_LABELS = {
     farmer: 'Farmer', sawmill: 'Sawmill', forestry_operator: 'Forestry Operator',
-    tree_service: 'Tree Service', recycler: 'Recycler'
+    tree_service: 'Tree Service', recycler: 'Recycler',
+    aggregator: 'Aggregator / Processor', broker: 'Broker'
   };
 
   var MOISTURE_LABELS = {

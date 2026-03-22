@@ -171,7 +171,7 @@ async function createDealRoom(listing, buyerProfile, buyerUID) {
   return dealRef.id
 }
 
-async function submitBid(dealId, bidderUID, bidderName, bidderRole, volume, pricePerTonne, deliveryMethod, deliveryDate, notes) {
+async function submitBid(dealId, bidderUID, bidderName, bidderRole, volume, pricePerTonne, deliveryMethod, deliveryDate, notes, transportCostPerTonne) {
   const dealRef = db.collection('deals').doc(dealId)
   const deal = (await dealRef.get()).data()
 
@@ -194,6 +194,7 @@ async function submitBid(dealId, bidderUID, bidderName, bidderRole, volume, pric
       commissionAmount: commission.commissionAmount,
       deliveryMethod,
       deliveryDate,
+      transportCostPerTonne: transportCostPerTonne || null,
       notes,
       status: 'Auto-Rejected',
       autoRejectReason: 'Below minimum accepted price',
@@ -215,6 +216,7 @@ async function submitBid(dealId, bidderUID, bidderName, bidderRole, volume, pric
     commissionAmount: commission.commissionAmount,
     deliveryMethod,
     deliveryDate,
+    transportCostPerTonne: transportCostPerTonne || null,
     notes,
     status: 'Pending',
     nearAsking: isNearAsking,
@@ -839,6 +841,7 @@ function renderDealRoom(dealId, user) {
             '<p style="margin:0 0 8px 0;font-size:14px"><strong>Price:</strong> $' + pendingBid.pricePerTonne + '/tonne</p>' +
             '<p style="margin:0 0 8px 0;font-size:14px"><strong>Total:</strong> $' + (pendingBid.volumeTonnes * pendingBid.pricePerTonne).toLocaleString() + '</p>' +
             '<p style="margin:0 0 8px 0;font-size:14px"><strong>Delivery:</strong> ' + (pendingBid.deliveryMethod || '—') + '</p>' +
+            (pendingBid.transportCostPerTonne ? '<p style="margin:0 0 8px 0;font-size:14px"><strong>Proposed transport:</strong> $' + pendingBid.transportCostPerTonne + '/t</p>' : '<p style="margin:0 0 8px 0;font-size:14px;color:var(--color-text-muted)">Transport cost: to be negotiated</p>') +
             (commInfo ? '<p style="margin:0;font-size:12px;color:var(--color-text-muted)">Platform commission: $' + commInfo.commissionAmount + ' (' + commInfo.rateDisplay + ')</p>' : '') +
           '</div>' +
           '<div style="display:flex;flex-direction:column;gap:8px">' +
@@ -879,13 +882,31 @@ function renderDealRoom(dealId, user) {
               '<span id="dr-commission-value" style="color:var(--color-text-muted);margin-left:8px"></span>' +
             '</div>' +
             '<div>' +
-              '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Delivery method</label>' +
-              '<select id="dr-delivery" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
-                '<option value="buyer_collects">Buyer collects</option>' +
-                '<option value="producer_delivers">Producer delivers</option>' +
-                '<option value="third_party_freight">Third party logistics</option>' +
-              '</select>' +
+              '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Delivery method <span style="font-weight:400;color:var(--color-text-muted)">(producer\'s offered options)</span></label>' +
+              (function() {
+                var offered = (ld.deliveryMethods && ld.deliveryMethods.length)
+                  ? ld.deliveryMethods
+                  : ['buyer_collects','producer_delivers','third_party_freight'];
+                var METHOD_LABELS = {
+                  'buyer_collects': 'Buyer collects',
+                  'Buyer collects': 'Buyer collects',
+                  'producer_delivers': 'Producer delivers',
+                  'Producer delivers': 'Producer delivers',
+                  'third_party_freight': 'Third party logistics',
+                  'Third party freight': 'Third party logistics'
+                };
+                var opts = offered.map(function(m) {
+                  var val = m.toLowerCase().replace(/ /g,'_');
+                  return '<option value="' + val + '">' + (METHOD_LABELS[m] || m) + '</option>';
+                }).join('');
+                return '<select id="dr-delivery" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' + opts + '</select>';
+              })() +
               '<div id="dr-3pl-panel" style="margin-top:12px;display:none"></div>' +
+            '</div>' +
+            '<div>' +
+              '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Proposed transport cost ($/tonne) <span style="font-weight:400;color:var(--color-text-muted)">optional</span></label>' +
+              '<p style="font-size:11px;color:var(--color-text-muted);margin:0 0 6px 0">Include if you have a freight quote. Leave blank to negotiate separately.</p>' +
+              '<input id="dr-transport-cost" type="number" min="0" step="0.01" placeholder="e.g. 45" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
             '</div>' +
             '<div>' +
               '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Target delivery date</label>' +
@@ -949,6 +970,7 @@ function renderDealRoom(dealId, user) {
           const pr = parseFloat(document.getElementById('dr-price').value)
           const delivery = document.getElementById('dr-delivery').value
           const deliveryDate = document.getElementById('dr-delivery-date').value
+          const transportCostPerTonne = parseFloat(document.getElementById('dr-transport-cost').value) || null
           const notes = document.getElementById('dr-notes').value
 
           if (!vol || !pr) {
@@ -976,6 +998,7 @@ function renderDealRoom(dealId, user) {
             pricePerTonne: pr,
             deliveryMethod: delivery,
             deliveryDate: deliveryDate,
+            transportCostPerTonne: transportCostPerTonne || null,
             notes: notes,
             status: 'Pending',
             timestamp: firebase.firestore.FieldValue.serverTimestamp()

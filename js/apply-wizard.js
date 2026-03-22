@@ -337,9 +337,9 @@ function updateCompleteness(index, feedstock) {
   const labVerified = document.getElementById('labverified-' + index)
   if (labVerified && labVerified.checked) filledOptional++
 
-  const total = requiredIds.length + optionalIds.length + 1
+  const total = requiredIds.length + optionalIds.length + 3
   const filled = filledRequired + filledOptional
-  const pct = Math.round((filled / total) * 100)
+  const pct = Math.min(100, Math.round((filled / total) * 100))
 
   const fill = document.getElementById('completeness-fill-' + index)
   const label = document.getElementById('completeness-label-' + index)
@@ -386,8 +386,6 @@ function validateStep3() {
     if (!carbon || !carbon.value) missing.push('Carbon Content')
     if (!ph || !ph.value) missing.push('pH')
     if (!moisture || !moisture.value) missing.push('Moisture')
-    if (!labdate || !labdate.value) missing.push('Lab Report Date')
-    if (!labreport || !labreport.files || labreport.files.length === 0) missing.push('Lab Report Upload')
     if (missing.length > 0) {
       const tab = document.querySelector('#properties-tabs .feedstock-tab[data-index="' + i + '"]')
       if (tab) {
