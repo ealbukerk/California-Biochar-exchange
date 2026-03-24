@@ -176,44 +176,78 @@
   function scoreListing(listing, user) {
     var score = 0;
     var reasons = [];
-    var cropMatches = (user.crop || []).filter(function (cropName) {
-      return listing.suitableFor.indexOf(cropName) !== -1;
-    });
+    var buyerType = user && user.buyerType ? user.buyerType : "";
+    var isNonAg = buyerType && buyerType !== "agriculture";
 
-    if (cropMatches.length > 0) {
-      score += 30;
-      reasons.push("suitable for " + cropMatches[0].toLowerCase());
-    }
+    if (!isNonAg) {
+      var cropMatches = (user.crop || []).filter(function (cropName) {
+        return listing.suitableFor.indexOf(cropName) !== -1;
+      });
 
-    if (user.soilPh === "Below 5.5" && listing.scorecard.pH > 7.0) {
-      score += 20;
-      reasons.push("alkaline profile aligns with low-pH soil");
-    } else if (user.soilPh === "5.5–6.5" && listing.scorecard.pH >= 6.5 && listing.scorecard.pH <= 8.0) {
-      score += 20;
-      reasons.push("pH compatibility in your target range");
-    } else if (user.soilPh === "Above 8.5" && listing.scorecard.pH < 7.5) {
-      score += 10;
-      reasons.push("more neutral pH for high-alkaline soils");
+      if (cropMatches.length > 0) {
+        score += 30;
+        reasons.push("suitable for " + cropMatches[0].toLowerCase());
+      }
+
+      if (user.soilPh === "Below 5.5" && listing.scorecard.pH > 7.0) {
+        score += 20;
+        reasons.push("alkaline profile aligns with low-pH soil");
+      } else if (user.soilPh === "5.5–6.5" && listing.scorecard.pH >= 6.5 && listing.scorecard.pH <= 8.0) {
+        score += 20;
+        reasons.push("pH compatibility in your target range");
+      } else if (user.soilPh === "Above 8.5" && listing.scorecard.pH < 7.5) {
+        score += 10;
+        reasons.push("more neutral pH for high-alkaline soils");
+      } else {
+        score += 10;
+      }
     } else {
-      score += 10;
+      if (listing.scorecard.carbonContent >= 70) {
+        score += 35;
+        reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
+      } else if (listing.scorecard.carbonContent >= 60) {
+        score += 20;
+        reasons.push("solid carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
+      }
+
+      if (listing.scorecard.labVerified) {
+        score += 20;
+        reasons.push("lab-verified");
+      }
+
+      var particle = (listing.scorecard.particleSize || "").toLowerCase();
+      if (particle === "fine_dust" || particle === "fine_chips") {
+        score += 20;
+        reasons.push("fine particle size");
+      } else if (particle === "chipped" || particle === "shredded") {
+        score += 10;
+        reasons.push("moderate particle size");
+      }
+
+      if (listing.availableTonnes >= Number(user.volume)) {
+        score += 25;
+        reasons.push("available in sufficient volume");
+      }
     }
 
-    if (listing.availableTonnes >= Number(user.volume)) {
-      score += 15;
-      reasons.push("available in sufficient volume");
-    }
+    if (!isNonAg) {
+      if (listing.availableTonnes >= Number(user.volume)) {
+        score += 15;
+        reasons.push("available in sufficient volume");
+      }
 
-    if (listing.scorecard.carbonContent >= 70) {
-      score += 10;
-      reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    } else if (listing.scorecard.carbonContent >= 60) {
-      score += 5;
-      reasons.push("solid carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    }
+      if (listing.scorecard.carbonContent >= 70) {
+        score += 10;
+        reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
+      } else if (listing.scorecard.carbonContent >= 60) {
+        score += 5;
+        reasons.push("solid carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
+      }
 
-    if (listing.scorecard.labVerified) {
-      score += 10;
-      reasons.push("lab-verified");
+      if (listing.scorecard.labVerified) {
+        score += 10;
+        reasons.push("lab-verified");
+      }
     }
 
     if (

@@ -211,6 +211,15 @@
                     </article>
                   </div>
                 </div>
+                <div id="buyer-use-wrap" style="display:none">
+                  <label style="display:block;font-size:var(--font-size-sm);font-weight:600;margin-bottom:var(--space-1)">Primary use for biochar</label>
+                  <select id="buyer-use-type" style="width:100%;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)">
+                    <option value="agriculture">Agriculture / soil amendment</option>
+                    <option value="water_filtration">Water filtration & treatment</option>
+                    <option value="construction">Construction / concrete additive</option>
+                    <option value="carbon_removal">Carbon removal / offsets</option>
+                  </select>
+                </div>
                 <div class="field seller-only-field">
                   <label for="su-ein">Business EIN</label>
                   <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Employer Identification Number. Format: XX-XXXXXXX. Required for seller verification.</p>
@@ -500,6 +509,7 @@
             userData.acreage = parseFloat(document.getElementById("su-acreage").value) || null;
             userData.applicationRate = parseFloat(document.getElementById("su-apprate").value) || 7;
             userData.spreadCostPerTonne = parseFloat(document.getElementById("su-spreadcost").value) || 60;
+            userData.buyerType = document.getElementById("buyer-use-type").value;
           }
 
           if (selectedRole === "seller") {
@@ -536,6 +546,8 @@
             document.querySelectorAll('.seller-only-field').forEach(function (el) {
               el.style.display = selectedRole === "seller" ? "block" : "none";
             });
+            var buyerUseWrap = document.getElementById("buyer-use-wrap");
+            if (buyerUseWrap) buyerUseWrap.style.display = selectedRole === "buyer" ? "block" : "none";
             var farmFields = document.getElementById("buyer-farm-fields");
             if (farmFields) farmFields.style.display = selectedRole === "buyer" ? "block" : "none";
           });

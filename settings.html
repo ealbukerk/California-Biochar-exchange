@@ -160,7 +160,6 @@
             document.getElementById('account-status').textContent = 'Failed to save.';
             document.getElementById('account-status').style.color = '#DC2626';
           });
-      });
 
       // Change password
       document.getElementById('save-password-btn').addEventListener('click', function() {
@@ -205,9 +204,6 @@
           .catch(function(err) { statusEl.textContent = err.message || 'Failed. Try signing out and back in first.'; statusEl.style.color = '#DC2626'; });
       });
 
-      // Sign out
-        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
-      });
     });
   </script>
 </body>

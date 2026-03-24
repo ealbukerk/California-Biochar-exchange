@@ -26,6 +26,17 @@
     .fs-photo-gallery img { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
     .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); position: sticky; top: var(--space-6); }
     .yield-box { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-4); }
+    .agg-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
+    .agg-modal-overlay.open { display:flex; }
+    .agg-modal { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-6); max-width:560px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
+    .agg-modal h2 { font-size:var(--font-size-lg); font-weight:700; margin-bottom:var(--space-2); }
+    .agg-modal-close { position:absolute; top:var(--space-4); right:var(--space-4); background:none; border:none; font-size:1.2rem; cursor:pointer; color:var(--color-text-muted); }
+    .agg-result-card { border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-4); margin-top:var(--space-3); }
+    .agg-result-card h3 { font-size:var(--font-size-base); font-weight:600; margin-bottom:var(--space-1); }
+    .agg-result-card .agg-meta { font-size:var(--font-size-sm); color:var(--color-text-muted); margin-bottom:var(--space-3); }
+    .agg-result-card .agg-tags { display:flex; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-3); }
+    .agg-result-card .agg-tag { background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:2px var(--space-2); font-size:var(--font-size-xs); color:var(--color-text-secondary); }
+    .agg-result-card .agg-distance { font-size:var(--font-size-sm); font-weight:600; color:var(--color-accent); }
   </style>
 </head>
 <body>
@@ -104,6 +115,7 @@
     }
 
     function renderListing(l) {
+      window._renderedListing = l;
       var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
       var yieldRatio = (window.FEEDSTOCK_YIELD_RATIOS || {})[l.biomassType];
       var yieldTons = yieldRatio ? Math.round(l.estimatedQuantityTons * yieldRatio) : null;
@@ -208,6 +220,12 @@
           '<p style="font-size:var(--font-size-sm);font-weight:600;margin-bottom:var(--space-2)">🔥 Are you a biochar producer?</p>' +
           '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)">Post a demand listing to get matched with feedstock suppliers in your area.</p>' +
           '<a href="producer-demand.html" class="btn btn-secondary" style="width:100%;text-align:center;display:block;font-size:var(--font-size-sm)">Post demand listing</a>' +
+        '</div>' +
+
+        '<div class="fs-sidebar-card" style="background:linear-gradient(135deg,#3D6B4510,#3D6B4508)">' +
+          '<p style="font-size:var(--font-size-sm);font-weight:600;margin-bottom:var(--space-2)">🌾 Need someone to take this material?</p>' +
+          '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)">Find biochar producers and aggregators near you who accept ' + biomassLabel + '.</p>' +
+          '<button id="find-aggregator-btn" class="btn btn-secondary" style="width:100%;font-size:var(--font-size-sm)">Find a processor near me</button>' +
         '</div>';
 
       // Cost calculator
@@ -236,6 +254,197 @@
       });
     }
 
+    var _currentListing = null;
+
+    function haversineAgg(lat1, lon1, lat2, lon2) {
+      var R = 3958.8;
+      var dLat = (lat2 - lat1) * Math.PI / 180;
+      var dLon = (lon2 - lon1) * Math.PI / 180;
+      var a = Math.sin(dLat/2)*Math.sin(dLat/2) +
+              Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*
+              Math.sin(dLon/2)*Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function geocodeZipAgg(zip) {
+      return fetch('https://api.zippopotam.us/us/' + zip)
+        .then(function(r) { return r.json(); })
+        .then(function(d) {
+          if (!d.places || !d.places[0]) throw new Error('ZIP not found');
+          return { lat: parseFloat(d.places[0].latitude), lon: parseFloat(d.places[0].longitude) };
+        });
+    }
+
+    var BIOMASS_LABELS_MODAL = {
+      orchard_prunings:'Orchard Prunings', almond_shells:'Almond Shells',
+      pistachio_shells:'Pistachio Shells', walnut_shells:'Walnut Shells',
+      corn_stover:'Corn Stover', rice_husks:'Rice Husks',
+      forestry_slash:'Forestry Slash', logging_residue:'Logging Residue',
+      thinning_material:'Thinning Material', clean_wood_waste:'Clean Wood Waste',
+      construction_wood:'Construction Wood', tree_service_chips:'Tree Service Chips'
+    };
+
+    function openAggModal(listing) {
+      _currentListing = listing;
+      var overlay = document.getElementById('agg-modal-overlay');
+      overlay.classList.add('open');
+      document.getElementById('agg-results').innerHTML = '';
+      document.getElementById('agg-zip-input').value = '';
+    }
+
+    document.addEventListener('click', function(e) {
+      if (e.target && e.target.id === 'find-aggregator-btn') {
+        openAggModal(_currentListing || window._renderedListing);
+      }
+      if (e.target && (e.target.id === 'agg-modal-close' || e.target.id === 'agg-modal-overlay')) {
+        document.getElementById('agg-modal-overlay').classList.remove('open');
+      }
+      if (e.target && e.target.id === 'agg-search-btn') runAggSearch();
+    });
+
+    document.getElementById('agg-modal-overlay').addEventListener('click', function(e) {
+      if (e.target === this) this.classList.remove('open');
+    });
+
+    function runAggSearch() {
+      var zip = document.getElementById('agg-zip-input').value.trim();
+      var radius = parseInt(document.getElementById('agg-radius-select').value);
+      var resultsEl = document.getElementById('agg-results');
+      if (!zip || zip.length !== 5) {
+        resultsEl.innerHTML = '<p style="color:#DC2626;font-size:var(--font-size-sm)">Please enter a valid 5-digit ZIP.</p>';
+        return;
+      }
+      var biomassType = _currentListing ? _currentListing.biomassType : null;
+      resultsEl.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">Searching…</p>';
+
+      geocodeZipAgg(zip).then(function(buyerCoords) {
+        var demands = [];
+        var aggSuppliers = [];
+
+        var demandQuery = firebase.firestore().collection('feedstock_demand')
+          .where('status', '==', 'active')
+          .get()
+          .then(function(snap) {
+            snap.forEach(function(doc) {
+              var d = doc.data(); d._id = doc.id;
+              if (!d.locationZip) return;
+              var types = d.acceptedBiomassTypes || [];
+              if (biomassType && types.length > 0 && types.indexOf(biomassType) === -1) return;
+              demands.push(d);
+            });
+          });
+
+        var aggQuery = firebase.firestore().collection('feedstock_listings')
+          .where('status', '==', 'active')
+          .get()
+          .then(function(snap) {
+            snap.forEach(function(doc) {
+              var d = doc.data(); d._id = doc.id;
+              if (!d.locationZip) return;
+              if (d.supplierType !== 'aggregator' && d.supplierType !== 'broker') return;
+              var types = d.biomassTypes || [];
+              if (biomassType && types.length > 0 && types.indexOf(biomassType) === -1) return;
+              aggSuppliers.push(d);
+            });
+          });
+
+        return Promise.all([demandQuery, aggQuery]).then(function() {
+          var allResults = [];
+
+          function processWithGeocode(items, type) {
+            return Promise.all(items.map(function(item) {
+              return geocodeZipAgg(item.locationZip).then(function(coords) {
+                var dist = haversineAgg(buyerCoords.lat, buyerCoords.lon, coords.lat, coords.lon);
+                if (dist > radius) return null;
+                var maxDist = parseInt(item.maxSourcingDistance) || 999;
+                if (type === 'demand' && dist > maxDist) return null;
+                return { item: item, dist: Math.round(dist), type: type };
+              }).catch(function() { return null; });
+            }));
+          }
+
+          return Promise.all([
+            processWithGeocode(demands, 'demand'),
+            processWithGeocode(aggSuppliers, 'aggregator')
+          ]).then(function(groups) {
+            groups.forEach(function(g) {
+              g.forEach(function(r) { if (r) allResults.push(r); });
+            });
+            allResults.sort(function(a, b) { return a.dist - b.dist; });
+            renderAggResults(allResults, biomassType, radius);
+          });
+        });
+      }).catch(function() {
+        resultsEl.innerHTML = '<p style="color:#DC2626;font-size:var(--font-size-sm)">Could not find that ZIP code. Please check and try again.</p>';
+      });
+    }
+
+    function renderAggResults(results, biomassType, radius) {
+      var resultsEl = document.getElementById('agg-results');
+      var biomassLabel = biomassType ? (BIOMASS_LABELS_MODAL[biomassType] || biomassType) : 'this material';
+
+      if (results.length === 0) {
+        resultsEl.innerHTML =
+          '<div style="text-align:center;padding:var(--space-6) 0">' +
+          '<div style="font-size:2rem;margin-bottom:var(--space-3)">🌾</div>' +
+          '<p style="font-weight:600;margin-bottom:var(--space-2)">No processors found within ' + radius + ' miles</p>' +
+          '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">The network is growing. List your supply on the Biomass Market and producers will contact you directly when they need ' + biomassLabel + ' in your area.</p>' +
+          '<a href="feedstock.html" class="btn btn-primary" style="font-size:var(--font-size-sm)">Browse the Biomass Market →</a>' +
+          '</div>';
+        return;
+      }
+
+      var html = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + results.length + ' match' + (results.length > 1 ? 'es' : '') + ' found</p>';
+
+      results.forEach(function(r) {
+        var item = r.item;
+        var isProducer = r.type === 'demand';
+        var name = item.company || item.producerName || item.supplierName || 'Unnamed';
+        var contactEmail = item.contactEmail || '';
+
+        var typeLabel = isProducer
+          ? '🔥 Biochar producer seeking feedstock'
+          : '📦 Biomass aggregator / processor';
+
+        var acceptedTypes = isProducer
+          ? (item.acceptedBiomassTypes || [])
+          : (item.biomassTypes || []);
+
+        var tagsHtml = acceptedTypes.length
+          ? acceptedTypes.slice(0, 5).map(function(t) {
+              return '<span class="agg-tag">' + (BIOMASS_LABELS_MODAL[t] || t) + '</span>';
+            }).join('')
+          : '<span class="agg-tag">Multiple types accepted</span>';
+
+        var detailHtml = '';
+        if (isProducer) {
+          if (item.volumeNeeded) detailHtml += '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Needs: ' + item.volumeNeeded + ' ' + (item.volumePeriod || '') + '</span> &nbsp;·&nbsp; ';
+          if (item.maxMoistureAccepted) detailHtml += '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Max moisture: ' + item.maxMoistureAccepted + '%</span> &nbsp;·&nbsp; ';
+          if (item.pricePerTonMax) detailHtml += '<span style="font-size:var(--font-size-xs);color:var(--color-accent);font-weight:600">Pays up to $' + item.pricePerTonMax + '/ton</span>';
+        } else {
+          if (item.estimatedQuantityTons) detailHtml += '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Capacity: ' + item.estimatedQuantityTons.toLocaleString() + ' tons</span> &nbsp;·&nbsp; ';
+          if (item.pricePerTon !== undefined) detailHtml += '<span style="font-size:var(--font-size-xs);color:var(--color-accent);font-weight:600">' + (item.pricePerTon === 0 ? 'Free to haul' : '$' + item.pricePerTon + '/ton') + '</span>';
+        }
+
+        html +=
+          '<div class="agg-result-card">' +
+            '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-1)">' +
+              '<h3>' + name + '</h3>' +
+              '<span class="agg-distance">' + r.dist + ' mi</span>' +
+            '</div>' +
+            '<div class="agg-meta">' + typeLabel + '</div>' +
+            (detailHtml ? '<div style="margin-bottom:var(--space-2)">' + detailHtml + '</div>' : '') +
+            '<div class="agg-tags">' + tagsHtml + '</div>' +
+            (contactEmail
+              ? '<a href="mailto:' + contactEmail + '?subject=Feedstock inquiry: ' + biomassLabel + '&body=Hi ' + name + ',%0A%0AI have ' + biomassLabel + ' available and saw your listing on Biochar.market. I\\'d like to discuss a potential supply arrangement.%0A%0A" class="btn btn-primary" style="font-size:var(--font-size-sm);padding:var(--space-2) var(--space-4)">Contact →</a>'
+              : '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">No contact info listed</span>') +
+          '</div>';
+      });
+
+      resultsEl.innerHTML = html;
+    }
+
+    window.AuthState.onReady(function(user, profile) {
       var id = getParam('id');
       if (!id) { document.getElementById('fs-detail-body').innerHTML = '<p>Listing not found.</p>'; return; }
 
@@ -254,5 +463,29 @@
         .catch(function() { document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Error loading listing</h1>'; });
     });
   </script>
+
+  <div id="agg-modal-overlay" class="agg-modal-overlay">
+    <div class="agg-modal">
+      <button class="agg-modal-close" id="agg-modal-close">✕</button>
+      <h2>Find a processor or aggregator</h2>
+      <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Find biochar producers and biomass aggregators near you who accept this material type.</p>
+      <div style="display:flex;gap:var(--space-3);align-items:flex-end;margin-bottom:var(--space-4)">
+        <div style="flex:1">
+          <label style="font-size:var(--font-size-sm);font-weight:600;display:block;margin-bottom:var(--space-1)">Your ZIP code</label>
+          <input id="agg-zip-input" type="text" maxlength="5" placeholder="e.g. 95678" style="width:100%;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
+        </div>
+        <div>
+          <label style="font-size:var(--font-size-sm);font-weight:600;display:block;margin-bottom:var(--space-1)">Radius</label>
+          <select id="agg-radius-select" style="height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+            <option value="50">50 mi</option>
+            <option value="100" selected>100 mi</option>
+            <option value="250">250 mi</option>
+          </select>
+        </div>
+        <button id="agg-search-btn" class="btn btn-primary" style="height:40px;white-space:nowrap">Search</button>
+      </div>
+      <div id="agg-results"></div>
+    </div>
+  </div>
 </body>
 </html>
