@@ -171,9 +171,14 @@
       maxScore <= 3 ? 'contamination-possible_soil' :
       'contamination-mixed_debris';
     var contamDisplay = hasScores
-      ? 'D:' + (l.contaminationDebris||'?') + ' A:' + (l.contaminationAsh||'?') + ' C:' + (l.contaminationChemical||'?')
+      ? '<span style="display:inline-flex;gap:4px;align-items:center">' +
+        '<span title="Physical debris" style="background:' + (parseInt(l.contaminationDebris||1)<=2?'#D1FAE5':parseInt(l.contaminationDebris||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationDebris||1)<=2?'#065F46':parseInt(l.contaminationDebris||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">D' + (l.contaminationDebris||'?') + '</span>' +
+        '<span title="Soil/ash content" style="background:' + (parseInt(l.contaminationAsh||1)<=2?'#D1FAE5':parseInt(l.contaminationAsh||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationAsh||1)<=2?'#065F46':parseInt(l.contaminationAsh||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">A' + (l.contaminationAsh||'?') + '</span>' +
+        '<span title="Chemical risk" style="background:' + (parseInt(l.contaminationChemical||1)<=2?'#D1FAE5':parseInt(l.contaminationChemical||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationChemical||1)<=2?'#065F46':parseInt(l.contaminationChemical||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">C' + (l.contaminationChemical||'?') + '</span>' +
+        '</span>'
       : (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—');
-    var negTag = l.negotiable ? '<span class="fs-tag fs-tag-neg">Negotiable</span>' : '';
+    var negTag = '';
+    var verifiedTag = l.verified ? '<span style="background:#D1FAE5;color:#065F46;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">✓ Verified</span>' : '<span style="background:#FEF3C7;color:#92400E;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">Unverified</span>';
     var freeTag = l.pricePerTon === 0 ? '<span class="fs-tag fs-tag-free">Free to haul</span>' : '';
     var priceDisplay = l.pricePerTon === 0 ? 'Free' : '$' + l.pricePerTon + '/ton';
 
@@ -206,7 +211,7 @@
           '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
             '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
             '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
-            negTag + freeTag +
+            verifiedTag + freeTag +
           '</div>' +
           '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +
           distLine +
@@ -222,7 +227,7 @@
         '<div class="fs-quality-row">' +
           '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
           '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val ' + contamClass + '" title="Physical debris / Soil-ash / Chemical risk (1=best, 5=worst)">' + contamDisplay + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Contamination <span style="font-size:9px;color:var(--color-text-muted)">(D/A/C)</span></div><div class="fs-stat-val">' + contamDisplay + '</div></div>' +
         '</div>' +
 
         deliveredHtml +

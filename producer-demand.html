@@ -194,21 +194,14 @@
                   </select>
                 </div>
                 <div class="form-group">
-                  <label>Contamination tolerance <span class="required-star">*</span></label>
-                  <select id="pd-contamination-tolerance">
-                    <option value="clean_only">Clean only</option>
-                    <option value="soil_acceptable">Soil acceptable</option>
-                    <option value="mixed_acceptable">Mixed acceptable</option>
-                  </select>
+                  <label>Max contamination score accepted (1–5) <span class="required-star">*</span></label>
+                  <input type="number" id="pd-contamination-tolerance" min="1" max="5" placeholder="e.g. 2" />
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">1 = cleanest only · 5 = accept anything. Applies to debris, ash, and chemical scores.</div>
                 </div>
                 <div class="form-group">
                   <label>Preferred particle size</label>
-                  <select id="pd-particle-size">
-                    <option value="any">Any</option>
-                    <option value="chipped">Chipped</option>
-                    <option value="shredded">Shredded</option>
-                    <option value="whole">Whole</option>
-                  </select>
+                  <input type="text" id="pd-particle-size" placeholder="e.g. under 75mm, any chipped or shredded" />
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Describe acceptable range in mm, or leave blank if no preference.</div>
                 </div>
                 <div class="form-group">
                   <label>Preprocessing capability</label>

@@ -302,10 +302,6 @@
       if (e.target && e.target.id === 'agg-search-btn') runAggSearch();
     });
 
-    document.getElementById('agg-modal-overlay').addEventListener('click', function(e) {
-      if (e.target === this) this.classList.remove('open');
-    });
-
     function runAggSearch() {
       var zip = document.getElementById('agg-zip-input').value.trim();
       var radius = parseInt(document.getElementById('agg-radius-select').value);

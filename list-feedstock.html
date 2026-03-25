@@ -195,9 +195,8 @@
                 </div>
                 <div class="form-group">
                   <label>Price per ton ($) <span class="required-star">*</span></label>
-                  <p class="field-hint">Material cost only — do not include transport. Enter 0 if free to haul.</p>
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-bottom:4px">Enter 0 if free to haul. All prices are negotiable.</div>
                   <input type="number" id="f-price" min="0" placeholder="18" />
-                  <div class="checkbox-row"><input type="checkbox" id="f-negotiable" /><label for="f-negotiable">Price is negotiable</label></div>
                 </div>
               </div>
 
@@ -229,25 +228,8 @@
               <div class="wizard-form-grid">
                 <div class="form-group">
                   <label>Particle size <span class="required-star">*</span></label>
-                  <select id="f-particle-size">
-                    <option value="">Select…</option>
-                    <optgroup label="Fine">
-                      <option value="fine_dust">Fine dust / powder (under 5mm)</option>
-                      <option value="fine_chips">Fine chips (5–25mm)</option>
-                    </optgroup>
-                    <optgroup label="Medium">
-                      <option value="chipped">Chipped (25–75mm) — most common</option>
-                      <option value="shredded">Shredded / mulched (irregular)</option>
-                    </optgroup>
-                    <optgroup label="Coarse">
-                      <option value="coarse_chunks">Coarse chunks (75–150mm)</option>
-                      <option value="whole_limbs">Whole limbs / branches (150mm+)</option>
-                    </optgroup>
-                    <optgroup label="Other">
-                      <option value="baled">Baled (straw, stover, husks)</option>
-                      <option value="mixed">Mixed / unsorted</option>
-                    </optgroup>
-                  </select>
+                  <input type="text" id="f-particle-size" placeholder="e.g. 25–75mm chipped, under 5mm powder" />
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Describe size in mm where possible. Producers use this to assess kiln compatibility.</div>
                 </div>
                 <div class="form-group full-width" style="grid-column:1/-1">
                   <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
