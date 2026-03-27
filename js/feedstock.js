@@ -204,7 +204,7 @@
       : '';
 
     return '<div class="listing-card-wrapper">' +
-      '<div class="listing-card" style="padding:0;overflow:hidden">' +
+      '<a href="feedstock-listing.html?id=' + (l._id || l.id || '') + '" class="fs-card" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;cursor:pointer">' +
         photoHtml +
         '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
         '<div>' +
@@ -233,12 +233,8 @@
         deliveredHtml +
         yieldHtml(l) +
 
-        '<div style="display:flex;gap:var(--space-2);margin-top:auto">' +
-          '<a href="feedstock-listing.html?id=' + l._id + '" style="flex:1;text-align:center;padding:var(--space-3);background:var(--color-accent);color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-sm);font-weight:600">View details</a>' +
-          '<button class="fs-contact-btn" data-id="' + l._id + '" style="flex:1;padding:var(--space-3);background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer;color:var(--color-text-primary)">Request</button>' +
         '</div>' +
-        '</div>' +
-      '</div>' +
+      '</a>' +
     '</div>';
   }
 
@@ -398,6 +394,36 @@
           listings = listings.concat([d]);
         });
       }).catch(function(){}).finally(function() {
+        var producerProfile = window.AuthState && window.AuthState.profile ? window.AuthState.profile : null;
+        if (producerProfile && producerProfile.acceptedBiomassTypes && producerProfile.acceptedBiomassTypes.length) {
+          listings = listings.map(function(l) {
+            var score = 0;
+            var accepted = producerProfile.acceptedBiomassTypes || [];
+            var demandTypes = l.acceptedBiomassTypes || [];
+            var typeMatch = demandTypes.filter(function(t) { return accepted.indexOf(t) !== -1; }).length;
+            score += typeMatch * 30;
+            if (producerProfile.locationZip && l.locationZip) {
+              var cached = window._fsGeoCache && window._fsGeoCache[l.locationZip];
+              var myCache = window._fsGeoCache && window._fsGeoCache[producerProfile.locationZip];
+              if (cached && myCache) {
+                var R = 3958.8;
+                var dLat = (cached.lat - myCache.lat) * Math.PI / 180;
+                var dLng = (cached.lng - myCache.lng) * Math.PI / 180;
+                var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(myCache.lat*Math.PI/180)*Math.cos(cached.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+                var dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                if (dist <= 50) score += 20;
+                else if (dist <= 150) score += 12;
+                else if (dist <= 300) score += 5;
+              }
+            }
+            if (l.volumeNeeded && producerProfile.annualCapacity) {
+              if (l.volumeNeeded <= producerProfile.annualCapacity) score += 10;
+            }
+            l._matchScore = score;
+            return l;
+          });
+          listings.sort(function(a, b) { return (b._matchScore || 0) - (a._matchScore || 0); });
+        }
         if (!listings.length) {
           if (empty) empty.style.display = 'block';
           grid.innerHTML = '';
@@ -410,13 +436,14 @@
           }).join(' ');
           var period = PERIOD_LABELS_D[l.volumePeriod] || '';
           var pyro = PYRO_LABELS_D[l.pyroTech] || '';
-          return '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">' +
+          return '<a href="producer-demand-browse.html?id=' + (l._id || l.id || '') + '" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3);text-decoration:none;color:inherit;cursor:pointer">' +
             '<div style="display:flex;align-items:flex-start;justify-content:space-between">' +
               '<div>' +
                 '<div style="font-weight:700;font-size:var(--font-size-base)">' + (l.company||l.producerName||'') + '</div>' +
                 '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">' + (pyro ? pyro + ' · ' : '') + 'ZIP ' + (l.locationZip||'') + '</div>' +
               '</div>' +
               '<span style="font-size:11px;padding:3px 10px;background:var(--color-accent-light);color:var(--color-accent);border-radius:20px;font-weight:600">Seeking</span>' +
+              (l._matchScore > 0 ? '<span style="font-size:11px;padding:3px 8px;background:var(--color-accent-light);color:var(--color-accent);border-radius:20px;font-weight:600;margin-left:4px">' + l._matchScore + ' pts</span>' : '') +
             '</div>' +
             '<div style="display:flex;flex-wrap:wrap;gap:4px">' + types + '</div>' +
             '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">' +
@@ -425,8 +452,7 @@
               '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Min shipment</div><div style="font-weight:600">' + (l.minimumShipmentTons||'?') + 't</div></div>' +
               '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Max distance</div><div style="font-weight:600">' + (l.maxSourcingDistance ? l.maxSourcingDistance+'mi' : 'Any') + '</div></div>' +
             '</div>' +
-            '<a href="producer-demand-browse.html" class="btn btn-primary" style="text-align:center;font-size:var(--font-size-sm)">Contact producer →</a>' +
-          '</div>';
+          '</a>';
         }).join('');
       });
   }

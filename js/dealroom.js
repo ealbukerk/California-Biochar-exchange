@@ -872,6 +872,15 @@ function renderDealRoom(dealId, user) {
             '<div>' +
               '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Volume (tonnes) <span style="color:var(--color-accent)">*</span></label>' +
               '<input id="dr-volume" type="number" min="' + minOrder + '" placeholder="Min ' + minOrder + ' t" style="width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px">' +
+              (function() {
+                var prof = window.AuthState && window.AuthState.profile;
+                if (prof && prof.acreage && prof.applicationRate) {
+                  var suggested = Math.round(prof.acreage * prof.applicationRate);
+                  var capped = Math.min(suggested, ld.availableTonnes || suggested);
+                  return '<div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Based on your farm size (' + prof.acreage + ' acres × ' + prof.applicationRate + ' t/acre) — suggested: <button type="button" onclick="document.getElementById(\\'dr-volume\\').value=' + capped + ';document.getElementById(\\'dr-volume\\').dispatchEvent(new Event(\\'input\\'))" style="background:none;border:none;color:var(--color-accent);font-size:11px;cursor:pointer;font-weight:600;padding:0">' + capped + 't</button></div>';
+                }
+                return '';
+              })() +
             '</div>' +
             '<div>' +
               '<label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px">Price per tonne ($) <span style="color:var(--color-accent)">*</span></label>' +

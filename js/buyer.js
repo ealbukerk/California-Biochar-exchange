@@ -577,9 +577,6 @@
         ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div></div>'
         : '') +
 
-      '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap;margin-top:auto">' +
-      '<span class="btn btn-primary" style="flex:1;text-align:center">Make an offer</span>' +
-      '</div>' +
       '</div>' +
       '</a>' +
       '</div>'
