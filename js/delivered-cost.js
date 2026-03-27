@@ -35,9 +35,14 @@
   };
 
   function getTruckRate(distanceMiles) {
-    if (distanceMiles <= 50) return 5.00;
-    if (distanceMiles <= 150) return 4.00;
-    return 3.25;
+    var base;
+    if (distanceMiles <= 50)  base = 5.00;
+    else if (distanceMiles <= 150) base = 4.00;
+    else base = 3.25;
+
+    var month = new Date().getMonth(); // 0=Jan
+    var seasonal = (month >= 8 && month <= 10) ? 1.18 : 1.0;
+    return base * seasonal;
   }
 
   function getCoords(zip) {
@@ -153,7 +158,16 @@
         costPerAcre: costPerAcre,
         backhaulNote: opts.hasBiomassBackhaul
           ? 'You have biomass available — a combined delivery run could reduce net transport cost by up to 40%. List it on the Biomass Market.'
-          : null
+          : null,
+        consolidationNote: (function() {
+          if (!opts.availableTonnes || !opts.dryTonnes) return null;
+          var loads = Math.ceil(opts.dryTonnes / 20);
+          if (loads >= 4 && distance > 150) {
+            var weeklyLoad = Math.ceil(loads / 4);
+            return 'Splitting into ' + loads + ' loads over 4 weeks (~' + weeklyLoad + '/week) may reduce per-load cost vs single delivery.';
+          }
+          return null;
+        })()
       };
     });
   }

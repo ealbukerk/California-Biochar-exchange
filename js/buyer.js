@@ -537,6 +537,9 @@
       '<div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">' +
       '<div><span style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-text-primary)">$' + htmlEscape(listing.pricePerTonne) + '</span><span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">/tonne</span></div>' +
       '<div class="delivered-cost-inline" id="dc-' + htmlEscape(listing.id) + '" style="font-size:var(--font-size-sm);color:var(--color-accent);font-weight:600;text-align:right"></div>' +
+      (state.profile && state.profile.goals && state.profile.goals.indexOf('carbon_sequestration') !== -1 && listing.scorecard && listing.scorecard.carbonContent
+        ? '<div id="co2cost-' + htmlEscape(listing.id) + '" style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:right"></div>'
+        : '') +
       '</div>' +
 
       '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-2)">' +
@@ -803,6 +806,12 @@
           (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
           ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>' +
           backhaulSaving;
+        var co2El = document.getElementById('co2cost-' + listing.id);
+        if (co2El && result && result.deliveredPerTonne && listing.scorecard && listing.scorecard.carbonContent) {
+          var co2PerTonne = listing.scorecard.carbonContent / 100 * 3.67;
+          var costPerTCO2 = Math.round(result.deliveredPerTonne / co2PerTonne);
+          co2El.textContent = '$' + costPerTCO2 + '/tCO\u2082 sequestered';
+        }
       }).catch(function() {
         el.textContent = '';
       });

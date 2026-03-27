@@ -101,6 +101,33 @@
 
       <div id="panel-supply">
 
+      <div id="aggregator-finder" style="background:linear-gradient(135deg,#7A5C1E10,#7A5C1E05);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-6)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:var(--space-4)">
+          <div>
+            <div style="font-weight:700;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Are you a farmer with biomass to sell?</div>
+            <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);max-width:560px">Individual farm volumes are usually too small for direct producer sales. Local aggregators collect, chip, test, and sell bulk loads on your behalf. Find one near you.</div>
+          </div>
+          <div style="display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap">
+            <select id="agg-biomass-type" style="height:38px;border:1px solid #7A5C1E60;border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+              <option value="">My material type</option>
+              <option value="orchard_prunings">Orchard prunings</option>
+              <option value="almond_shells">Almond shells</option>
+              <option value="walnut_shells">Walnut shells</option>
+              <option value="pistachio_shells">Pistachio shells</option>
+              <option value="corn_stover">Corn stover</option>
+              <option value="rice_husks">Rice husks</option>
+              <option value="forestry_slash">Forestry slash</option>
+              <option value="logging_residue">Logging residue</option>
+              <option value="clean_wood_waste">Clean wood waste</option>
+              <option value="tree_service_chips">Tree service chips</option>
+            </select>
+            <input id="agg-zip" type="text" maxlength="5" placeholder="Your ZIP" style="height:38px;width:90px;border:1px solid #7A5C1E60;border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+            <button id="agg-find-btn" style="height:38px;padding:0 var(--space-5);background:#7A5C1E;color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">Find aggregators</button>
+          </div>
+        </div>
+        <div id="agg-results" style="margin-top:var(--space-4);display:none"></div>
+      </div>
+
       <div class="filter-bar">
         <div class="filter-grid">
           <div class="filter-group">
@@ -233,6 +260,70 @@
         }
       }
       if (window.location.search.indexOf('tab=demand') !== -1) switchTab('demand');
+    </script>
+    <script>
+      document.getElementById('agg-find-btn').addEventListener('click', function() {
+        var zip = document.getElementById('agg-zip').value.trim();
+        var type = document.getElementById('agg-biomass-type').value;
+        var resultsEl = document.getElementById('agg-results');
+        if (!zip || zip.length < 5) { resultsEl.style.display = 'block'; resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Please enter your ZIP code.</p>'; return; }
+        resultsEl.style.display = 'block';
+        resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
+
+        function geoZip(z) {
+          return fetch('https://api.zippopotam.us/us/' + z)
+            .then(function(r) { return r.json(); })
+            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+        }
+        function hav(a, b) {
+          var R = 3958.8, dLat = (b.lat-a.lat)*Math.PI/180, dLng = (b.lng-a.lng)*Math.PI/180;
+          var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+          return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+        }
+
+        geoZip(zip).then(function(myCoords) {
+          var db = firebase.firestore();
+          var query = db.collection('feedstock_listings')
+            .where('status', '==', 'active')
+            .where('supplierType', 'in', ['aggregator', 'broker']);
+          query.get().then(function(snap) {
+            var matches = [];
+            var checks = [];
+            snap.forEach(function(doc) {
+              var d = doc.data(); d._id = doc.id;
+              if (type && d.biomassTypes && d.biomassTypes.indexOf(type) === -1 && d.biomassType !== type) return;
+              if (!d.locationZip) return;
+              checks.push(geoZip(d.locationZip).then(function(c) {
+                var dist = Math.round(hav(myCoords, c));
+                matches.push({ d: d, dist: dist });
+              }).catch(function() {}));
+            });
+            Promise.all(checks).then(function() {
+              matches.sort(function(a,b) { return a.dist - b.dist; });
+              if (!matches.length) {
+                resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
+                return;
+              }
+              var BIOMASS_LABELS = { orchard_prunings:'Orchard prunings', almond_shells:'Almond shells', walnut_shells:'Walnut shells', pistachio_shells:'Pistachio shells', corn_stover:'Corn stover', rice_husks:'Rice husks', forestry_slash:'Forestry slash', logging_residue:'Logging residue', clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips' };
+              resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-top:var(--space-2)">' +
+                matches.slice(0,3).map(function(m) {
+                  var types = (m.d.biomassTypes || [m.d.biomassType]).slice(0,3).map(function(t) { return '<span style="font-size:10px;padding:1px 6px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:10px">' + (BIOMASS_LABELS[t]||t) + '</span>'; }).join(' ');
+                  return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
+                    '<div style="font-weight:700;font-size:var(--font-size-sm);margin-bottom:2px">' + (m.d.company||m.d.supplierName||'Aggregator') + '</div>' +
+                    '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + m.dist + ' mi away &nbsp;·&nbsp; ZIP ' + m.d.locationZip + '</div>' +
+                    '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:var(--space-3)">' + types + '</div>' +
+                    '<a href="mailto:' + (m.d.contactEmail||'') + '?subject=Biomass inquiry from farmer ZIP ' + zip + '" style="display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600">Contact →</a>' +
+                  '</div>';
+                }).join('') +
+              '</div>';
+            });
+          }).catch(function() {
+            resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Could not load aggregators. Try again.</p>';
+          });
+        }).catch(function() {
+          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">ZIP code not found.</p>';
+        });
+      });
     </script>
   </section>
 

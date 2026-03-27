@@ -137,10 +137,31 @@
     var ratios = window.FEEDSTOCK_YIELD_RATIOS || {};
     var ratio = ratios[l.biomassType];
     if (!ratio || !l.estimatedQuantityTons) return '';
-    var charYield = Math.round(l.estimatedQuantityTons * ratio);
-    var co2 = Math.round(charYield * 0.85 * 3.67);
+
+    var moisturePenalty = 1.0;
+    if (l.moistureContent === 'over_40') moisturePenalty = 0.80;
+    else if (l.moistureContent === '30_40') moisturePenalty = 0.88;
+    else if (l.moistureContent === '20_30') moisturePenalty = 0.94;
+
+    var ashPenalty = 1.0;
+    var ashScore = parseInt(l.contaminationAsh || 1);
+    if (ashScore >= 4) ashPenalty = 0.82;
+    else if (ashScore === 3) ashPenalty = 0.91;
+
+    var bestRatio = ratio * 1.08;
+    var worstRatio = ratio * moisturePenalty * ashPenalty;
+
+    var bestYield  = Math.round(l.estimatedQuantityTons * bestRatio);
+    var worstYield = Math.round(l.estimatedQuantityTons * worstRatio);
+    var midYield   = Math.round((bestYield + worstYield) / 2);
+    var co2 = Math.round(midYield * 0.85 * 3.67);
+
+    var rangeStr = bestYield === worstYield
+      ? bestYield.toLocaleString() + ' tons'
+      : worstYield.toLocaleString() + '\u2013' + bestYield.toLocaleString() + ' tons';
+
     return '<div style="background:var(--color-accent-light);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-top:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-secondary)">' +
-      '🔥 Est. char yield: <strong>' + charYield.toLocaleString() + ' tons</strong>' +
+      '🔥 Est. char yield: <strong>' + rangeStr + '</strong>' +
       ' &nbsp;·&nbsp; 🌍 CO₂ potential: <strong>' + co2.toLocaleString() + ' tCO₂e</strong>' +
     '</div>';
   }
