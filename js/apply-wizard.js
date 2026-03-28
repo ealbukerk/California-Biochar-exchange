@@ -817,7 +817,10 @@ document.addEventListener('DOMContentLoaded', function() {
   if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true);
   var draft = loadDraft();
   var banner = document.getElementById('draft-resume-banner');
-  if (draft && draft.wizardData && banner) {
+  var hasRealContent = draft && draft.wizardData &&
+    draft.wizardData.feedstocks && draft.wizardData.feedstocks.length > 0 &&
+    draft.wizardData.business && draft.wizardData.business.businessName;
+  if (hasRealContent && banner) {
     var savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString() : '';
     var savedAtEl = document.getElementById('draft-saved-at');
     if (savedAtEl) savedAtEl.textContent = savedAt ? '· saved ' + savedAt : '';
