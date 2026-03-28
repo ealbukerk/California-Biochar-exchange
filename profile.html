@@ -31,6 +31,29 @@
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
         padding: var(--space-8);
+        box-shadow: var(--shadow-sm);
+        margin-bottom: var(--space-5);
+      }
+      .profile-section h2 {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        padding-bottom: var(--space-3);
+        border-bottom: 1px solid var(--color-border);
+        margin-bottom: var(--space-5);
+      }
+      #my-feedstock-section,
+      #my-demand-section,
+      #producer-details-section {
+        border-left: 4px solid #7A5C1E;
+      }
+      #prefs-section,
+      #history-section,
+      #scheduled-section {
+        border-left: 4px solid var(--color-accent);
+      }
+      #carbon-section {
+        background: linear-gradient(135deg, #EAF2EB, var(--color-surface));
+        border-left: 4px solid var(--color-accent);
       }
 
       .profile-section h2 {
@@ -405,13 +428,9 @@
           <div id="third-party-wrap" style="margin-top:var(--space-6)"></div>
         </section>
 
-        <section style="margin-bottom:var(--space-8)">
-          <h2 style="font-size:var(--font-size-2xl);font-weight:700;margin-bottom:var(--space-4)">
-            🌱 Your Carbon Impact
-          </h2>
-          <div id="carbon-dashboard-wrap">
-            <p style="color:var(--color-text-muted)">Sign in to see your carbon impact.</p>
-          </div>
+        <section class="profile-section" id="carbon-section">
+          <h2>🌍 Carbon impact</h2>
+          <div id="carbon-dashboard-wrap"></div>
         </section>
 
         <section class="profile-section" id="dealrooms-section">

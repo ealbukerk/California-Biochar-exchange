@@ -10,13 +10,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
-    .fs-detail-hero { background: #7A5C1E; padding: var(--space-10) 0; color: white; }
-    .fs-detail-hero h1 { font-size: var(--font-size-2xl); font-weight: 700; }
+    .fs-detail-hero { background: linear-gradient(135deg, #7A5C1E 0%, #5C4415 100%); padding: var(--space-12) 0 var(--space-10); color: white; }
+    .fs-detail-hero h1 { font-size: var(--font-size-3xl); font-weight: 800; letter-spacing: -0.02em; }
     .fs-detail-hero p { color: rgba(255,255,255,0.8); margin-top: var(--space-2); }
     .fs-detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: var(--space-8); margin-top: var(--space-8); align-items: start; }
-    .fs-detail-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-5); }
-    .fs-detail-section h2 { font-size: var(--font-size-lg); font-weight: 600; margin-bottom: var(--space-4); }
+    .fs-detail-section { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-5); box-shadow: var(--shadow-sm); }
+    .fs-detail-section h2 { font-size: var(--font-size-lg); font-weight: 700; margin-bottom: var(--space-4); padding-bottom: var(--space-3); border-bottom: 1px solid var(--color-border); color: var(--color-text-primary); }
     .fs-spec-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-4); }
+    .fs-spec-item { background: var(--color-bg); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); }
+    .fs-spec-item .label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--color-text-muted); margin-bottom: 4px; }
+    .fs-spec-item .value { font-size: var(--font-size-sm); font-weight: 600; color: var(--color-text-primary); }
     .fs-spec-item .label { font-size: var(--font-size-xs); color: var(--color-text-muted); text-transform: uppercase; font-weight: 600; }
     .fs-spec-item .value { font-weight: 600; margin-top: 2px; }
     .fs-tag-clean { color: var(--color-accent); }
@@ -24,7 +27,8 @@
     .fs-tag-warn { color: #B45309; }
     .fs-photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
     .fs-photo-gallery img { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
-    .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); position: sticky; top: var(--space-6); }
+    .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); box-shadow: var(--shadow-sm); }
+    .fs-sidebar-col .fs-sidebar-card:first-child { position: sticky; top: calc(60px + var(--space-4)); }
     .yield-box { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-4); }
     .agg-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
     .agg-modal-overlay.open { display:flex; }

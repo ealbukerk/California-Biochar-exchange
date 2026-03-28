@@ -599,17 +599,20 @@ function renderDealRoom(dealId, user) {
     const isProducer = user.uid === deal.producerUID
 
     container.innerHTML =
-      '<div style="display:grid;grid-template-columns:1fr 380px;gap:24px;align-items:start">' +
-        '<div>' +
-          '<div id="dr-info-card" style="background:var(--color-accent-light);border:1px solid var(--color-accent);border-radius:12px;padding:20px;margin-bottom:20px"></div>' +
-          '<div id="dr-chat-thread" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:12px;padding:20px;min-height:300px;max-height:480px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:12px"></div>' +
-          '<div style="display:flex;gap:8px">' +
-            '<textarea id="dr-message-input" placeholder="Type a message..." style="flex:1;height:48px;resize:none;padding:12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px;font-family:var(--font-sans)"></textarea>' +
-            '<button id="dr-send-btn" class="btn btn-primary" style="white-space:nowrap">Send</button>' +
+      '<div style="display:grid;grid-template-columns:1fr 400px;gap:28px;align-items:start;padding:var(--space-6) 0">' +
+        '<div style="display:flex;flex-direction:column;gap:16px">' +
+          '<div id="dr-info-card" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm)"></div>' +
+          '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm)">' +
+            '<div style="padding:14px 20px;border-bottom:1px solid var(--color-border);font-size:13px;font-weight:600;color:var(--color-text-muted);letter-spacing:0.04em;text-transform:uppercase">Conversation</div>' +
+            '<div id="dr-chat-thread" style="padding:20px;min-height:280px;max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:10px"></div>' +
+            '<div style="padding:12px 16px;border-top:1px solid var(--color-border);display:flex;gap:8px;background:var(--color-bg)">' +
+              '<textarea id="dr-message-input" placeholder="Type a message..." style="flex:1;height:44px;resize:none;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;font-size:14px;font-family:var(--font-sans);background:var(--color-surface)"></textarea>' +
+              '<button id="dr-send-btn" class="btn btn-primary" style="white-space:nowrap;align-self:flex-end">Send</button>' +
+            '</div>' +
           '</div>' +
         '</div>' +
-        '<div>' +
-          '<div id="dr-bid-panel" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:12px;padding:20px"></div>' +
+        '<div style="position:sticky;top:calc(60px + var(--space-4))">' +
+          '<div id="dr-bid-panel" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:24px;box-shadow:var(--shadow-sm)"></div>' +
         '</div>' +
       '</div>'
 
