@@ -200,6 +200,11 @@
       : (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—');
     var negTag = '';
     var verifiedTag = l.verified ? '<span style="background:#D1FAE5;color:#065F46;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">✓ Verified</span>' : '<span style="background:#FEF3C7;color:#92400E;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">Unverified</span>';
+    var qty = l.estimatedQuantityTons || 0;
+    var sizeLabel = qty >= 500 ? 'Large' : qty >= 100 ? 'Medium' : 'Small';
+    var sizeColor = qty >= 500 ? '#1E3A5F' : qty >= 100 ? '#92400E' : '#374151';
+    var sizeBg    = qty >= 500 ? '#DBEAFE' : qty >= 100 ? '#FEF3C7' : '#F3F4F6';
+    var sizeTag = '<span style="background:' + sizeBg + ';color:' + sizeColor + ';border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">' + sizeLabel + ' · ' + qty.toLocaleString() + 't</span>';
     var freeTag = l.pricePerTon === 0 ? '<span class="fs-tag fs-tag-free">Free to haul</span>' : '';
     var priceDisplay = l.pricePerTon === 0 ? 'Free' : '$' + l.pricePerTon + '/ton';
 
@@ -232,18 +237,14 @@
           '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
             '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
             '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
-            verifiedTag + freeTag +
+            verifiedTag + ' ' + sizeTag + (freeTag ? ' ' + freeTag : '') +
           '</div>' +
           '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +
           distLine +
           availHtml +
         '</div>' +
 
-        '<div class="fs-card-stats">' +
-          '<div class="fs-stat"><div class="fs-stat-label">Quantity</div><div class="fs-stat-val">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Min pickup</div><div class="fs-stat-val">' + l.minimumPickupTons + ' tons</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Price</div><div class="fs-stat-val">' + priceDisplay + '</div></div>' +
-        '</div>' +
+        '<div class="fs-card-stats"></div>' +
 
         '<div class="fs-quality-row">' +
           '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
@@ -344,7 +345,7 @@
       var isSelected = fsCompareList.indexOf(String(l._id)) !== -1;
       var card = cardHtml(l);
       var compareBtn = '<button class="fs-compare-toggle" data-id="' + l._id + '" style="width:100%;padding:6px;background:' + (isSelected ? '#7A5C1E' : 'none') + ';color:' + (isSelected ? 'white' : '#7A5C1E') + ';border:1px solid #7A5C1E;border-radius:var(--radius-md);font-size:var(--font-size-xs);font-weight:600;cursor:pointer;margin-top:4px">' + (isSelected ? '✓ Selected for compare' : '+ Compare') + '</button>';
-      return card.replace('</div>\n    </div>', compareBtn + '</div>\n    </div>');
+      return card.replace('</a>', compareBtn + '</a>');
     }).join('');
 
     grid.querySelectorAll('.fs-contact-btn').forEach(function(btn) {

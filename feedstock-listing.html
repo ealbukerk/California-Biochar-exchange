@@ -116,9 +116,14 @@
 
     function renderListing(l) {
       window._renderedListing = l;
-      var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
+      if (!l) { document.getElementById('fs-detail-body').innerHTML = '<p style="padding:var(--space-8);color:var(--color-text-muted)">Listing not found.</p>'; return; }
+      var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType || 'Biomass';
       var yieldRatio = (window.FEEDSTOCK_YIELD_RATIOS || {})[l.biomassType];
       var yieldTons = yieldRatio ? Math.round(l.estimatedQuantityTons * yieldRatio) : null;
+      l.estimatedQuantityTons = l.estimatedQuantityTons || 0;
+      l.minimumPickupTons = l.minimumPickupTons || 0;
+      l.pricePerTon = l.pricePerTon || 0;
+      l.contactEmail = l.contactEmail || '';
 
       // Hero
       document.getElementById('fs-hero-content').innerHTML =
@@ -445,7 +450,8 @@
       if (!id) { document.getElementById('fs-detail-body').innerHTML = '<p>Listing not found.</p>'; return; }
 
       // Try demo data first
-      var demo = (window.FEEDSTOCK_LISTINGS || []).find(function(l) { return String(l._id) === String(id); });
+      var allDemo = window.FEEDSTOCK_LISTINGS || window.FEEDSTOCK_DATA || window.feedstockListings || [];
+      var demo = allDemo.find(function(l) { return String(l._id) === String(id) || String(l.id) === String(id); });
       if (demo) { renderListing(demo); return; }
 
       // Fall back to Firestore
