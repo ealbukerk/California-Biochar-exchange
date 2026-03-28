@@ -234,7 +234,8 @@
       if (window.location.search.indexOf('tab=demand') !== -1) switchTab('demand');
     </script>
     <script>
-      document.getElementById('agg-find-btn').addEventListener('click', function() {
+      var aggBtn = document.getElementById('agg-find-btn');
+      if (aggBtn) aggBtn.addEventListener('click', function() {
         var zip = document.getElementById('agg-zip').value.trim();
         var type = document.getElementById('agg-biomass-type').value;
         var resultsEl = document.getElementById('agg-results');
