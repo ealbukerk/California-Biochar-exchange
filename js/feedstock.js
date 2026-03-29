@@ -199,7 +199,7 @@
         '</span>'
       : (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—');
     var negTag = '';
-    var verifiedTag = l.verified ? '<span style="background:#D1FAE5;color:#065F46;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">✓ Verified</span>' : '<span style="background:#FEF3C7;color:#92400E;border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">Unverified</span>';
+    var verifiedTag = '';
     var qty = l.estimatedQuantityTons || 0;
     var sizeLabel = qty >= 500 ? 'Large' : qty >= 100 ? 'Medium' : 'Small';
     var sizeColor = qty >= 500 ? '#1E3A5F' : qty >= 100 ? '#92400E' : '#374151';
@@ -229,7 +229,13 @@
       ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">📅 ' + l.availabilityWindow + '</div>'
       : '';
 
-    return '<div class="listing-card-wrapper">' +
+    return '<div class="listing-card-wrapper" style="position:relative">' +
+      '<div class="compare-corner">' +
+      '<input type="checkbox" class="fs-compare-check" data-id="' + (l._id || l.id || '') + '"' +
+      (fsCompareList.indexOf(String(l._id || l.id || '')) !== -1 ? ' checked' : '') +
+      '><label class="compare-label">Compare</label>' +
+      '</div>' +
+      (l.verified ? '<div style="position:absolute;top:10px;right:10px;z-index:2;background:#D1FAE5;color:#065F46;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.12)" title="Verified listing">✓</div>' : '') +
       '<a href="feedstock-listing.html?id=' + (l._id || l.id || '') + '" class="fs-card" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;cursor:pointer">' +
         photoHtml +
         '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
@@ -237,7 +243,7 @@
           '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
             '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
             '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
-            verifiedTag + ' ' + sizeTag + (freeTag ? ' ' + freeTag : '') +
+            sizeTag + (freeTag ? ' ' + freeTag : '') +
           '</div>' +
           '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +
           distLine +
@@ -365,6 +371,21 @@
         }
         updateFsCompareBar();
         renderGrid();
+      });
+    });
+
+    grid.querySelectorAll('.fs-compare-check').forEach(function(chk) {
+      chk.addEventListener('change', function(e) {
+        e.stopPropagation();
+        var id = String(chk.getAttribute('data-id'));
+        var idx = fsCompareList.indexOf(id);
+        if (chk.checked && idx === -1) {
+          if (fsCompareList.length >= 3) { chk.checked = false; return; }
+          fsCompareList.push(id);
+        } else if (!chk.checked && idx !== -1) {
+          fsCompareList.splice(idx, 1);
+        }
+        updateFsCompareBar();
       });
     });
   }

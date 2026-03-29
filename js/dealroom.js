@@ -904,7 +904,7 @@ function renderDealRoom(dealId, user) {
                   'Buyer collects': 'Buyer collects',
                   'producer_delivers': 'Producer delivers',
                   'Producer delivers': 'Producer delivers',
-                  'third_party_freight': 'Third party logistics',
+                  'third_party_freight': 'Arrange freight',
                   'Third party freight': 'Third party logistics'
                 };
                 var opts = offered.map(function(m) {
