@@ -138,7 +138,7 @@ nav {
   border-bottom: 1px solid var(--color-border);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 200;
 }
 
 .nav-inner {
@@ -583,6 +583,8 @@ textarea:focus {
   padding: var(--space-5) 0;
   border-bottom: 1px solid var(--color-border);
   margin-bottom: var(--space-6);
+  position: relative;
+  z-index: 140;
 }
 
 .filter-search-row {
@@ -600,6 +602,11 @@ textarea:focus {
   align-items: start;
 }
 
+.filter-grid .ms-wrapper {
+  position: relative;
+  z-index: 140;
+}
+
 .filter-grid > * {
   width: 100%;
   min-width: 0;
@@ -614,6 +621,22 @@ textarea:focus {
   border-radius: var(--radius-md);
   cursor: pointer;
   width: 100%;
+}
+
+#compare-bar {
+  z-index: 140;
+}
+
+.listing-card,
+.fs-card {
+  position: relative;
+  z-index: 10;
+}
+
+.fs-modal-overlay,
+.pdb-modal-overlay,
+.agg-modal-overlay {
+  z-index: 400;
 }
 
 .fs-card {

@@ -50,6 +50,7 @@
 
   var currentStep = 1;
   var photoFiles = [];
+  var verificationFiles = [];
 
   function val(id) { return document.getElementById(id).value.trim(); }
   function checked(id) { return document.getElementById(id).checked; }
@@ -115,7 +116,8 @@
       ['Age', val('f-age').replace(/_/g, ' ')],
       ['Loading', LOADING_LABELS[val('f-loading')] || val('f-loading')],
       ['Availability', val('f-availability') || '—'],
-      ['Photos', photoFiles.length ? photoFiles.length + ' photo(s) attached' : 'None']
+      ['Photos', photoFiles.length ? photoFiles.length + ' photo(s) attached' : 'None'],
+      ['Verification docs', verificationFiles.length ? verificationFiles.length + ' document(s) attached' : 'None']
     ];
     var html = '<div class="review-card-title">Listing Summary</div>';
     rows.forEach(function (r) {
@@ -153,6 +155,31 @@
     return Promise.all(promises);
   }
 
+  function handleVerificationSelect(files) {
+    verificationFiles = Array.prototype.slice.call(files, 0, 5);
+    var previews = document.getElementById('verification-previews');
+    previews.innerHTML = '';
+    verificationFiles.forEach(function (file) {
+      var item = document.createElement('div');
+      item.style.cssText = 'padding:6px 10px;border:1px solid var(--color-border);border-radius:6px;font-size:12px;color:var(--color-text-muted)';
+      item.textContent = file.name;
+      previews.appendChild(item);
+    });
+  }
+
+  function uploadVerificationDocs() {
+    if (!verificationFiles.length) return Promise.resolve([]);
+    var promises = verificationFiles.map(function (file) {
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { return d.secure_url || ''; });
+    });
+    return Promise.all(promises);
+  }
+
   function submitListing(user) {
     if (!val('f-name') || !val('f-company') || !val('f-email')) {
       alert('Please fill in your name, company, and email.');
@@ -166,7 +193,9 @@
     btn.disabled = true;
     btn.textContent = 'Publishing…';
 
-    uploadPhotos().then(function (photoUrls) {
+    Promise.all([uploadPhotos(), uploadVerificationDocs()]).then(function (results) {
+      var photoUrls = results[0] || [];
+      var verificationUrls = results[1] || [];
       var listing = {
         supplierUID: user.uid,
         supplierName: val('f-name'),
@@ -196,6 +225,8 @@
         availabilityWindow: val('f-availability'),
         notes: val('f-notes'),
         photos: photoUrls.filter(Boolean),
+        verificationDocs: verificationUrls.filter(Boolean),
+        supplierVerified: verificationUrls.filter(Boolean).length > 0,
         status: 'active',
         verified: false,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -243,6 +274,12 @@
     document.getElementById('photo-input').addEventListener('change', function (e) {
       handlePhotoSelect(e.target.files);
     });
+    var verificationInput = document.getElementById('verification-input');
+    if (verificationInput) {
+      verificationInput.addEventListener('change', function (e) {
+        handleVerificationSelect(e.target.files);
+      });
+    }
   }
 
   document.addEventListener('DOMContentLoaded', init);

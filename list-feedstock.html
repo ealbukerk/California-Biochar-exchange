@@ -214,6 +214,19 @@
                 <div id="photo-previews"></div>
               </div>
 
+              <div style="margin-top:var(--space-6)">
+                <div class="form-group full-width">
+                  <label>Verify your listing <span style="color:var(--color-text-muted);font-weight:400">(optional but recommended)</span></label>
+                  <p class="field-hint">Upload a waste transfer manifest, lab report, or weight ticket. These documents help producers trust your listing.</p>
+                </div>
+                <div class="photo-upload-area" style="margin-top:var(--space-3)" onclick="document.getElementById('verification-input').click()">
+                  <div class="upload-icon">📄</div>
+                  <p>Click to upload documents<br><span style="font-size:0.75rem">PDF, JPG, or PNG</span></p>
+                </div>
+                <input type="file" id="verification-input" accept="image/*,.pdf" multiple style="display:none" />
+                <div id="verification-previews"></div>
+              </div>
+
               <div class="wizard-nav">
                 <span></span>
                 <button class="btn-next" id="next-1">Next: Quality &amp; Logistics →</button>

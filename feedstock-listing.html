@@ -32,7 +32,7 @@
     .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); box-shadow: var(--shadow-sm); }
     .fs-sidebar-col .fs-sidebar-card:first-child { position: sticky; top: calc(60px + var(--space-4)); }
     .yield-box { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-4); }
-    .agg-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
+    .agg-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; }
     .agg-modal-overlay.open { display:flex; }
     .agg-modal { background:var(--color-surface); border-radius:var(--radius-lg); padding:var(--space-6); max-width:560px; width:90%; max-height:80vh; overflow-y:auto; position:relative; }
     .agg-modal h2 { font-size:var(--font-size-lg); font-weight:700; margin-bottom:var(--space-2); }
@@ -133,7 +133,9 @@
       // Hero
       document.getElementById('fs-hero-content').innerHTML =
         '<h1>' + biomassLabel + '</h1>' +
-        '<p>' + (l.company || l.supplierName || '') + ' · ' + (SUPPLIER_LABELS[l.supplierType] || '') + ' · ZIP ' + (l.locationZip || '') + '</p>';
+        '<p>' + (l.company || l.supplierName || '') +
+          (l.supplierVerified ? ' <span class="verified-badge">✓ Verified</span>' : '') +
+          ' · ' + (SUPPLIER_LABELS[l.supplierType] || '') + ' · ZIP ' + (l.locationZip || '') + '</p>';
 
       // Hero background and photo strip
       var heroEl = document.getElementById('fs-detail-hero');

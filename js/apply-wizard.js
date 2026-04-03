@@ -124,37 +124,6 @@ function clearDraft() {
   try { localStorage.removeItem('biochar_wizard_draft'); } catch(e) {}
 }
 
-function validateStep1() {
-  const required = ['w-businessName','w-contactName','w-email','w-state','w-zipcode','w-ein','w-years','w-equipment','w-capacity']
-  let valid = true
-  required.forEach(function(id) {
-    const el = document.getElementById(id)
-    if (!el || !el.value.trim()) {
-      el.style.borderColor = '#C0392B'
-      valid = false
-    } else {
-      el.style.borderColor = ''
-    }
-  })
-  return valid
-}
-
-function saveStep1() {
-  wizardData.business = {
-    businessName: document.getElementById('w-businessName').value.trim(),
-    contactName: document.getElementById('w-contactName').value.trim(),
-    email: document.getElementById('w-email').value.trim(),
-    state: document.getElementById('w-state').value,
-    zipcode: document.getElementById('w-zipcode').value.trim(),
-    ein: document.getElementById('w-ein').value.trim(),
-    businessWebsite: document.getElementById('w-website').value.trim(),
-    yearsInOperation: document.getElementById('w-years').value,
-    equipmentType: document.getElementById('w-equipment').value,
-    pyroTech: document.getElementById('w-equipment').value,
-    annualCapacity: document.getElementById('w-capacity').value
-  }
-}
-
 function validateStep2() {
   const checked = document.querySelectorAll('input[name="feedstocks"]:checked')
   if (checked.length === 0) {
@@ -589,17 +558,16 @@ function buildReviewStep() {
 
   let summaryHTML =
     '<div class="review-section">' +
-    '<h3>Business information</h3>' +
+    '<h3>Business profile</h3>' +
     Object.entries({
       'Business': wizardData.business.businessName,
-      'Contact': wizardData.business.contactName,
       'Email': wizardData.business.email,
       'State': wizardData.business.state,
       'ZIP': wizardData.business.zipcode,
       'EIN': wizardData.business.ein,
       'Website': wizardData.business.businessWebsite || 'Not provided',
       'Equipment': wizardData.business.equipmentType,
-      'Capacity': wizardData.business.annualCapacity + ' tonnes/year'
+      'Capacity': wizardData.business.annualCapacity ? wizardData.business.annualCapacity + ' tonnes/year' : '—'
     }).map(function(entry) {
       return '<div class="review-row"><span class="review-row-label">' + entry[0] + '</span><span class="review-row-value">' + entry[1] + '</span></div>'
     }).join('') +
@@ -626,36 +594,41 @@ function buildReviewStep() {
   wizardData.feedstocks.forEach(function(feedstock) {
     const props = wizardData.properties[feedstock]
     const avail = wizardData.availability[feedstock]
+    var previewListing = {
+      id: 'preview-' + feedstock.replace(/\s+/g, '-').toLowerCase(),
+      feedstock: feedstock,
+      producerName: wizardData.business.businessName || 'Your business',
+      state: wizardData.business.state || '',
+      county: wizardData.business.state || '',
+      pricePerTonne: avail.pricePerTonne || '—',
+      availableTonnes: avail.availableTonnes || '—',
+      minOrderTonnes: avail.minOrderTonnes || '—',
+      availableFrom: avail.availableFrom || null,
+      availableUntil: avail.availableUntil || null,
+      leadTimeDays: avail.leadTimeDays || null,
+      scorecard: {
+        carbonContent: parseFloat(props.carbonContent) || 0,
+        ashContent: parseFloat(props.ashContent) || 0,
+        electricalConductivity: parseFloat(props.electricalConductivity) || 0
+      },
+      certifications: props.certifications || [],
+      photos: getPreviewPhotos()
+    };
+
     const wrapper = document.createElement('div')
     wrapper.className = 'preview-card-wrapper'
     wrapper.title = 'Click to see full listing detail view'
-    wrapper.innerHTML =
-      '<div class="listing-card" style="border:2px solid var(--color-accent);pointer-events:none">' +
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--space-3)">' +
-          '<div>' +
-            '<h3 style="font-size:var(--font-size-base);font-weight:var(--font-weight-bold)">' + wizardData.business.businessName + '</h3>' +
-            '<p style="color:var(--color-text-muted);font-size:var(--font-size-xs)">' + wizardData.business.state + '</p>' +
-          '</div>' +
-          '<span class="listing-tag">' + feedstock + '</span>' +
-        '</div>' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3)">' +
-          '<span style="font-size:var(--font-size-xl);font-weight:var(--font-weight-bold);color:var(--color-accent)">$' + (avail.pricePerTonne || '—') + '<span style="font-size:var(--font-size-xs);font-weight:normal;color:var(--color-text-muted)">/tonne</span></span>' +
-          '<span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">' + (avail.availableTonnes || '—') + ' t available</span>' +
-        '</div>' +
-        (props.carbonContent || props.pH || props.surfaceArea ?
-          '<div style="display:flex;gap:var(--space-2);flex-wrap:wrap">' +
-          (props.carbonContent ? '<span class="scorecard-badge">' + props.carbonContent + '% C</span>' : '') +
-          (props.pH ? '<span class="scorecard-badge">pH ' + props.pH + '</span>' : '') +
-          (props.surfaceArea ? '<span class="scorecard-badge">' + props.surfaceArea + ' m²/g</span>' : '') +
-          '</div>' : '') +
-        (props.certifications && props.certifications.length > 0 ?
-          '<div style="margin-top:var(--space-2);display:flex;gap:var(--space-2);flex-wrap:wrap">' +
-          props.certifications.map(function(c) { return '<span class="cert-badge">' + c + '</span>' }).join('') +
-          '</div>' : '') +
-      '</div>'
+    if (typeof window.listingCardHtml === 'function') {
+      wrapper.innerHTML = window.listingCardHtml(previewListing, null, '', { expanded: false, includeCompare: true });
+      wrapper.querySelectorAll('.compare-corner input').forEach(function(i) { i.disabled = true; });
+      var cardLink = wrapper.querySelector('a');
+      if (cardLink) cardLink.style.pointerEvents = 'none';
+    } else {
+      wrapper.innerHTML = '<div class="listing-card" style="border:2px solid var(--color-accent);pointer-events:none;padding:var(--space-5)"><h3>' + previewListing.producerName + '</h3><p>' + feedstock + '</p></div>';
+    }
 
     wrapper.addEventListener('click', function() {
-      openPreviewModal(feedstock, props, avail)
+      openPreviewModal(feedstock, props, avail, previewListing)
     })
 
     const hint = document.createElement('p')
@@ -667,7 +640,7 @@ function buildReviewStep() {
   })
 }
 
-function openPreviewModal(feedstock, props, avail) {
+function openPreviewModal(feedstock, props, avail, previewListing) {
   let modal = document.getElementById('preview-modal')
   if (!modal) {
     modal = document.createElement('div')
@@ -676,44 +649,38 @@ function openPreviewModal(feedstock, props, avail) {
     document.body.appendChild(modal)
   }
 
+  var listing = Object.assign({}, previewListing, {
+    feedstock: feedstock,
+    pricePerTonne: avail.pricePerTonne || '—',
+    availableTonnes: avail.availableTonnes || '—',
+    minOrderTonnes: avail.minOrderTonnes || '—',
+    availableFrom: avail.availableFrom || null,
+    availableUntil: avail.availableUntil || null,
+    leadTimeDays: avail.leadTimeDays || 0,
+    description: avail.description || '',
+    scorecard: {
+      carbonContent: parseFloat(props.carbonContent) || 0,
+      pH: parseFloat(props.pH) || 0,
+      surfaceArea: parseFloat(props.surfaceArea) || 0,
+      particleSize: props.particleSize || '',
+      moisture: parseFloat(props.moisture) || 0,
+      ashContent: parseFloat(props.ashContent) || 0,
+      electricalConductivity: parseFloat(props.electricalConductivity) || 0,
+      labVerified: !!props.labVerified
+    },
+    certifications: props.certifications || [],
+    suitableFor: props.suitableFor || [],
+    transactionsCompleted: 0,
+    averageRating: null
+  });
+
   modal.innerHTML =
-    '<div style="background:var(--color-surface);border-radius:var(--radius-lg);max-width:680px;width:100%;max-height:90vh;overflow-y:auto;padding:var(--space-8)">' +
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-6)">' +
+    '<div style="background:var(--color-surface);border-radius:var(--radius-lg);max-width:980px;width:100%;max-height:90vh;overflow-y:auto;padding:var(--space-6)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-5)">' +
         '<h2 style="font-size:var(--font-size-xl)">Full listing preview — ' + feedstock + '</h2>' +
         '<button onclick="document.getElementById(\'preview-modal\').style.display=\'none\'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--color-text-muted)">×</button>' +
       '</div>' +
-      '<h3 style="margin-bottom:var(--space-2)">' + wizardData.business.businessName + '</h3>' +
-      '<p style="color:var(--color-text-muted);margin-bottom:var(--space-5)">' + wizardData.business.state + '</p>' +
-
-      '<div style="margin-bottom:var(--space-6)">' +
-        '<h4 style="font-size:var(--font-size-base);font-weight:var(--font-weight-semibold);margin-bottom:var(--space-4)">Lab scorecard</h4>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
-          renderScorecardRow('Carbon Content', props.carbonContent ? props.carbonContent + '%' : '—', 'Above 70% qualifies for carbon credit programs', !!props.carbonContent) +
-          renderScorecardRow('pH', props.pH || '—', 'Above 7 raises soil pH, beneficial for acidic soils', !!props.pH) +
-          renderScorecardRow('Moisture', props.moisture ? props.moisture + '%' : '—', 'Below 15% preferred for handling', !!props.moisture) +
-          renderScorecardRow('Surface Area', props.surfaceArea ? props.surfaceArea + ' m²/g' : '—', 'Above 400 is excellent for water retention', !!props.surfaceArea) +
-          renderScorecardRow('Particle Size', props.particleSize ? props.particleSize + ' mm' : '—', '1-4mm is versatile for most applications', !!props.particleSize) +
-          renderScorecardRow('Ash Content', props.ashContent ? props.ashContent + '%' : '—', 'Below 20% indicates high-carbon biochar', !!props.ashContent) +
-          renderScorecardRow('Electrical Conductivity', props.electricalConductivity ? props.electricalConductivity + ' dS/m' : '—', 'Below 2 ideal for most crops', !!props.electricalConductivity) +
-        '</div>' +
-      '</div>' +
-
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4);margin-bottom:var(--space-5)">' +
-        '<div><p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Price per tonne</p><p style="font-size:var(--font-size-2xl);font-weight:var(--font-weight-bold);color:var(--color-accent)">$' + (avail.pricePerTonne || '—') + '</p></div>' +
-        '<div><p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Available</p><p style="font-size:var(--font-size-xl);font-weight:var(--font-weight-bold)">' + (avail.availableTonnes || '—') + ' tonnes</p></div>' +
-        '<div><p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Minimum order</p><p style="font-weight:var(--font-weight-semibold)">' + (avail.minOrderTonnes || '—') + ' tonnes</p></div>' +
-        '<div><p style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Lead time</p><p style="font-weight:var(--font-weight-semibold)">' + (avail.leadTimeDays || '—') + ' days</p></div>' +
-      '</div>' +
-
-      (avail.deliveryMethods && avail.deliveryMethods.length > 0 ?
-        '<div style="margin-bottom:var(--space-5)"><p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">Delivery options</p><div style="display:flex;gap:var(--space-2);flex-wrap:wrap">' +
-        avail.deliveryMethods.map(function(d) { return '<span class="listing-tag">' + d + '</span>' }).join('') +
-        '</div></div>' : '') +
-
-      (props.certifications && props.certifications.length > 0 ?
-        '<div><p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">Certifications</p><div style="display:flex;gap:var(--space-2);flex-wrap:wrap">' +
-        props.certifications.map(function(c) { return '<span class="cert-badge">' + c + '</span>' }).join('') +
-        '</div></div>' : '') +
+      renderListingPreview(listing) +
     '</div>'
 
   modal.style.display = 'flex'
@@ -722,38 +689,125 @@ function openPreviewModal(feedstock, props, avail) {
   })
 }
 
-function renderScorecardRow(label, value, hint, hasValue) {
-  return '<div style="background:' + (hasValue ? 'var(--color-accent-light)' : 'var(--color-bg)') + ';border-radius:var(--radius-md);padding:var(--space-3) var(--space-4)">' +
-    '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:2px">' + label + '</p>' +
-    '<p style="font-weight:var(--font-weight-bold);font-size:var(--font-size-lg);color:' + (hasValue ? 'var(--color-accent)' : 'var(--color-text-muted)') + '">' + value + '</p>' +
-    '<p style="font-size:10px;color:var(--color-text-muted);margin-top:2px">' + hint + '</p>' +
-  '</div>'
+function getPreviewPhotos() {
+  if (!sellerPhotoFiles.length) return [];
+  return sellerPhotoFiles.map(function(file) { return URL.createObjectURL(file); });
+}
+
+function formatPreviewDate(dateStr) {
+  var date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return dateStr || '';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function renderListingPreview(listing) {
+  var suitableTags = (Array.isArray(listing.suitableFor) ? listing.suitableFor : [])
+    .map(function (item) { return '<span class="suitable-tag">' + item + '</span>'; })
+    .join('');
+  var headerClass = 'listing-header';
+  var headerStyle = '';
+  if (listing.photos && listing.photos.length) {
+    headerClass += ' has-hero';
+    headerStyle = ' style="background-image:url(' + listing.photos[0] + ')"';
+  }
+  var photoStrip = '';
+  if (listing.photos && listing.photos.length) {
+    photoStrip = '<div class="listing-photo-strip">' +
+      listing.photos.map(function(p) { return '<a href="' + p + '" target="_blank" rel="noopener"><img src="' + p + '" alt="Listing photo"></a>'; }).join('') +
+      '</div>';
+  }
+  var leadTimeDays = Number(listing.leadTimeDays) || 0;
+  var leadTimeText =
+    leadTimeDays === 0
+      ? '<span class="availability-lead ready">Ready to ship</span>'
+      : '<span class="availability-lead wait">' + Math.ceil(leadTimeDays / 7) + '-week lead time</span>';
+  var verificationClass = listing.scorecard.labVerified ? 'verified' : 'self';
+  var verificationText = listing.scorecard.labVerified ? 'Lab Verified' : 'Self Reported';
+  return '<div class="listing-shell">' +
+    '<section class="' + headerClass + '"' + headerStyle + '>' +
+      '<h1>' + listing.producerName + '</h1>' +
+      '<p class="listing-location">' + (listing.state || '') + '</p>' +
+      '<div class="listing-top-meta"><span class="feedstock-tag">' + listing.feedstock + '</span></div>' +
+      '<div class="headline-row">' +
+        '<span class="headline-price">$' + listing.pricePerTonne + '</span><span class="headline-unit">/tonne</span>' +
+        '<span class="headline-detail">' + listing.availableTonnes + ' t available &nbsp;·&nbsp; Min order: ' + listing.minOrderTonnes + ' t</span>' +
+      '</div>' +
+      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-2)">' +
+        (listing.availableFrom ? formatPreviewDate(listing.availableFrom) : 'Available now') +
+        (listing.availableUntil ? ' — ' + formatPreviewDate(listing.availableUntil) : '') +
+      '</div>' +
+      '<p class="rating-line">No transactions yet' +
+        '<span style="margin-left:12px;color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
+        (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
+        '</span></p>' +
+      photoStrip +
+      '<div id="top-card-actions"></div>' +
+      '<div id="complete-loop-banner"></div>' +
+    '</section>' +
+    '<section class="scorecard-section">' +
+      '<div class="section-title-row"><h2>Lab Scorecard</h2><span class="verify-badge ' + verificationClass + '">' + verificationText + '</span></div>' +
+      '<div class="scorecard-grid">' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.carbonContent || 0).toFixed(1) + '%</p><p class="scorecard-label">Carbon Content</p><p class="scorecard-note">Higher is better. Above 70% indicates stable long-term sequestration.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.pH || 0).toFixed(1) + '</p><p class="scorecard-label">pH</p><p class="scorecard-note">Values above 7 raise soil pH — beneficial for acidic soils.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.surfaceArea || 0) + ' m²/g</p><p class="scorecard-label">Surface Area</p><p class="scorecard-note">Higher surface area means better water and nutrient retention.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.particleSize || '—') + '</p><p class="scorecard-label">Particle Size</p><p class="scorecard-note">Smaller particles blend more easily. Larger particles improve drainage.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.moisture || 0).toFixed(1) + '%</p><p class="scorecard-label">Moisture</p><p class="scorecard-note">Lower is better for storage and transport.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.ashContent || 0).toFixed(1) + '%</p><p class="scorecard-label">Ash Content</p><p class="scorecard-note">Mineral residue from feedstock. High ash reduces stable carbon proportion.</p></article>' +
+        '<article class="scorecard-item"><p class="scorecard-value">' + (listing.scorecard.electricalConductivity || 0).toFixed(1) + ' dS/m</p><p class="scorecard-label">Electrical Conductivity</p><p class="scorecard-note">Below 2 dS/m is ideal for most crops.</p></article>' +
+      '</div>' +
+    '</section>' +
+    '<section class="scorecard-section" style="margin-top:var(--space-6)">' +
+      '<h2 class="section-title">Delivered Cost Estimate</h2>' +
+      '<div id="dc-setup">' +
+        '<div style="display:flex;flex-wrap:wrap;gap:var(--space-4);margin-bottom:var(--space-4);align-items:flex-end">' +
+          '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Your ZIP Code</label>' +
+          '<input type="text" maxlength="5" placeholder="e.g. 94103" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
+          '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Volume (tonnes)</label>' +
+          '<input type="number" min="1" value="' + listing.minOrderTonnes + '" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
+          '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Application Rate (tons/acre)</label>' +
+          '<input type="number" min="0" step="0.1" value="1" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
+          '<div style="flex:1;min-width:220px"><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Spreading Cost: $<span>60</span>/tonne</label>' +
+          '<input type="range" min="40" max="80" value="60" style="width:100%"></div>' +
+          '<button class="btn btn-primary" type="button">Calculate</button>' +
+        '</div>' +
+      '</div>' +
+    '</section>' +
+    '<section class="description-section">' +
+      '<h2>About this material</h2>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)">' +
+      suitableTags +
+      '</div>' +
+      '<p style="color:var(--color-text-secondary);line-height:1.7">' + (listing.description || '') + '</p>' +
+    '</section>' +
+    '<section class="availability-section">' +
+      '<div class="availability-card">' +
+        '<div><div class="availability-label">Lead time</div><div class="availability-value">' + leadTimeText + '</div></div>' +
+        '<div><div class="availability-label">Delivery options</div><div class="availability-tags">' +
+        (avail.deliveryMethods || []).map(function(d) { return '<span>' + d + '</span>'; }).join('') +
+        '</div></div>' +
+      '</div>' +
+    '</section>' +
+  '</div>';
 }
 
 document.addEventListener('click', function(e) {
   if (e.target.classList.contains('wizard-next')) {
     const from = parseInt(e.target.dataset.from)
     if (from === 1) {
-      if (!validateStep1()) return
-      saveStep1()
-      buildStateSelect(document.getElementById('w-state'), true)
-      showStep(2)
-    }
-    if (from === 2) {
       if (!validateStep2()) return
       buildPropertiesTabs()
       buildAvailabilityTabs()
+      showStep(2)
+    }
+    if (from === 2) {
+      if (!validateStep3()) return
       showStep(3)
     }
     if (from === 3) {
-      if (!validateStep3()) return
-      showStep(4)
-    }
-    if (from === 4) {
       if (!validateStep4()) return
       buildReviewStep()
       clearDraft()
-      showStep(5)
+      showStep(4)
     }
   }
 
@@ -763,31 +817,20 @@ document.addEventListener('click', function(e) {
   }
 })
 
-async function prefillWizard() {
-  if (!window.currentUser) return
-  try {
-    const doc = await db.collection('users').doc(window.currentUser.uid).get()
-    if (!doc.exists) return
-    const p = doc.data()
-    const fields = {
-      'w-businessName': p.businessName,
-      'w-contactName': p.name,
-      'w-email': p.email,
-      'w-zipcode': p.zipcode,
-      'w-ein': p.ein,
-      'w-website': p.businessWebsite
-    }
-    Object.entries(fields).forEach(function(entry) {
-      const el = document.getElementById(entry[0])
-      if (el && entry[1]) el.value = entry[1]
-    })
-    if (p.state) {
-      const stateSelect = document.getElementById('w-state')
-      if (stateSelect) stateSelect.value = p.state
-    }
-    const equipmentEl = document.getElementById('w-equipment')
-    if (equipmentEl && p.pyroTech) equipmentEl.value = p.pyroTech
-  } catch(e) {}
+function prefillWizard(profile, user) {
+  if (!profile) return;
+  wizardData.business = {
+    businessName: profile.businessName || '',
+    contactName: profile.name || '',
+    email: profile.email || (user && user.email) || '',
+    state: profile.state || '',
+    zipcode: profile.zipcode || '',
+    ein: profile.ein || '',
+    businessWebsite: profile.businessWebsite || '',
+    equipmentType: profile.equipmentType || profile.pyroTech || '',
+    pyroTech: profile.pyroTech || profile.equipmentType || '',
+    annualCapacity: profile.annualCapacity || ''
+  };
 }
 
 var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
@@ -822,13 +865,10 @@ document.addEventListener('DOMContentLoaded', function() {
       toggleBtn.textContent = allChecked ? 'Select all' : 'Deselect all';
     });
   }
-  var stateEl = document.getElementById('w-state');
-  if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true);
   var draft = loadDraft();
   var banner = document.getElementById('draft-resume-banner');
   var hasRealContent = draft && draft.wizardData &&
-    draft.wizardData.feedstocks && draft.wizardData.feedstocks.length > 0 &&
-    draft.wizardData.business && draft.wizardData.business.businessName;
+    draft.wizardData.feedstocks && draft.wizardData.feedstocks.length > 0;
   if (hasRealContent && banner) {
     var savedAt = draft.savedAt ? new Date(draft.savedAt).toLocaleDateString() : '';
     var savedAtEl = document.getElementById('draft-saved-at');
@@ -845,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
         buildPropertiesTabs();
         buildAvailabilityTabs();
         var step = draft.currentStep || 1;
-        if (step >= 3) {
+        if (step >= 2) {
           wizardData.feedstocks.forEach(function(feedstock, i) {
             var props = wizardData.properties[feedstock] || {};
             var fields = ['carbon','ph','moisture','surface','particle','ash','ec'];
@@ -859,18 +899,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (labVerified && props.labVerified) labVerified.checked = true;
           });
         }
-      }
-      if (wizardData.business && Object.keys(wizardData.business).length) {
-        var fields = {
-          'w-businessName': 'businessName', 'w-contactName': 'contactName',
-          'w-email': 'email', 'w-zipcode': 'zipcode', 'w-ein': 'ein',
-          'w-website': 'businessWebsite', 'w-years': 'yearsInOperation',
-          'w-equipment': 'equipmentType', 'w-capacity': 'annualCapacity'
-        };
-        Object.keys(fields).forEach(function(id) {
-          var el = document.getElementById(id);
-          if (el && wizardData.business[fields[id]]) el.value = wizardData.business[fields[id]];
-        });
       }
       showStep(draft.currentStep || 1);
     });
@@ -895,8 +923,8 @@ function uploadSellerPhotos() {
   return Promise.all(promises);
 }
 
-firebase.auth().onAuthStateChanged(function(user) {
-  if (user) prefillWizard()
+window.AuthState.onReady(function(user, profile) {
+  if (user && profile) prefillWizard(profile, user);
 })
 
 
@@ -943,9 +971,8 @@ document.addEventListener('click', function(e) {
       zipcode: wizardData.business.zipcode,
       ein: wizardData.business.ein,
       businessWebsite: wizardData.business.businessWebsite,
-      yearsInOperation: wizardData.business.yearsInOperation,
       equipmentType: wizardData.business.equipmentType,
-      pyroTech: wizardData.business.equipmentType,
+      pyroTech: wizardData.business.pyroTech || wizardData.business.equipmentType,
       annualCapacity: wizardData.business.annualCapacity,
       feedstock: feedstock,
       scorecard: {
@@ -980,8 +1007,8 @@ document.addEventListener('click', function(e) {
 
   Promise.all(promises)
     .then(function() {
-      showStep(5)
-      const inner = document.querySelector('#step-5 .wizard-panel-inner')
+      showStep(4)
+      const inner = document.querySelector('#step-4 .wizard-panel-inner')
       if (inner) {
         inner.innerHTML =
           '<div style="text-align:center;padding:var(--space-12) 0">' +

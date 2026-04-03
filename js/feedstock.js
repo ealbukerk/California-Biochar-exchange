@@ -181,15 +181,17 @@
     var bestYield  = Math.round(l.estimatedQuantityTons * bestRatio);
     var worstYield = Math.round(l.estimatedQuantityTons * worstRatio);
     var midYield   = Math.round((bestYield + worstYield) / 2);
-    var co2 = Math.round(midYield * 0.85 * 3.67);
+    var co2Total = midYield * 0.85 * 3.67;
+    var co2PerTon = l.estimatedQuantityTons ? (co2Total / l.estimatedQuantityTons) : null;
 
     var rangeStr = bestYield === worstYield
       ? bestYield.toLocaleString() + ' tons'
       : worstYield.toLocaleString() + '\u2013' + bestYield.toLocaleString() + ' tons';
 
+    if (!co2PerTon) return '';
     return '<div style="background:var(--color-accent-light);border-radius:var(--radius-md);padding:var(--space-3) var(--space-4);margin-top:var(--space-2);font-size:var(--font-size-sm);color:var(--color-text-secondary)">' +
       '🔥 Est. char yield: <strong>' + rangeStr + '</strong>' +
-      ' &nbsp;·&nbsp; 🌍 CO₂ potential: <strong>' + co2.toLocaleString() + ' tCO₂e</strong>' +
+      ' &nbsp;·&nbsp; 🌍 CO₂ potential: <strong>~' + co2PerTon.toFixed(1) + ' t CO₂ / ton</strong>' +
     '</div>';
   }
 
@@ -216,6 +218,7 @@
     var sizeColor = qty >= 500 ? '#1E3A5F' : qty >= 100 ? '#92400E' : '#374151';
     var sizeBg    = qty >= 500 ? '#DBEAFE' : qty >= 100 ? '#FEF3C7' : '#F3F4F6';
     var sizeTag = '<span style="background:' + sizeBg + ';color:' + sizeColor + ';border-radius:4px;padding:2px 7px;font-size:11px;font-weight:700">' + sizeLabel + ' · ' + qty.toLocaleString() + 't</span>';
+    var supplierBadge = l.supplierVerified ? '<span class="verified-badge">✓ Verified</span>' : '';
     var freeTag = l.pricePerTon === 0 ? '<span class="fs-tag fs-tag-free">Free to haul</span>' : '';
     var priceDisplay = l.pricePerTon === 0 ? 'Free' : '$' + l.pricePerTon + '/ton';
 
@@ -246,7 +249,6 @@
       (fsCompareList.indexOf(String(l._id || l.id || '')) !== -1 ? ' checked' : '') +
       '><label class="compare-label">Compare</label>' +
       '</div>' +
-      (l.verified ? '<div style="position:absolute;top:10px;right:10px;z-index:2;background:#D1FAE5;color:#065F46;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,0.12)" title="Verified listing">✓</div>' : '') +
       '<a href="feedstock-listing.html?id=' + (l._id || l.id || '') + '" class="fs-card" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;cursor:pointer">' +
         photoHtml +
         '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
@@ -254,6 +256,7 @@
           '<div class="listing-top-row" style="flex-wrap:wrap;gap:var(--space-2)">' +
             '<span class="fs-tag fs-tag-type">' + typeLabel + '</span>' +
             '<span class="fs-tag fs-tag-supplier">' + supplierLabel + '</span>' +
+            (supplierBadge ? supplierBadge + ' ' : '') +
             sizeTag + (freeTag ? ' ' + freeTag : '') +
           '</div>' +
           '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +

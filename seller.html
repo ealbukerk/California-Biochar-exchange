@@ -886,26 +886,21 @@
             <div class="wizard-steps-bar">
               <div class="wizard-step-dot active" data-step="1">
                 <span class="dot-number">1</span>
-                <span class="dot-label">Business Info</span>
+                <span class="dot-label">Your Feedstocks</span>
               </div>
               <div class="wizard-step-line"></div>
               <div class="wizard-step-dot" data-step="2">
                 <span class="dot-number">2</span>
-                <span class="dot-label">Your Feedstocks</span>
+                <span class="dot-label">Material Properties</span>
               </div>
               <div class="wizard-step-line"></div>
               <div class="wizard-step-dot" data-step="3">
                 <span class="dot-number">3</span>
-                <span class="dot-label">Material Properties</span>
+                <span class="dot-label">Availability</span>
               </div>
               <div class="wizard-step-line"></div>
               <div class="wizard-step-dot" data-step="4">
                 <span class="dot-number">4</span>
-                <span class="dot-label">Availability</span>
-              </div>
-              <div class="wizard-step-line"></div>
-              <div class="wizard-step-dot" data-step="5">
-                <span class="dot-number">5</span>
                 <span class="dot-label">Review</span>
               </div>
             </div>
@@ -922,88 +917,8 @@
             </div>
           </div>
 
-          <!-- Step 1: Business Info -->
+          <!-- Step 1: Feedstocks -->
           <div class="wizard-panel active" id="step-1">
-            <div class="wizard-panel-inner">
-              <h2 class="wizard-step-title">Your business information</h2>
-              <p class="wizard-step-sub">We've pre-filled what we know. Review and correct anything that needs updating.</p>
-
-              <div class="wizard-notice">
-                <span>ℹ️</span>
-                <p>This information will be reviewed by our team before your listing goes live. Make sure everything is accurate.</p>
-              </div>
-
-              <div class="wizard-form-grid">
-                <div class="form-group">
-                  <label for="w-businessName">Business name <span class="required-star">*</span></label>
-                  <input type="text" id="w-businessName" name="businessName" autocomplete="organization" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-contactName">Contact name <span class="required-star">*</span></label>
-                  <input type="text" id="w-contactName" name="contactName" autocomplete="name" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-email">Email address <span class="required-star">*</span></label>
-                  <input type="email" id="w-email" name="email" autocomplete="email" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-state">State <span class="required-star">*</span></label>
-                  <select id="w-state" name="state" autocomplete="address-level1" required></select>
-                </div>
-                <div class="form-group">
-                  <label for="w-zipcode">ZIP code <span class="required-star">*</span></label>
-                  <input type="text" id="w-zipcode" name="zipcode" pattern="[0-9]{5}" maxlength="5" autocomplete="postal-code" placeholder="e.g. 94103" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-ein">Business EIN <span class="required-star">*</span></label>
-                  <p class="field-hint">Format: XX-XXXXXXX. Required for seller verification.</p>
-                  <input type="text" id="w-ein" name="ein" placeholder="XX-XXXXXXX" pattern="[0-9]{2}-[0-9]{7}" autocomplete="off" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-website">Business website</label>
-                  <input type="url" id="w-website" name="businessWebsite" placeholder="https://yourcompany.com" autocomplete="url">
-                </div>
-                <div class="form-group">
-                  <label for="w-years">Years in operation <span class="required-star">*</span></label>
-                  <input type="number" id="w-years" name="yearsInOperation" min="0" max="100" placeholder="e.g. 5" autocomplete="off" required>
-                </div>
-                <div class="form-group">
-                  <label for="w-equipment">Pyrolysis equipment type <span class="required-star">*</span></label>
-                  <select id="w-equipment" name="equipmentType" autocomplete="off" required>
-                    <option value="">Select type</option>
-                    <option>Retort kiln</option>
-                    <option>Rotary drum</option>
-                    <option>Flame curtain</option>
-                    <option>Gasifier</option>
-                    <option>Other</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="w-capacity">Annual production capacity (tonnes) <span class="required-star">*</span></label>
-                  <input type="number" id="w-capacity" name="annualCapacity" min="0" placeholder="e.g. 500" autocomplete="off" required>
-                </div>
-              </div>
-
-              <div class="form-group" style="grid-column:1/-1;margin-top:var(--space-4)">
-                <label>Photos of your operation <span style="color:var(--color-text-muted);font-weight:400">(recommended)</span></label>
-                <p class="field-hint">Photos of your kiln, equipment, or finished product build trust with buyers. Up to 5 images.</p>
-                <div id="seller-photo-drop" style="border:2px dashed var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);text-align:center;cursor:pointer;background:var(--color-bg);margin-top:var(--space-2)" onclick="document.getElementById('seller-photo-input').click()">
-                  <div style="font-size:1.75rem">📷</div>
-                  <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">Click to upload · JPG or PNG</p>
-                </div>
-                <input type="file" id="seller-photo-input" accept="image/*" multiple style="display:none" />
-                <div id="seller-photo-previews" style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-3)"></div>
-              </div>
-
-              <div class="wizard-nav">
-                <span></span>
-                <button class="btn btn-primary wizard-next" data-from="1">Continue to Feedstocks →</button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 2: Feedstocks -->
-          <div class="wizard-panel" id="step-2">
             <div class="wizard-panel-inner">
               <h2 class="wizard-step-title">Which feedstocks do you produce?</h2>
               <p class="wizard-step-sub">Select every feedstock type you can supply. You will enter material properties and pricing separately for each one.</p>
@@ -1065,14 +980,14 @@
               <p id="feedstock-error" class="field-error" style="display:none">Please select at least one feedstock to continue.</p>
 
               <div class="wizard-nav">
-                <button class="btn btn-secondary wizard-back" data-to="1">← Back</button>
-                <button class="btn btn-primary wizard-next" data-from="2">Continue to Material Properties →</button>
+                <span></span>
+                <button class="btn btn-primary wizard-next" data-from="1">Continue to Material Properties →</button>
               </div>
             </div>
           </div>
 
-          <!-- Step 3: Material Properties (tabs generated by JS) -->
-          <div class="wizard-panel" id="step-3">
+          <!-- Step 2: Material Properties (tabs generated by JS) -->
+          <div class="wizard-panel" id="step-2">
             <div class="wizard-panel-inner">
               <h2 class="wizard-step-title">Material properties</h2>
               <p class="wizard-step-sub">Enter lab data for each feedstock. All fields marked required must be completed. <strong>Listings with complete lab data rank higher in search results and get significantly more buyer inquiries — filling out every field now will directly increase your orders.</strong></p>
@@ -1081,14 +996,14 @@
               <div class="feedstock-tab-panels" id="properties-panels"></div>
 
               <div class="wizard-nav">
-                <button class="btn btn-secondary wizard-back" data-to="2">← Back</button>
-                <button class="btn btn-primary wizard-next" data-from="3">Continue to Availability →</button>
+                <button class="btn btn-secondary wizard-back" data-to="1">← Back</button>
+                <button class="btn btn-primary wizard-next" data-from="2">Continue to Availability →</button>
               </div>
             </div>
           </div>
 
-          <!-- Step 4: Availability (tabs generated by JS) -->
-          <div class="wizard-panel" id="step-4">
+          <!-- Step 3: Availability (tabs generated by JS) -->
+          <div class="wizard-panel" id="step-3">
             <div class="wizard-panel-inner">
               <h2 class="wizard-step-title">Availability and pricing</h2>
               <p class="wizard-step-sub">Set pricing and availability for each feedstock. Buyers see this information when browsing listings.</p>
@@ -1096,15 +1011,26 @@
               <div class="feedstock-tabs" id="availability-tabs"></div>
               <div class="feedstock-tab-panels" id="availability-panels"></div>
 
+              <div class="form-group" style="grid-column:1/-1;margin-top:var(--space-4)">
+                <label>Photos of your operation <span style="color:var(--color-text-muted);font-weight:400">(recommended)</span></label>
+                <p class="field-hint">Photos of your kiln, equipment, or finished product build trust with buyers. Up to 5 images.</p>
+                <div id="seller-photo-drop" style="border:2px dashed var(--color-border);border-radius:var(--radius-md);padding:var(--space-6);text-align:center;cursor:pointer;background:var(--color-bg);margin-top:var(--space-2)" onclick="document.getElementById('seller-photo-input').click()">
+                  <div style="font-size:1.75rem">📷</div>
+                  <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">Click to upload · JPG or PNG</p>
+                </div>
+                <input type="file" id="seller-photo-input" accept="image/*" multiple style="display:none" />
+                <div id="seller-photo-previews" style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-3)"></div>
+              </div>
+
               <div class="wizard-nav">
-                <button class="btn btn-secondary wizard-back" data-to="3">← Back</button>
-                <button class="btn btn-primary wizard-next" data-from="4">Review your application →</button>
+                <button class="btn btn-secondary wizard-back" data-to="2">← Back</button>
+                <button class="btn btn-primary wizard-next" data-from="3">Review your application →</button>
               </div>
             </div>
           </div>
 
-          <!-- Step 5: Review -->
-          <div class="wizard-panel" id="step-5">
+          <!-- Step 4: Review -->
+          <div class="wizard-panel" id="step-4">
             <div class="wizard-panel-inner">
               <h2 class="wizard-step-title">Review your application</h2>
               <p class="wizard-step-sub">Check everything below before submitting. Your listing will go live after our team reviews your application — typically within 2 business days.</p>
@@ -1131,7 +1057,7 @@
               <p id="submit-error" class="field-error" style="display:none"></p>
 
               <div class="wizard-nav">
-                <button class="btn btn-secondary wizard-back" data-to="4">← Back</button>
+                <button class="btn btn-secondary wizard-back" data-to="3">← Back</button>
                 <button class="btn btn-primary" id="wizard-submit-btn">Submit application</button>
               </div>
             </div>
