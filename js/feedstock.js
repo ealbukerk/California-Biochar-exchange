@@ -292,22 +292,7 @@
   var fsCompareList = [];
 
   function updateFsCompareBar() {
-    var bar = document.getElementById('compare-bar');
-    var count = document.getElementById('compare-count');
-    var btn = document.getElementById('compare-btn');
-    if (!bar || !count) return;
-    if (fsCompareList.length > 0) {
-      bar.style.display = 'flex';
-      count.textContent = fsCompareList.length + ' listing' + (fsCompareList.length > 1 ? 's' : '') + ' selected';
-    } else {
-      bar.style.display = 'none';
-    }
-    if (btn) {
-      var enabled = fsCompareList.length >= 2 && fsCompareList.length <= 3;
-      btn.disabled = !enabled;
-      btn.style.opacity = enabled ? '1' : '0.5';
-      btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
-    }
+    return;
   }
 
   function fsCompareCardHtml(l) {
@@ -335,7 +320,6 @@
   function renderFsComparison() {
     var view = document.getElementById('fs-comparison-view');
     var grid = document.getElementById('fs-grid');
-    var bar = document.getElementById('compare-bar');
     if (!view) return;
     var selected = fsCompareList.map(function(id) {
       return state.listings.find(function(l) { return String(l._id) === String(id); });
@@ -343,7 +327,6 @@
     if (selected.length < 2) return;
 
     if (grid) grid.classList.add('hidden');
-    if (bar) bar.style.display = 'none';
     view.classList.remove('hidden');
     view.innerHTML =
       '<div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px">' +
@@ -378,30 +361,11 @@
     }
     empty.style.display = 'none';
     grid.innerHTML = state.filtered.map(function(l) {
-      var isSelected = fsCompareList.indexOf(String(l._id)) !== -1;
-      var card = cardHtml(l);
-      var compareBtn = '<button class="fs-compare-toggle" data-id="' + l._id + '" style="width:100%;padding:6px;background:' + (isSelected ? '#7A5C1E' : 'none') + ';color:' + (isSelected ? 'white' : '#7A5C1E') + ';border:1px solid #7A5C1E;border-radius:var(--radius-md);font-size:var(--font-size-xs);font-weight:600;cursor:pointer;margin-top:4px">' + (isSelected ? '✓ Selected for compare' : '+ Compare') + '</button>';
-      return card.replace('</a>', compareBtn + '</a>');
+      return cardHtml(l);
     }).join('');
 
     grid.querySelectorAll('.fs-contact-btn').forEach(function(btn) {
       btn.addEventListener('click', function() { openModal(btn.getAttribute('data-id')); });
-    });
-
-    grid.querySelectorAll('.fs-compare-toggle').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var id = String(btn.getAttribute('data-id'));
-        var idx = fsCompareList.indexOf(id);
-        if (idx !== -1) {
-          fsCompareList.splice(idx, 1);
-        } else if (fsCompareList.length < 3) {
-          fsCompareList.push(id);
-        }
-        updateFsCompareBar();
-        renderGrid();
-      });
     });
 
     grid.querySelectorAll('.fs-compare-check').forEach(function(chk) {
@@ -416,6 +380,7 @@
           fsCompareList.splice(idx, 1);
         }
         updateFsCompareBar();
+        if (fsCompareList.length === 3) renderFsComparison();
       });
     });
 
@@ -815,11 +780,6 @@
         if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
       });
     }
-  document.addEventListener('click', function(e) {
-    if (e.target.id === 'compare-btn') {
-      if (fsCompareList.length >= 2 && fsCompareList.length <= 3) renderFsComparison();
-    }
-  });
     firebase.auth().onAuthStateChanged(function (user) {
       var login = document.getElementById('nav-login');
       var profile = document.getElementById('nav-profile');

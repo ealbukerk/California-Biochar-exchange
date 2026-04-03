@@ -66,6 +66,7 @@
       <div class="nav-grid">
         <a class="nav-card" href="buyer.html" target="_blank"><div class="nav-title">Biochar Market</div><div class="nav-file">buyer.html</div></a>
         <a class="nav-card" href="listing.html" target="_blank"><div class="nav-title">Browse Listings</div><div class="nav-file">listing.html</div></a>
+        <a class="nav-card" href="listings.html" target="_blank"><div class="nav-title">Listings Index</div><div class="nav-file">listings.html</div></a>
         <a class="nav-card" href="feedstock.html" target="_blank"><div class="nav-title">Feedstock Market</div><div class="nav-file">feedstock.html</div></a>
         <a class="nav-card" href="feedstock-listing.html?id=fs-demo-001" target="_blank"><div class="nav-title">Feedstock Detail</div><div class="nav-file">feedstock-listing.html?id=fs-demo-001</div></a>
         <a class="nav-card" href="carriers.html" target="_blank"><div class="nav-title">Carriers</div><div class="nav-file">carriers.html</div></a>
@@ -77,8 +78,8 @@
       <div class="nav-grid">
         <a class="nav-card" href="seller.html" target="_blank"><div class="nav-title">List Biochar</div><div class="nav-file">seller.html</div></a>
         <a class="nav-card" href="list-feedstock.html" target="_blank"><div class="nav-title">List Feedstock</div><div class="nav-file">list-feedstock.html</div></a>
-        <!-- <a class="nav-card" href="producer-demand.html" target="_blank"><div class="nav-title">Post Demand</div><div class="nav-file">producer-demand.html</div></a> -->
-        <!-- <a class="nav-card" href="producer-demand-browse.html" target="_blank"><div class="nav-title">Browse Demand</div><div class="nav-file">producer-demand-browse.html</div></a> -->
+        <a class="nav-card" href="producer-demand.html" target="_blank"><div class="nav-title">Post Demand</div><div class="nav-file">producer-demand.html</div></a>
+        <a class="nav-card" href="producer-demand-browse.html" target="_blank"><div class="nav-title">Browse Demand</div><div class="nav-file">producer-demand-browse.html</div></a>
       </div>
     </div>
 
@@ -109,6 +110,9 @@
       <div class="nav-grid">
         <a class="nav-card" href="auth.html" target="_blank"><div class="nav-title">Auth / Sign up</div><div class="nav-file">auth.html</div></a>
         <a class="nav-card" href="index.html" target="_blank"><div class="nav-title">Index</div><div class="nav-file">index.html</div></a>
+        <a class="nav-card" href="buyers.html" target="_blank"><div class="nav-title">Buyers</div><div class="nav-file">buyers.html</div></a>
+        <a class="nav-card" href="match.html" target="_blank"><div class="nav-title">Match</div><div class="nav-file">match.html</div></a>
+        <a class="nav-card" href="qa.html" target="_blank"><div class="nav-title">QA Dashboard</div><div class="nav-file">qa.html</div></a>
       </div>
     </div>
   </div>
@@ -130,12 +134,11 @@ document.querySelectorAll('.tab-btn').forEach(function(btn) {
 });
 
 var PAGES = [
-  'index.html','buyer.html','seller.html','auth.html','profile.html',
-  'listing.html','feedstock.html','feedstock-listing.html','list-feedstock.html',
-  'producer-demand.html','producer-demand-browse.html','dealroom.html',
-  'carriers.html','settings.html','terms.html','admin.html',
-  'how-it-works.html','certifications.html','understanding-biochar.html',
-  'crops.html','learn.html'
+  'admin.html','auth.html','buyer.html','buyers.html','carriers.html','certifications.html','crops.html',
+  'dealroom.html','feedstock-listing.html','feedstock.html','how-it-works.html','index.html','learn.html',
+  'list-feedstock.html','listing.html','listings.html','match.html','producer-demand-browse.html',
+  'producer-demand.html','profile.html','qa.html','seller.html','settings.html','terms.html',
+  'understanding-biochar.html'
 ];
 
 var PAGE_CHECKS = {
@@ -148,7 +151,7 @@ var PAGE_CHECKS = {
     mustNotContain: []
   },
   'feedstock.html': {
-    mustContain: ['fs-grid','list-feedstock.html','producer-demand.html','panel-demand','demand-full-grid','bm-nav-placeholder'],
+    mustContain: ['fs-grid','list-feedstock.html','feedstock-map','bm-nav-placeholder'],
     mustNotContain: []
   },
   'feedstock-listing.html': {
@@ -197,7 +200,7 @@ var KEY_STRINGS = {
   'js/dealroom.js': ['confirmDealDelivery','respondToBid','openRatingModal','renderThirdPartyPanel','CLOUDINARY_UPLOAD_URL'],
   'js/delivered-cost.js': ['router.project-osrm.org','calcDeliveredCost','BIOCHAR_DENSITY'],
   'js/apply-wizard.js': ['saveDraft','loadDraft','clearDraft','uploadSellerPhotos','prefillWizard','pyroTech'],
-  'js/auth-state.js': ['BUY_NAV','SELL_NAV','buildNav','setMode','hasBiomassAvailable','onReady','bm-mode-buy','bm-avatar-btn'],
+  'js/auth-state.js': ['PAGE_CONTEXT','buildNav','initNavListener','bm-role-buyer','bm-mkt-biochar'],
   'js/feedstock.js': ['feedstock-listing.html','renderDemandTab'],
   'js/profile.js': ['scheduleRepeatOrder','loadScheduledOrders','advanceDateByFrequency'],
   'js/admin.js': ['loadPendingListings','approveListing','rejectListing'],
@@ -343,6 +346,18 @@ async function runAll() {
 
   var p6 = addSection('dc', '6 — delivered-cost.js loaded where needed');
   await checkDeliveredCostLoaded(p6);
+
+  var p7 = addSection('manual', '7 — Manual validation (auth or live data required)');
+  [
+    'Feedstock compare auto-trigger at 3 selections (manual only)',
+    'ZIP autofill from profile (manual only)',
+    'Feedstock contamination score averaging on cards',
+    'Demand tab hidden state',
+    'New listings stored with verified:false (manual only)',
+    'Listing cards show primary photo when available'
+  ].forEach(function(label) {
+    addRow(p7, label, 'warn', 'manual only');
+  });
 
   document.getElementById('sum-pass').textContent = results.pass;
   document.getElementById('sum-fail').textContent = results.fail;

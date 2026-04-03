@@ -1,3 +1,7 @@
+function demoTimestamp(dateStr) {
+  return { toMillis: function () { return new Date(dateStr).getTime(); } };
+}
+
 window.FEEDSTOCK_YIELD_RATIOS = {
   orchard_prunings: 0.28,
   almond_shells: 0.32,
@@ -20,7 +24,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Maria Gutierrez',
     company: 'Gutierrez Family Orchards',
     contactEmail: 'maria@gutierrezorchards.com',
+    phone: '',
     supplierType: 'farmer',
+    biomassTypes: ['orchard_prunings'],
     biomassType: 'orchard_prunings',
     particleSize: 'chipped',
     contaminationRisk: 'scored',
@@ -40,7 +46,8 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Almond and walnut mix from 200-acre orchard. Loader on site. Easy truck access off Hwy 99.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-02-10')
   },
   {
     _id: 'fs-demo-002',
@@ -48,7 +55,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Tom Bergstrom',
     company: 'Sierra Nevada Timber',
     contactEmail: 'tom@snvtimber.com',
+    phone: '',
     supplierType: 'sawmill',
+    biomassTypes: ['logging_residue'],
     biomassType: 'logging_residue',
     particleSize: 'mixed',
     contaminationRisk: 'scored',
@@ -68,7 +77,8 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Mix of pine and fir slash from thinning operations. Material is stored on-site at our El Dorado County yard.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-01-05')
   },
   {
     _id: 'fs-demo-003',
@@ -76,7 +86,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Kevin Park',
     company: 'Bay Area Tree Care',
     contactEmail: 'kevin@batreecare.com',
+    phone: '',
     supplierType: 'tree_service',
+    biomassTypes: ['tree_service_chips'],
     biomassType: 'tree_service_chips',
     particleSize: 'chipped',
     contaminationRisk: 'scored',
@@ -96,7 +108,8 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Fresh chips from residential and commercial tree work in Oakland and Alameda. Free to haul — we just need it gone. Mostly oak and eucalyptus.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-01-20')
   },
   {
     _id: 'fs-demo-004',
@@ -104,7 +117,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Priya Nair',
     company: 'Sacramento Valley Rice',
     contactEmail: 'priya@sacvalleyrice.com',
+    phone: '',
     supplierType: 'farmer',
+    biomassTypes: ['rice_husks'],
     biomassType: 'rice_husks',
     particleSize: 'mixed',
     contaminationRisk: 'scored',
@@ -124,7 +139,8 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Dry rice husks from post-harvest processing. Excellent pyrolysis feedstock — very low moisture, consistent particle size. Baled and ready to load.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-02-01')
   },
   {
     _id: 'fs-demo-005',
@@ -132,7 +148,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Dave Schultz',
     company: 'Mendocino Forest Products',
     contactEmail: 'dave@mfpwood.com',
+    phone: '',
     supplierType: 'forestry_operator',
+    biomassTypes: ['thinning_material'],
     biomassType: 'thinning_material',
     particleSize: 'whole_limbs',
     contaminationRisk: 'scored',
@@ -152,7 +170,8 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Cal Fire-funded thinning project. Material is whole limbs and small diameter stems, some soil contact. Road access requires high-clearance trucks.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-01-12')
   },
   {
     _id: 'fs-demo-006',
@@ -160,7 +179,9 @@ window.FEEDSTOCK_LISTINGS = [
     supplierName: 'Carol Whitfield',
     company: 'Sonoma Clean Demolition',
     contactEmail: 'carol@sonomaclean.com',
+    phone: '',
     supplierType: 'recycler',
+    biomassTypes: ['clean_wood_waste'],
     biomassType: 'clean_wood_waste',
     particleSize: 'chipped',
     contaminationRisk: 'scored',
@@ -180,6 +201,7 @@ window.FEEDSTOCK_LISTINGS = [
     notes: 'Untreated dimensional lumber and pallets from deconstruction jobs. Clean, no paint or treatment. Chipped on-site. Sonoma County pickup only.',
     photos: [],
     status: 'active',
-    _demo: true
+    verified: false,
+    createdAt: demoTimestamp('2026-02-05')
   }
 ];
