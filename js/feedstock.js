@@ -55,6 +55,17 @@
     unknown: 7
   };
 
+  function scoreDots(score, max, lowerBetter) {
+    var filled = Math.round((lowerBetter ? (max + 1 - score) : score) / max * 5);
+    filled = Math.max(1, Math.min(5, filled));
+    var color = score <= 2 ? '#3D6B45' : score <= 3 ? '#B87333' : '#cc4444';
+    var dots = '';
+    for (var i = 0; i < 5; i++) {
+      dots += '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:2px;background:' + (i < filled ? color : 'var(--color-border)') + '"></span>';
+    }
+    return dots;
+  }
+
   var state = {
     listings: [],
     filtered: [],
@@ -252,10 +263,31 @@
 
         '<div class="fs-card-stats"></div>' +
 
-        '<div class="fs-quality-row">' +
-          '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Contamination <span style="font-size:9px;color:var(--color-text-muted)">(D/A/C)</span></div><div class="fs-stat-val">' + contamDisplay + '</div></div>' +
+        '<div style="display:flex;flex-direction:column;gap:4px;margin-top:var(--space-2)">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Moisture</span>' +
+            scoreDots({'under_20':1,'20_30':2,'30_40':3,'over_40':4}[l.moistureContent]||2, 4, true) +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + moistureLabel + '</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Debris</span>' +
+            scoreDots(parseInt(l.contaminationDebris||1), 5, true) +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationDebris||1) + '/5</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Ash</span>' +
+            scoreDots(parseInt(l.contaminationAsh||1), 5, true) +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationAsh||1) + '/5</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Chemical</span>' +
+            scoreDots(parseInt(l.contaminationChemical||1), 5, true) +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationChemical||1) + '/5</span>' +
+          '</div>' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
+            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Particle size</span>' +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + particleLabel + '</span>' +
+          '</div>' +
         '</div>' +
 
         deliveredHtml +
@@ -618,14 +650,12 @@
   function init() {
     bindFilters();
     bindModal();
-    document.addEventListener('click', function(e) {
-      if (e.target.id === 'fs-compare-btn') renderFsComparison();
-      if (e.target.id === 'fs-compare-clear') {
-        fsCompareList = [];
-        updateFsCompareBar();
-        renderGrid();
-      }
-    });
+  document.addEventListener('click', function(e) {
+    if (e.target.id === 'fs-compare-clear') {
+      fsCompareList = [];
+      renderGrid();
+    }
+  });
     firebase.auth().onAuthStateChanged(function (user) {
       var login = document.getElementById('nav-login');
       var profile = document.getElementById('nav-profile');

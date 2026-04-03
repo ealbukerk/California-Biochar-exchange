@@ -127,13 +127,16 @@
             </select>
           </div>
           <div class="filter-group">
-            <span class="filter-group-label">Contamination</span>
-            <select id="filter-contamination">
-              <option value="">Any contamination level</option>
-              <option value="1">Max score 1 — certified clean only</option>
-              <option value="2">Max score 2 — minor contact OK</option>
-              <option value="3">Max score 3 — moderate OK</option>
-            </select>
+            <span class="filter-group-label">Max debris score &nbsp;<span id="filter-debris-val">Any</span></span>
+            <input type="range" id="filter-debris" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Max ash score &nbsp;<span id="filter-ash-val">Any</span></span>
+            <input type="range" id="filter-ash" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Max chemical score &nbsp;<span id="filter-chemical-val">Any</span></span>
+            <input type="range" id="filter-chemical" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Max price/ton &nbsp;<span id="filter-price-val">Any</span></span>
@@ -173,27 +176,38 @@
         <div id="aggregator-empty" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators listed in this area yet.</div>
       </div>
 
-      <div style="background:linear-gradient(135deg,#7A5C1E12,#7A5C1E06);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-8);display:flex;align-items:center;justify-content:space-between;gap:var(--space-6)">
-        <div>
-          <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Are you a farmer with biomass to sell?</div>
-          <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Individual farm volumes are often too small for direct producer sales. Aggregators in your area collect, chip, and test material — then sell bulk loads to pyrolysis producers. List your material or find a local aggregator.</div>
+      <div style="background:linear-gradient(135deg,#7A5C1E12,#7A5C1E06);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-8)">
+        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Are you a farmer with biomass to sell?</div>
+        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Individual farm volumes are often too small for direct producer sales. Find aggregators near you who collect, chip, and test material — then sell bulk loads to pyrolysis producers.</div>
+        <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
+          <div class="filter-group">
+            <span class="filter-group-label">Your ZIP</span>
+            <input type="text" id="farmer-zip" maxlength="5" placeholder="e.g. 95401" style="width:90px;height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
+          </div>
+          <div class="filter-group">
+            <span class="filter-group-label">Material type</span>
+            <select id="farmer-type" style="height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
+              <option value="">Any type</option>
+              <option value="orchard_prunings">Orchard prunings</option>
+              <option value="almond_shells">Almond shells</option>
+              <option value="walnut_shells">Walnut shells</option>
+              <option value="pistachio_shells">Pistachio shells</option>
+              <option value="corn_stover">Corn stover</option>
+              <option value="rice_husks">Rice husks</option>
+              <option value="forestry_slash">Forestry slash</option>
+              <option value="logging_residue">Logging residue</option>
+              <option value="clean_wood_waste">Clean wood waste</option>
+              <option value="tree_service_chips">Tree service chips</option>
+            </select>
+          </div>
+          <button id="farmer-find-btn" style="height:38px;padding:0 var(--space-5);background:#7A5C1E;color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer;white-space:nowrap">Find aggregators →</button>
+          <a href="list-feedstock.html" style="height:38px;line-height:38px;padding:0 var(--space-5);border:1px solid #7A5C1E;color:#7A5C1E;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;text-decoration:none;white-space:nowrap">List my material</a>
         </div>
-        <div style="display:flex;gap:var(--space-3);flex-shrink:0">
-          <a href="list-feedstock.html" class="btn btn-primary" style="font-size:var(--font-size-sm);white-space:nowrap">List my material</a>
-        </div>
+        <div id="farmer-results" style="display:none;margin-top:var(--space-4)"></div>
       </div>
 
       <h2 style="margin-bottom:var(--space-6)">All feedstock listings</h2>
       <div id="fs-grid" class="listings-grid"></div>
-      <div id="fs-compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid #7A5C1E;padding:16px 32px;align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)">
-        <span id="fs-compare-count" style="font-weight:600;font-size:14px;color:#7A5C1E">0 listings selected</span>
-        <div style="display:flex;gap:12px;align-items:center">
-          <span style="font-size:13px;color:#666">Select up to 3 feedstock listings</span>
-          <button id="fs-compare-btn" style="background:#7A5C1E;color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Compare selected</button>
-          <button id="fs-compare-clear" style="background:none;border:1px solid var(--color-border);padding:10px 16px;border-radius:8px;font-size:14px;cursor:pointer">Clear</button>
-        </div>
-      </div>
-
       <div id="fs-comparison-view" class="hidden"></div>
       <div id="fs-empty" class="fs-empty" style="display:none">
         <p>No feedstock listings match your filters.</p>
@@ -295,6 +309,106 @@
           });
         }).catch(function() {
           resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">ZIP code not found.</p>';
+        });
+      });
+    </script>
+    <script>
+      document.getElementById('farmer-find-btn').addEventListener('click', function() {
+        var zip = document.getElementById('farmer-zip').value.trim();
+        var type = document.getElementById('farmer-type').value;
+        var resultsEl = document.getElementById('farmer-results');
+        if (!zip || zip.length < 5) {
+          resultsEl.style.display = 'block';
+          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Please enter your ZIP code.</p>';
+          return;
+        }
+        resultsEl.style.display = 'block';
+        resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
+
+        var PRICE_RANGES = {
+          almond_shells: '$30–55/ton', walnut_shells: '$28–50/ton',
+          pistachio_shells: '$25–45/ton', orchard_prunings: '$15–35/ton',
+          corn_stover: '$20–40/ton', rice_husks: '$18–38/ton',
+          forestry_slash: '$10–25/ton', logging_residue: '$8–22/ton',
+          clean_wood_waste: '$12–28/ton', tree_service_chips: '$0–20/ton'
+        };
+        var BIOMASS_LABELS = {
+          orchard_prunings:'Orchard prunings', almond_shells:'Almond shells',
+          walnut_shells:'Walnut shells', pistachio_shells:'Pistachio shells',
+          corn_stover:'Corn stover', rice_husks:'Rice husks',
+          forestry_slash:'Forestry slash', logging_residue:'Logging residue',
+          clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips'
+        };
+        function geoZip(z) {
+          return fetch('https://api.zippopotam.us/us/' + z)
+            .then(function(r) { return r.json(); })
+            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+        }
+        function hav(a, b) {
+          var R = 3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
+          var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
+          return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
+        }
+        geoZip(zip).then(function(myCoords) {
+          firebase.firestore().collection('feedstock_listings')
+            .where('status', '==', 'active')
+            .where('supplierType', 'in', ['aggregator', 'broker'])
+            .get().then(function(snap) {
+              var checks = [];
+              var all = [];
+              snap.forEach(function(doc) { var d = doc.data(); d._id = doc.id; all.push(d); });
+              all.forEach(function(d) {
+                if (!d.locationZip) return;
+                checks.push(geoZip(d.locationZip).then(function(c) {
+                  d._dist = hav(myCoords, c);
+                }).catch(function() {}));
+              });
+              Promise.all(checks).then(function() {
+                var sorted = all.filter(function(d) { return typeof d._dist === 'number'; });
+                sorted.sort(function(a, b) { return a._dist - b._dist; });
+                var top = sorted.slice(0, 3);
+                if (!top.length) {
+                  resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
+                  return;
+                }
+                resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)">' +
+                  top.map(function(d) {
+                    var accepts = d.biomassTypes || (d.biomassType ? [d.biomassType] : []);
+                    var typeMatch = !type || accepts.indexOf(type) !== -1;
+                    var typeNote = typeMatch
+                      ? (type ? '<span style="font-size:11px;color:#3D6B45;font-weight:600">✓ Accepts ' + (BIOMASS_LABELS[type]||type) + '</span>' : '')
+                      : '<span style="font-size:11px;color:#B87333">Accepts: ' + accepts.slice(0,3).map(function(t){ return BIOMASS_LABELS[t]||t; }).join(', ') + ' only</span>';
+                    var priceEst = type && PRICE_RANGES[type] ? '<div style="font-size:var(--font-size-xs);color:#3D6B45;font-weight:600;margin-top:4px">Est. price: ' + PRICE_RANGES[type] + '</div>' : '';
+                    var contactStyle = typeMatch
+                      ? 'display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)'
+                      : 'display:block;text-align:center;padding:var(--space-2);background:var(--color-border);color:var(--color-text-muted);border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)';
+                    var subject = type
+                      ? 'Biomass inquiry — ' + (BIOMASS_LABELS[type]||type) + ' from ZIP ' + zip
+                      : 'Biomass inquiry from ZIP ' + zip;
+                    return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
+                      '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (d.company||d.supplierName||'Aggregator') + '</div>' +
+                      '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + d._dist + ' mi away · ZIP ' + (d.locationZip||'') + '</div>' +
+                      '<div style="margin-bottom:4px">' + typeNote + '</div>' +
+                      priceEst +
+                      '<a href="mailto:' + (d.contactEmail||'') + '?subject=' + encodeURIComponent(subject) + '" style="' + contactStyle + '">' + (typeMatch ? 'Contact →' : 'Request exception →') + '</a>' +
+                    '</div>';
+                  }).join('') +
+                '</div>';
+              });
+            }).catch(function() {
+              resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Search failed. Please try again.</p>';
+            });
+        }).catch(function() {
+          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Invalid ZIP code.</p>';
+        });
+      });
+
+      firebase.auth().onAuthStateChanged(function(user) {
+        if (!user) return;
+        firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+          if (doc.exists && doc.data().zipcode) {
+            document.getElementById('farmer-zip').value = doc.data().zipcode;
+          }
         });
       });
     </script>
