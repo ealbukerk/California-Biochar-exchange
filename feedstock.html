@@ -102,67 +102,68 @@
 
       <div id="panel-supply">
       <div class="filter-bar">
+        <div class="filter-search-row">
+          <input id="fs-search" type="text" placeholder="Search suppliers, material types..." />
+        </div>
         <div class="filter-grid">
-          <div class="filter-group">
-            <span class="filter-group-label">Material type</span>
-            <select id="filter-biomass" style="min-width:160px">
-              <option value="">All types</option>
-              <optgroup label="Agricultural">
-                <option value="orchard_prunings">Orchard prunings</option>
-                <option value="almond_shells">Almond shells</option>
-                <option value="pistachio_shells">Pistachio shells</option>
-                <option value="walnut_shells">Walnut shells</option>
-                <option value="corn_stover">Corn stover</option>
-                <option value="rice_husks">Rice husks</option>
-              </optgroup>
-              <optgroup label="Forestry">
-                <option value="forestry_slash">Forestry slash</option>
-                <option value="logging_residue">Logging residue</option>
-                <option value="thinning_material">Thinning material</option>
-              </optgroup>
-              <optgroup label="Urban / Industrial">
-                <option value="clean_wood_waste">Clean wood waste</option>
-                <option value="construction_wood">Construction wood</option>
-                <option value="tree_service_chips">Tree service chips</option>
-              </optgroup>
-            </select>
-          </div>
+          <select id="filter-biomass">
+            <option value="">All material types</option>
+            <optgroup label="Agricultural">
+              <option value="orchard_prunings">Orchard prunings</option>
+              <option value="almond_shells">Almond shells</option>
+              <option value="pistachio_shells">Pistachio shells</option>
+              <option value="walnut_shells">Walnut shells</option>
+              <option value="corn_stover">Corn stover</option>
+              <option value="rice_husks">Rice husks</option>
+            </optgroup>
+            <optgroup label="Forestry">
+              <option value="forestry_slash">Forestry slash</option>
+              <option value="logging_residue">Logging residue</option>
+              <option value="thinning_material">Thinning material</option>
+            </optgroup>
+            <optgroup label="Urban / Industrial">
+              <option value="clean_wood_waste">Clean wood waste</option>
+              <option value="construction_wood">Construction wood</option>
+              <option value="tree_service_chips">Tree service chips</option>
+            </optgroup>
+          </select>
+          <select id="filter-sort">
+            <option value="newest">Sort by: Newest</option>
+            <option value="closest">Closest</option>
+            <option value="cheapest">Cheapest</option>
+            <option value="largest">Largest volume</option>
+          </select>
           <div class="filter-group">
             <span class="filter-group-label">Max debris score &nbsp;<span id="filter-debris-val">Any</span></span>
-            <input type="range" id="filter-debris" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+            <input type="range" id="filter-debris" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Max ash score &nbsp;<span id="filter-ash-val">Any</span></span>
-            <input type="range" id="filter-ash" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+            <input type="range" id="filter-ash" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Max chemical score &nbsp;<span id="filter-chemical-val">Any</span></span>
-            <input type="range" id="filter-chemical" min="0" max="5" step="1" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+            <input type="range" id="filter-chemical" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Max price/ton &nbsp;<span id="filter-price-val">Any</span></span>
-            <input type="range" id="filter-price" min="0" max="100" step="5" value="0" style="width:130px;accent-color:#7A5C1E;height:42px" />
+            <input type="range" id="filter-price" min="0" max="100" step="5" value="0" style="width:100%;accent-color:#7A5C1E" />
           </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Min quantity (tons)</span>
-            <input type="number" id="filter-min-qty" placeholder="Any" style="width:90px" min="0" />
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Your ZIP</span>
-            <div class="filter-zip-wrap">
-              <input type="text" id="zip-input" placeholder="e.g. 95401" maxlength="5" style="width:90px" />
-              <span id="zip-status"></span>
-            </div>
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Sort by</span>
-            <select id="filter-sort">
-              <option value="newest">Newest</option>
-              <option value="closest">Closest</option>
-              <option value="cheapest">Cheapest</option>
-              <option value="largest">Largest volume</option>
+          <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-sm);cursor:pointer;height:42px">
+            <input type="checkbox" id="filter-verified-only" style="accent-color:#7A5C1E" />
+            Verified only
+          </label>
+          <div style="display:flex;align-items:center;gap:var(--space-2)">
+            <input id="zip-input" type="text" maxlength="5" placeholder="Your ZIP" style="width:90px;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit" />
+            <select id="filter-radius" style="height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit;background:var(--color-surface)">
+              <option value="0">Any distance</option>
+              <option value="50">Within 50 mi</option>
+              <option value="100">Within 100 mi</option>
+              <option value="250">Within 250 mi</option>
             </select>
+            <span id="zip-status" style="font-size:var(--font-size-sm);font-weight:600;min-width:16px"></span>
           </div>
+          <button id="reset-filters" class="btn-secondary">Reset all</button>
         </div>
       </div>
 

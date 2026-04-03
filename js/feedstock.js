@@ -71,7 +71,7 @@
     filtered: [],
     buyerLat: null,
     buyerLng: null,
-    filters: { biomassType: '', maxPrice: 0, contamination: '', minQty: 0, sort: 'newest' }
+    filters: { biomassType: '', maxPrice: 0, maxDebris: 0, maxAsh: 0, maxChemical: 0, sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
   };
 
   function haversine(lat1, lng1, lat2, lng2) {
@@ -113,34 +113,35 @@
 
   function applyFilters() {
     var f = state.filters;
-    var list = state.listings.slice();
-    if (f.biomassType) list = list.filter(function (l) { return l.biomassType === f.biomassType; });
-    if (f.maxPrice > 0) list = list.filter(function (l) { return l.pricePerTon <= f.maxPrice; });
-    if (f.contamination) {
-      var maxAllowed = parseInt(f.contamination);
-      list = list.filter(function(l) {
-        var d = parseInt(l.contaminationDebris || 1);
-        var a = parseInt(l.contaminationAsh || 1);
-        var c = parseInt(l.contaminationChemical || 1);
-        return Math.max(d, a, c) <= maxAllowed;
-      });
-    }
-    if (f.minQty > 0) list = list.filter(function (l) { return l.estimatedQuantityTons >= f.minQty; });
+    state.filtered = state.listings.filter(function(l) {
+      if (f.biomassType && l.biomassType !== f.biomassType &&
+          !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
+      if (f.maxPrice > 0 && l.pricePerTon > f.maxPrice) return false;
+      if (f.maxDebris > 0 && parseInt(l.contaminationDebris||1) > f.maxDebris) return false;
+      if (f.maxAsh > 0 && parseInt(l.contaminationAsh||1) > f.maxAsh) return false;
+      if (f.maxChemical > 0 && parseInt(l.contaminationChemical||1) > f.maxChemical) return false;
+      if (f.verifiedOnly && !l.verified) return false;
+      if (f.radius > 0 && (!l._dist || l._dist > f.radius)) return false;
+      if (f.search) {
+        var hay = ((l.company||'') + ' ' + (l.supplierName||'') + ' ' + (l.biomassType||'')).toLowerCase();
+        if (hay.indexOf(f.search) === -1) return false;
+      }
+      return true;
+    });
 
     if (f.sort === 'closest' && state.buyerLat) {
-      list.sort(function (a, b) { return (a._dist || 9999) - (b._dist || 9999); });
+      state.filtered.sort(function (a, b) { return (a._dist || 9999) - (b._dist || 9999); });
     } else if (f.sort === 'cheapest') {
-      list.sort(function (a, b) { return a.pricePerTon - b.pricePerTon; });
+      state.filtered.sort(function (a, b) { return a.pricePerTon - b.pricePerTon; });
     } else if (f.sort === 'largest') {
-      list.sort(function (a, b) { return b.estimatedQuantityTons - a.estimatedQuantityTons; });
+      state.filtered.sort(function (a, b) { return b.estimatedQuantityTons - a.estimatedQuantityTons; });
     } else {
-      list.sort(function (a, b) {
+      state.filtered.sort(function (a, b) {
         var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
         var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
         return tb - ta;
       });
     }
-    state.filtered = list;
     renderGrid();
   }
 
@@ -593,18 +594,51 @@
       document.getElementById('filter-price-val').textContent = v > 0 ? '$' + v + '/ton max' : 'Any';
       applyFilters();
     });
-    document.getElementById('filter-contamination').addEventListener('change', function () {
-      state.filters.contamination = this.value; applyFilters();
-    });
-    document.getElementById('filter-min-qty').addEventListener('input', function () {
-      state.filters.minQty = Number(this.value) || 0; applyFilters();
-    });
     document.getElementById('filter-sort').addEventListener('change', function () {
       state.filters.sort = this.value; applyFilters();
     });
     document.getElementById('zip-input').addEventListener('change', function () {
       var z = this.value.trim();
       if (z.length === 5) setZip(z);
+    });
+    ['filter-debris','filter-ash','filter-chemical'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', function() {
+        var key = 'max' + id.replace('filter-','').charAt(0).toUpperCase() + id.replace('filter-','').slice(1);
+        state.filters[key] = parseInt(this.value) || 0;
+        var valEl = document.getElementById(id + '-val');
+        if (valEl) valEl.textContent = this.value === '0' ? 'Any' : this.value;
+        applyFilters();
+      });
+    });
+    var radiusEl = document.getElementById('filter-radius');
+    if (radiusEl) radiusEl.addEventListener('change', function() {
+      state.filters.radius = parseInt(this.value) || 0; applyFilters();
+    });
+    var verifiedEl = document.getElementById('filter-verified-only');
+    if (verifiedEl) verifiedEl.addEventListener('change', function() {
+      state.filters.verifiedOnly = this.checked; applyFilters();
+    });
+    var searchEl = document.getElementById('fs-search');
+    if (searchEl) searchEl.addEventListener('input', function() {
+      state.filters.search = this.value.toLowerCase(); applyFilters();
+    });
+    var resetEl = document.getElementById('reset-filters');
+    if (resetEl) resetEl.addEventListener('click', function() {
+      state.filters = { biomassType: '', maxPrice: 0, maxDebris: 0, maxAsh: 0, maxChemical: 0, sort: 'newest', radius: 0, verifiedOnly: false, search: '' };
+      document.getElementById('filter-biomass').value = '';
+      document.getElementById('filter-sort').value = 'newest';
+      document.getElementById('filter-price').value = 0;
+      document.getElementById('filter-price-val').textContent = 'Any';
+      ['filter-debris','filter-ash','filter-chemical'].forEach(function(id) {
+        document.getElementById(id).value = 0;
+        document.getElementById(id + '-val').textContent = 'Any';
+      });
+      var rv = document.getElementById('filter-radius'); if (rv) rv.value = 0;
+      var vv = document.getElementById('filter-verified-only'); if (vv) vv.checked = false;
+      var sv = document.getElementById('fs-search'); if (sv) sv.value = '';
+      applyFilters();
     });
   }
 
