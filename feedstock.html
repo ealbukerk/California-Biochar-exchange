@@ -18,14 +18,15 @@
     .buyer-nav-logo { color: #7A5C1E; font-size: var(--font-size-lg); font-weight: var(--font-weight-bold); text-decoration: none; }
     .buyer-nav-links { display: flex; align-items: center; gap: var(--space-3); }
 
-    .buyer-hero { background: #7A5C1E; padding: var(--space-10) 0 var(--space-8); }
+    .buyer-hero { background: #7A5C1E; padding: var(--space-12) 0; text-align: center; }
     .buyer-hero h1 { color: white; font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
-    .buyer-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-2); font-size: var(--font-size-base); }
-    .buyer-hero-actions { margin-top: var(--space-5); }
+    .buyer-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-4); font-size: var(--font-size-lg); }
+    .buyer-hero-actions { margin-top: var(--space-6); }
     .buyer-hero-actions a { background: white; color: #7A5C1E; padding: var(--space-3) var(--space-6); border-radius: var(--radius-md); font-weight: var(--font-weight-semibold); text-decoration: none; font-size: var(--font-size-sm); }
     .buyer-hero-actions a:hover { background: rgba(255,255,255,0.9); }
 
-    .filter-grid { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; padding: var(--space-4) 0; justify-content: center; }
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; padding: var(--space-4) 0; }
+    .filter-grid > * { width: 100%; min-width: 0; }
     .filter-grid select, .filter-grid input[type=text], .filter-grid input[type=number] { height: 42px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface); padding: 0 var(--space-3); font-family: var(--font-sans); font-size: var(--font-size-sm); color: var(--color-text-primary); }
     .filter-grid select:focus, .filter-grid input:focus { outline: 2px solid var(--color-accent-light); border-color: #7A5C1E; }
     .filter-zip-wrap { display: flex; align-items: center; gap: var(--space-2); }
@@ -70,7 +71,7 @@
     #modal-submit:disabled { opacity: 0.6; cursor: not-allowed; }
     #modal-success { display: none; background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4); color: var(--color-accent); font-size: var(--font-size-sm); font-weight: var(--font-weight-semibold); text-align: center; margin-top: var(--space-4); }
 
-    .listings-section { padding: var(--space-8) 0 var(--space-12); }
+    .listings-section { padding: var(--space-12) 0; }
     .fs-empty { text-align: center; padding: var(--space-12) 0; color: var(--color-text-muted); }
     .contamination-clean { color: var(--color-accent); }
     .contamination-possible_soil { color: var(--color-warning); }
@@ -94,9 +95,9 @@
 
   <section class="listings-section">
     <div class="container">
-      <div style="display:flex;gap:0;border-bottom:2px solid var(--color-border);margin-bottom:var(--space-6)">
-        <button id="tab-supply" onclick="switchTab('supply')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:3px solid #7A5C1E;margin-bottom:-2px;font-size:var(--font-size-sm);font-weight:700;color:#7A5C1E;cursor:pointer">🌾 Available feedstock</button>
-        <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button>
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border);margin-bottom:var(--space-6)">
+        <button id="tab-supply" onclick="switchTab('supply')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid #7A5C1E;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:#7A5C1E;cursor:pointer">🌾 Available feedstock</button>
+        <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button>
       </div>
 
       <div id="panel-supply">
@@ -232,15 +233,19 @@
         if (tab === 'supply') {
           supply.style.display = 'block';
           demand.style.display = 'none';
+          tabS.style.borderBottomWidth = '2px';
           tabS.style.borderBottomColor = '#7A5C1E';
           tabS.style.color = '#7A5C1E';
+          tabD.style.borderBottomWidth = '2px';
           tabD.style.borderBottomColor = 'transparent';
           tabD.style.color = 'var(--color-text-muted)';
         } else {
           supply.style.display = 'none';
           demand.style.display = 'block';
+          tabS.style.borderBottomWidth = '2px';
           tabS.style.borderBottomColor = 'transparent';
           tabS.style.color = 'var(--color-text-muted)';
+          tabD.style.borderBottomWidth = '2px';
           tabD.style.borderBottomColor = '#7A5C1E';
           tabD.style.color = '#7A5C1E';
         }
