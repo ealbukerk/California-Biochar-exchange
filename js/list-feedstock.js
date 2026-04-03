@@ -195,6 +195,7 @@
         notes: val('f-notes'),
         photos: photoUrls.filter(Boolean),
         status: 'active',
+        verified: false,
         createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
       return firebase.firestore().collection('feedstock_listings').add(listing);

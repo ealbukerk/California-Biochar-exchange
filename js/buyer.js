@@ -1145,6 +1145,23 @@
             }
             if (appRateDisplay) appRateDisplay.textContent = '';
           }
+          if (state.profile && state.profile.zipcode) {
+            var zipInput = document.getElementById('filter-buyer-zip');
+            var statusEl = document.getElementById('buyer-zip-status');
+            if (zipInput) {
+              zipInput.value = state.profile.zipcode;
+              var radiusSelect = document.getElementById('filter-radius');
+              if (radiusSelect && radiusSelect.value === '0') radiusSelect.value = '100';
+              geocodeBuyerZip(state.profile.zipcode).then(function(c) {
+                buyerGeo.lat = c.lat;
+                buyerGeo.lng = c.lng;
+                if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = 'var(--color-accent)'; }
+                renderBrowseListings();
+              }).catch(function() {
+                if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = 'red'; }
+              });
+            }
+          }
           injectDeliveredCosts();
         })
         .catch(function () {
@@ -1174,9 +1191,13 @@
   }
 
   function geocodeBuyerZip(zip) {
-    return fetch('https://api.zippopotam.us/us/' + zip)
+    var zipGeoCache = window._zipGeoCache || (window._zipGeoCache = {});
+    if (zipGeoCache[zip]) return zipGeoCache[zip];
+    var p = fetch('https://api.zippopotam.us/us/' + zip)
       .then(function(r) { if (!r.ok) throw new Error('bad zip'); return r.json(); })
       .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+    zipGeoCache[zip] = p.catch(function(err) { delete zipGeoCache[zip]; throw err; });
+    return zipGeoCache[zip];
   }
 
   function bindDistanceFilter() {

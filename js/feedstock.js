@@ -71,8 +71,10 @@
     filtered: [],
     buyerLat: null,
     buyerLng: null,
-    filters: { biomassType: '', maxPrice: 0, maxDebris: 0, maxAsh: 0, maxChemical: 0, sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
+    filters: { biomassType: '', contaminationMax: '', sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
   };
+
+  window._DEMAND_ENABLED = false;
 
   function haversine(lat1, lng1, lat2, lng2) {
     var R = 3958.8;
@@ -84,10 +86,15 @@
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
   }
 
+  var zipGeoCache = window._zipGeoCache || (window._zipGeoCache = {});
+
   function geocodeZip(zip) {
-    return fetch('https://api.zippopotam.us/us/' + zip)
+    if (zipGeoCache[zip]) return zipGeoCache[zip];
+    var p = fetch('https://api.zippopotam.us/us/' + zip)
       .then(function (r) { if (!r.ok) throw new Error('bad zip'); return r.json(); })
       .then(function (d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+    zipGeoCache[zip] = p.catch(function (err) { delete zipGeoCache[zip]; throw err; });
+    return zipGeoCache[zip];
   }
 
   function geocodeListings(listings) {
@@ -116,10 +123,14 @@
     state.filtered = state.listings.filter(function(l) {
       if (f.biomassType && l.biomassType !== f.biomassType &&
           !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
-      if (f.maxPrice > 0 && l.pricePerTon > f.maxPrice) return false;
-      if (f.maxDebris > 0 && parseInt(l.contaminationDebris||1) > f.maxDebris) return false;
-      if (f.maxAsh > 0 && parseInt(l.contaminationAsh||1) > f.maxAsh) return false;
-      if (f.maxChemical > 0 && parseInt(l.contaminationChemical||1) > f.maxChemical) return false;
+      if (f.contaminationMax) {
+        var avg = Math.round(
+          (parseInt(l.contaminationDebris || 1) +
+            parseInt(l.contaminationAsh || 1) +
+            parseInt(l.contaminationChemical || 1)) / 3
+        );
+        if (avg > parseInt(f.contaminationMax)) return false;
+      }
       if (f.verifiedOnly && !l.verified) return false;
       if (f.radius > 0 && (!l._dist || l._dist > f.radius)) return false;
       if (f.search) {
@@ -203,13 +214,12 @@
       maxScore <= 2 ? 'contamination-clean' :
       maxScore <= 3 ? 'contamination-possible_soil' :
       'contamination-mixed_debris';
-    var contamDisplay = hasScores
-      ? '<span style="display:inline-flex;gap:4px;align-items:center">' +
-        '<span title="Physical debris" style="background:' + (parseInt(l.contaminationDebris||1)<=2?'#D1FAE5':parseInt(l.contaminationDebris||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationDebris||1)<=2?'#065F46':parseInt(l.contaminationDebris||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">D' + (l.contaminationDebris||'?') + '</span>' +
-        '<span title="Soil/ash content" style="background:' + (parseInt(l.contaminationAsh||1)<=2?'#D1FAE5':parseInt(l.contaminationAsh||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationAsh||1)<=2?'#065F46':parseInt(l.contaminationAsh||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">A' + (l.contaminationAsh||'?') + '</span>' +
-        '<span title="Chemical risk" style="background:' + (parseInt(l.contaminationChemical||1)<=2?'#D1FAE5':parseInt(l.contaminationChemical||1)<=3?'#FEF3C7':'#FEE2E2') + ';color:' + (parseInt(l.contaminationChemical||1)<=2?'#065F46':parseInt(l.contaminationChemical||1)<=3?'#92400E':'#991B1B') + ';border-radius:4px;padding:1px 5px;font-size:11px;font-weight:700">C' + (l.contaminationChemical||'?') + '</span>' +
-        '</span>'
-      : (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || '—');
+    var avgContam = Math.round(
+      (parseInt(l.contaminationDebris || 1) +
+        parseInt(l.contaminationAsh || 1) +
+        parseInt(l.contaminationChemical || 1)) / 3
+    );
+    var contamColor = avgContam <= 2 ? '#3D6B45' : avgContam <= 3 ? '#B87333' : '#cc4444';
     var negTag = '';
     var verifiedTag = '';
     var qty = l.estimatedQuantityTons || 0;
@@ -262,34 +272,14 @@
           availHtml +
         '</div>' +
 
-        '<div class="fs-card-stats"></div>' +
-
-        '<div style="display:flex;flex-direction:column;gap:4px;margin-top:var(--space-2)">' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Moisture</span>' +
-            scoreDots({'under_20':1,'20_30':2,'30_40':3,'over_40':4}[l.moistureContent]||2, 4, true) +
-            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + moistureLabel + '</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Debris</span>' +
-            scoreDots(parseInt(l.contaminationDebris||1), 5, true) +
-            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationDebris||1) + '/5</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Ash</span>' +
-            scoreDots(parseInt(l.contaminationAsh||1), 5, true) +
-            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationAsh||1) + '/5</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Chemical</span>' +
-            scoreDots(parseInt(l.contaminationChemical||1), 5, true) +
-            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + parseInt(l.contaminationChemical||1) + '/5</span>' +
-          '</div>' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-            '<span style="font-size:0.65rem;color:var(--color-text-muted);width:90px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.04em;font-weight:600">Particle size</span>' +
-            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">' + particleLabel + '</span>' +
-          '</div>' +
+        '<div class="fs-card-stats">' +
+          '<div class="fs-stat"><div class="fs-stat-label">Quantity</div><div class="fs-stat-val">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Min pickup</div><div class="fs-stat-val">' + l.minimumPickupTons + ' tons</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Price</div><div class="fs-stat-val">' + priceDisplay + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
         '</div>' +
+        '<div style="font-size:var(--font-size-xs);font-weight:600;margin-top:4px;color:' + contamColor + '">Contamination: ' + avgContam + '/5</div>' +
 
         deliveredHtml +
         yieldHtml(l) +
@@ -302,14 +292,21 @@
   var fsCompareList = [];
 
   function updateFsCompareBar() {
-    var bar = document.getElementById('fs-compare-bar');
-    var count = document.getElementById('fs-compare-count');
+    var bar = document.getElementById('compare-bar');
+    var count = document.getElementById('compare-count');
+    var btn = document.getElementById('compare-btn');
     if (!bar || !count) return;
-    if (fsCompareList.length >= 2) {
+    if (fsCompareList.length > 0) {
       bar.style.display = 'flex';
       count.textContent = fsCompareList.length + ' listing' + (fsCompareList.length > 1 ? 's' : '') + ' selected';
     } else {
       bar.style.display = 'none';
+    }
+    if (btn) {
+      var enabled = fsCompareList.length >= 2 && fsCompareList.length <= 3;
+      btn.disabled = !enabled;
+      btn.style.opacity = enabled ? '1' : '0.5';
+      btn.style.cursor = enabled ? 'pointer' : 'not-allowed';
     }
   }
 
@@ -338,7 +335,7 @@
   function renderFsComparison() {
     var view = document.getElementById('fs-comparison-view');
     var grid = document.getElementById('fs-grid');
-    var bar = document.getElementById('fs-compare-bar');
+    var bar = document.getElementById('compare-bar');
     if (!view) return;
     var selected = fsCompareList.map(function(id) {
       return state.listings.find(function(l) { return String(l._id) === String(id); });
@@ -421,6 +418,8 @@
         updateFsCompareBar();
       });
     });
+
+    updateFsCompareBar();
   }
 
   function openModal(id) {
@@ -446,6 +445,7 @@
   }
 
   function renderDemandTab() {
+    if (window._DEMAND_ENABLED === false) return;
     var grid = document.getElementById('demand-full-grid');
     var empty = document.getElementById('demand-full-empty');
     if (!grid) return;
@@ -512,7 +512,7 @@
           }).join(' ');
           var period = PERIOD_LABELS_D[l.volumePeriod] || '';
           var pyro = PYRO_LABELS_D[l.pyroTech] || '';
-          return '<a href="producer-demand-browse.html?id=' + (l._id || l.id || '') + '" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3);text-decoration:none;color:inherit;cursor:pointer">' +
+          return '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">' +
             '<div style="display:flex;align-items:flex-start;justify-content:space-between">' +
               '<div>' +
                 '<div style="font-weight:700;font-size:var(--font-size-base)">' + (l.company||l.producerName||'') + '</div>' +
@@ -528,7 +528,7 @@
               '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Min shipment</div><div style="font-weight:600">' + (l.minimumShipmentTons||'?') + 't</div></div>' +
               '<div style="font-size:var(--font-size-xs)"><div style="color:var(--color-text-muted)">Max distance</div><div style="font-weight:600">' + (l.maxSourcingDistance ? l.maxSourcingDistance+'mi' : 'Any') + '</div></div>' +
             '</div>' +
-          '</a>';
+          '</div>';
         }).join('');
       });
   }
@@ -588,29 +588,15 @@
     document.getElementById('filter-biomass').addEventListener('change', function () {
       state.filters.biomassType = this.value; applyFilters();
     });
-    document.getElementById('filter-price').addEventListener('input', function () {
-      var v = Number(this.value);
-      state.filters.maxPrice = v;
-      document.getElementById('filter-price-val').textContent = v > 0 ? '$' + v + '/ton max' : 'Any';
-      applyFilters();
-    });
     document.getElementById('filter-sort').addEventListener('change', function () {
       state.filters.sort = this.value; applyFilters();
+    });
+    document.getElementById('filter-contamination').addEventListener('change', function () {
+      state.filters.contaminationMax = this.value; applyFilters();
     });
     document.getElementById('zip-input').addEventListener('change', function () {
       var z = this.value.trim();
       if (z.length === 5) setZip(z);
-    });
-    ['filter-debris','filter-ash','filter-chemical'].forEach(function(id) {
-      var el = document.getElementById(id);
-      if (!el) return;
-      el.addEventListener('input', function() {
-        var key = 'max' + id.replace('filter-','').charAt(0).toUpperCase() + id.replace('filter-','').slice(1);
-        state.filters[key] = parseInt(this.value) || 0;
-        var valEl = document.getElementById(id + '-val');
-        if (valEl) valEl.textContent = this.value === '0' ? 'Any' : this.value;
-        applyFilters();
-      });
     });
     var radiusEl = document.getElementById('filter-radius');
     if (radiusEl) radiusEl.addEventListener('change', function() {
@@ -620,24 +606,19 @@
     if (verifiedEl) verifiedEl.addEventListener('change', function() {
       state.filters.verifiedOnly = this.checked; applyFilters();
     });
-    var searchEl = document.getElementById('fs-search');
+    var searchEl = document.getElementById('search');
     if (searchEl) searchEl.addEventListener('input', function() {
       state.filters.search = this.value.toLowerCase(); applyFilters();
     });
     var resetEl = document.getElementById('reset-filters');
     if (resetEl) resetEl.addEventListener('click', function() {
-      state.filters = { biomassType: '', maxPrice: 0, maxDebris: 0, maxAsh: 0, maxChemical: 0, sort: 'newest', radius: 0, verifiedOnly: false, search: '' };
+      state.filters = { biomassType: '', contaminationMax: '', sort: 'newest', radius: 0, verifiedOnly: false, search: '' };
       document.getElementById('filter-biomass').value = '';
       document.getElementById('filter-sort').value = 'newest';
-      document.getElementById('filter-price').value = 0;
-      document.getElementById('filter-price-val').textContent = 'Any';
-      ['filter-debris','filter-ash','filter-chemical'].forEach(function(id) {
-        document.getElementById(id).value = 0;
-        document.getElementById(id + '-val').textContent = 'Any';
-      });
+      document.getElementById('filter-contamination').value = '';
       var rv = document.getElementById('filter-radius'); if (rv) rv.value = 0;
       var vv = document.getElementById('filter-verified-only'); if (vv) vv.checked = false;
-      var sv = document.getElementById('fs-search'); if (sv) sv.value = '';
+      var sv = document.getElementById('search'); if (sv) sv.value = '';
       applyFilters();
     });
   }
@@ -684,10 +665,22 @@
   function init() {
     bindFilters();
     bindModal();
+    if (window.AuthState && typeof window.AuthState.onReady === 'function') {
+      window.AuthState.onReady(function(user, profile) {
+        if (profile && profile.zipcode) {
+          var zipEl = document.getElementById('zip-input');
+          if (zipEl) {
+            zipEl.value = profile.zipcode;
+            var radiusEl = document.getElementById('filter-radius');
+            if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
+            setZip(profile.zipcode);
+          }
+        }
+      });
+    }
   document.addEventListener('click', function(e) {
-    if (e.target.id === 'fs-compare-clear') {
-      fsCompareList = [];
-      renderGrid();
+    if (e.target.id === 'compare-btn') {
+      if (fsCompareList.length >= 2 && fsCompareList.length <= 3) renderFsComparison();
     }
   });
     firebase.auth().onAuthStateChanged(function (user) {
@@ -707,6 +700,8 @@
           if (doc.exists && doc.data().zipcode) {
             var z = doc.data().zipcode;
             document.getElementById('zip-input').value = z;
+            var radiusEl = document.getElementById('filter-radius');
+            if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
             setZip(z);
           }
           if (doc.exists) {
@@ -719,7 +714,7 @@
       }
       loadListings();
     });
-    renderDemandTab();
+    if (window._DEMAND_ENABLED !== false) renderDemandTab();
   }
 
   document.addEventListener('DOMContentLoaded', init);

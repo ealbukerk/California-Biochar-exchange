@@ -579,6 +579,43 @@ textarea:focus {
   color: var(--color-accent);
 }
 
+.filter-bar {
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: var(--space-6);
+}
+
+.filter-search-row {
+  margin-bottom: var(--space-4);
+}
+
+.filter-search-row input {
+  width: 100%;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.filter-grid > * {
+  width: 100%;
+  min-width: 0;
+}
+
+#reset-filters {
+  height: 42px;
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+  border: 1px dashed var(--color-border);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  width: 100%;
+}
+
 .fs-card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

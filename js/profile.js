@@ -233,7 +233,7 @@
           var types = (d.acceptedBiomassTypes || []).slice(0, 3).map(function (v) { return v.replace(/_/g, ' '); }).join(', ');
           rows += '<div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3) 0;border-bottom:1px solid var(--color-border)">' +
             '<div><strong style="text-transform:capitalize">' + types + '</strong><span style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-left:var(--space-3)">' + (d.volumeNeeded || '?') + ' tons · ' + (d.locationZip || '') + '</span></div>' +
-            '<a href="producer-demand-browse.html" class="btn btn-secondary" style="font-size:var(--font-size-xs)">View</a>' +
+            '<span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">View</span>' +
           '</div>';
         });
         wrap.innerHTML = rows;

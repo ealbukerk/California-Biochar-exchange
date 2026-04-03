@@ -88,7 +88,7 @@
       <p>Browse agricultural, forestry, and wood waste material available for pyrolysis producers across the US.</p>
       <div class="buyer-hero-actions" style="display:flex;gap:var(--space-3);flex-wrap:wrap">
         <a href="list-feedstock.html">+ List your material</a>
-        <a href="producer-demand.html" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.4)">+ Post demand</a>
+        <!-- <a href="producer-demand.html" style="background:rgba(255,255,255,0.15);color:white;border:1px solid rgba(255,255,255,0.4)">+ Post demand</a> -->
       </div>
     </div>
   </section>
@@ -97,13 +97,13 @@
     <div class="container">
       <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border);margin-bottom:var(--space-6)">
         <button id="tab-supply" onclick="switchTab('supply')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid #7A5C1E;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:#7A5C1E;cursor:pointer">🌾 Available feedstock</button>
-        <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button>
+        <!-- <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button> -->
       </div>
 
       <div id="panel-supply">
-      <div class="filter-bar">
+      <div id="filter-bar" class="filter-bar">
         <div class="filter-search-row">
-          <input id="fs-search" type="text" placeholder="Search suppliers, material types..." />
+          <input id="search" type="text" placeholder="Search suppliers, material types..." />
         </div>
         <div class="filter-grid">
           <select id="filter-biomass">
@@ -133,30 +133,23 @@
             <option value="cheapest">Cheapest</option>
             <option value="largest">Largest volume</option>
           </select>
-          <div class="filter-group">
-            <span class="filter-group-label">Max debris score &nbsp;<span id="filter-debris-val">Any</span></span>
-            <input type="range" id="filter-debris" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Max ash score &nbsp;<span id="filter-ash-val">Any</span></span>
-            <input type="range" id="filter-ash" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Max chemical score &nbsp;<span id="filter-chemical-val">Any</span></span>
-            <input type="range" id="filter-chemical" min="0" max="5" step="1" value="0" style="width:100%;accent-color:#7A5C1E" />
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Max price/ton &nbsp;<span id="filter-price-val">Any</span></span>
-            <input type="range" id="filter-price" min="0" max="100" step="5" value="0" style="width:100%;accent-color:#7A5C1E" />
-          </div>
           <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-sm);cursor:pointer;height:42px">
-            <input type="checkbox" id="filter-verified-only" style="accent-color:#7A5C1E" />
+            <input type="checkbox" id="filter-verified-only" style="accent-color:var(--color-accent)" />
             Verified only
           </label>
+          <select id="filter-contamination">
+            <option value="">Any contamination score</option>
+            <option value="1">Max score 1</option>
+            <option value="2">Max score 2</option>
+            <option value="3">Max score 3</option>
+            <option value="4">Max score 4</option>
+            <option value="5">Max score 5</option>
+          </select>
           <div style="display:flex;align-items:center;gap:var(--space-2)">
-            <input id="zip-input" type="text" maxlength="5" placeholder="Your ZIP" style="width:90px;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit" />
+            <input id="zip-input" type="text" maxlength="5" placeholder="" style="width:90px;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit" />
             <select id="filter-radius" style="height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit;background:var(--color-surface)">
               <option value="0">Any distance</option>
+              <option value="25">Within 25 mi</option>
               <option value="50">Within 50 mi</option>
               <option value="100">Within 100 mi</option>
               <option value="250">Within 250 mi</option>
@@ -184,7 +177,7 @@
         <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
           <div class="filter-group">
             <span class="filter-group-label">Your ZIP</span>
-            <input type="text" id="farmer-zip" maxlength="5" placeholder="e.g. 95401" style="width:90px;height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
+            <input type="text" id="farmer-zip" maxlength="5" placeholder="" style="width:90px;height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Material type</span>
@@ -217,6 +210,7 @@
       </div>
       </div>
 
+      <!--
       <div id="panel-demand" style="display:none">
         <div id="demand-full-grid" class="listings-grid" style="margin-top:var(--space-4)"></div>
         <div id="demand-full-empty" style="display:none;text-align:center;padding:var(--space-12) 0">
@@ -224,6 +218,7 @@
           <a href="producer-demand.html" style="color:#7A5C1E;font-weight:600;display:inline-block;margin-top:var(--space-3)">Post a demand listing →</a>
         </div>
       </div>
+      -->
     </div>
     <script>
       function switchTab(tab) {
@@ -231,6 +226,11 @@
         var demand = document.getElementById('panel-demand');
         var tabS = document.getElementById('tab-supply');
         var tabD = document.getElementById('tab-demand');
+        if (!tabS || !tabD) {
+          if (supply) supply.style.display = 'block';
+          if (demand) demand.style.display = 'none';
+          return;
+        }
         if (tab === 'supply') {
           supply.style.display = 'block';
           demand.style.display = 'none';
@@ -259,14 +259,18 @@
         var zip = document.getElementById('agg-zip').value.trim();
         var type = document.getElementById('agg-biomass-type').value;
         var resultsEl = document.getElementById('agg-results');
-        if (!zip || zip.length < 5) { resultsEl.style.display = 'block'; resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Please enter your ZIP code.</p>'; return; }
+        if (!zip || zip.length < 5) { resultsEl.style.display = 'none'; return; }
         resultsEl.style.display = 'block';
         resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
 
         function geoZip(z) {
-          return fetch('https://api.zippopotam.us/us/' + z)
+          var cache = window._zipGeoCache || (window._zipGeoCache = {});
+          if (cache[z]) return cache[z];
+          var p = fetch('https://api.zippopotam.us/us/' + z)
             .then(function(r) { return r.json(); })
             .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+          cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
+          return cache[z];
         }
         function hav(a, b) {
           var R = 3958.8, dLat = (b.lat-a.lat)*Math.PI/180, dLng = (b.lng-a.lng)*Math.PI/180;
@@ -323,11 +327,7 @@
         var zip = document.getElementById('farmer-zip').value.trim();
         var type = document.getElementById('farmer-type').value;
         var resultsEl = document.getElementById('farmer-results');
-        if (!zip || zip.length < 5) {
-          resultsEl.style.display = 'block';
-          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Please enter your ZIP code.</p>';
-          return;
-        }
+      if (!zip || zip.length < 5) { resultsEl.style.display = 'none'; return; }
         resultsEl.style.display = 'block';
         resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
 
@@ -345,11 +345,15 @@
           forestry_slash:'Forestry slash', logging_residue:'Logging residue',
           clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips'
         };
-        function geoZip(z) {
-          return fetch('https://api.zippopotam.us/us/' + z)
-            .then(function(r) { return r.json(); })
-            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
-        }
+      function geoZip(z) {
+        var cache = window._zipGeoCache || (window._zipGeoCache = {});
+        if (cache[z]) return cache[z];
+        var p = fetch('https://api.zippopotam.us/us/' + z)
+          .then(function(r) { return r.json(); })
+          .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+        cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
+        return cache[z];
+      }
         function hav(a, b) {
           var R = 3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
           var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
@@ -435,6 +439,14 @@
       <div class="fs-modal-field"><label>Phone (optional)</label><input type="tel" id="modal-phone" placeholder="(555) 555-5555" /></div>
       <button type="button" id="modal-submit">Send Request</button>
       <div id="modal-success">✓ Request sent! The supplier will be in touch at your email.</div>
+    </div>
+  </div>
+
+  <div id="compare-bar" style="display:none;position:fixed;bottom:0;left:0;right:0;background:var(--color-surface);border-top:2px solid var(--color-accent);padding:16px 32px;align-items:center;justify-content:space-between;z-index:300;box-shadow:0 -4px 12px rgba(0,0,0,0.08)">
+    <span id="compare-count" style="font-weight:600;font-size:14px">0 listings selected</span>
+    <div style="display:flex;gap:12px;align-items:center">
+      <span style="font-size:13px;color:#666">Select up to 3 listings</span>
+      <button id="compare-btn" style="background:var(--color-accent);color:white;border:none;padding:10px 24px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Compare selected</button>
     </div>
   </div>
 
