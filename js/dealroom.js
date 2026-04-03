@@ -586,7 +586,7 @@ function renderDealRoom(dealId, user) {
 
   db.collection('deals').doc(dealId).get().then(function(snap) {
     if (!snap.exists) {
-      container.innerHTML = '<div style="padding:40px;text-align:center"><p>Deal room not found.</p><a href="profile.html">← Back to profile</a></div>'
+      container.innerHTML = '<div style="padding:40px;text-align:center"><p>Deal room not found.</p></div>'
       return
     }
 
@@ -1256,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
   if (!dealId && !listingId) {
     document.getElementById('dealroom-container').innerHTML =
-      '<div style="padding:40px;text-align:center"><p>Deal room not found.</p><a href="buyer.html">← Back to listings</a></div>'
+      '<div style="padding:40px;text-align:center"><p>Deal room not found.</p></div>'
     return
   }
 
@@ -1285,7 +1285,7 @@ document.addEventListener('DOMContentLoaded', async function() {
           return String(l.id) === String(listingId)
         })
         if (!listing) {
-          if (container) container.innerHTML = '<div style="padding:40px;text-align:center"><p>Listing not found.</p><a href="buyer.html">← Back to listings</a></div>'
+          if (container) container.innerHTML = '<div style="padding:40px;text-align:center"><p>Listing not found.</p></div>'
           return
         }
         const profile = await db.collection('users').doc(user.uid).get()

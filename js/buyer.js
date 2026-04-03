@@ -490,20 +490,23 @@
   function listingCardHtml(listing, extraScore, explanation, options) {
     options = options || {};
 
-    var visibleSuitable = listing.suitableFor.slice(0, 3);
+    var suitableList = Array.isArray(listing.suitableFor) ? listing.suitableFor : [];
+    var visibleSuitable = suitableList.slice(0, 3);
     var suitableTags = visibleSuitable
       .map(function (item) {
         return '<span class="suitable-tag">' + htmlEscape(item) + "</span>";
       })
       .join("");
 
-    var hiddenCount = Math.max(0, listing.suitableFor.length - 3);
+    var hiddenCount = Math.max(0, suitableList.length - 3);
     if (hiddenCount > 0) {
       suitableTags += '<span class="suitable-more">+' + hiddenCount + " more</span>";
     }
 
-    var ratingText = listing.averageRating == null ? "No rating yet" : listing.averageRating.toFixed(1);
-    var stars = renderStars(listing.averageRating);
+    var txCount = Number(listing.transactionsCompleted) || 0;
+    var avgRating = listing.averageRating == null ? null : listing.averageRating;
+    var ratingText = avgRating == null ? "No rating yet" : avgRating.toFixed(1);
+    var stars = renderStars(avgRating);
     var lead = getLeadTimeDisplay(listing.leadTimeDays);
     var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
       ? window.renderVerifiedBadge()
@@ -559,7 +562,7 @@
       '</div>' +
 
       '<div style="display:flex;align-items:center;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted)">' +
-      '<span>' + htmlEscape(listing.transactionsCompleted) + ' transactions · ' + htmlEscape(ratingText) + (stars ? ' ' + htmlEscape(stars) : '') + '</span>' +
+      '<span>' + htmlEscape(txCount) + ' transactions · ' + htmlEscape(ratingText) + (stars ? ' ' + htmlEscape(stars) : '') + '</span>' +
       '<span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span>' +
       '</div>' +
 
@@ -986,11 +989,12 @@
       var firestoreListings = window._firestoreListings || [];
       var combined = allListings.concat(firestoreListings);
       var geocodePromises = combined.map(function(listing) {
-        if (!listing.producerZip) return Promise.resolve(null);
-        var cached = buyerGeo['_zip_' + listing.producerZip];
+        var listingZip = listing.producerZip || listing.zipcode;
+        if (!listingZip) return Promise.resolve(null);
+        var cached = buyerGeo['_zip_' + listingZip];
         if (cached && cached.lat) return Promise.resolve({ listing: listing, coords: cached });
-        return geocodeBuyerZip(listing.producerZip).then(function(c) {
-          buyerGeo['_zip_' + listing.producerZip] = c;
+        return geocodeBuyerZip(listingZip).then(function(c) {
+          buyerGeo['_zip_' + listingZip] = c;
           return c ? { listing: listing, coords: c } : null;
         }).catch(function() { return null; });
       });
@@ -1053,13 +1057,14 @@
     plotProducers(null, null);
 
     function centerMapOnUser() {
-      var zip = state.profile && state.profile.zipcode ? state.profile.zipcode : null;
+      var profile = state.profile || (window.AuthState && window.AuthState.profile) || null;
+      var zip = profile && profile.zipcode ? profile.zipcode : null;
       if (!zip) return;
       geocodeBuyerZip(zip).then(function(c) {
         if (!c) return;
         buyerGeo.lat = c.lat;
         buyerGeo.lng = c.lng;
-        plotBuyerLocation(c.lat, c.lng, (state.profile && state.profile.businessName) || '');
+        plotBuyerLocation(c.lat, c.lng, (profile && profile.businessName) || '');
         plotProducers(c.lat, c.lng);
       });
     }
@@ -1235,6 +1240,11 @@
   }
 
   function init() {
+    var isBuyerPage = !!document.getElementById('listings-grid');
+    if (!isBuyerPage) {
+      initMap();
+      return;
+    }
     initAuthState();
     initBrowseFilters();
     bindDistanceFilter();

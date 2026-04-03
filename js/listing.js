@@ -47,11 +47,12 @@
 
   function renderNotFound(container) {
     container.innerHTML =
-      '<p class="not-found">Listing not found. <a href="listings.html">Back to listings</a></p>';
+      '<p class="not-found">Listing not found.</p>';
   }
 
   function renderListing(container, listing) {
-    var suitableTags = listing.suitableFor
+    var suitableList = Array.isArray(listing.suitableFor) ? listing.suitableFor : [];
+    var suitableTags = suitableList
       .map(function (item) {
         return '<span class="suitable-tag">' + item + "</span>";
       })
@@ -71,11 +72,12 @@
         "</div>";
     }
 
+    var txCount = Number(listing.transactionsCompleted) || 0;
     var ratingLine = "No transactions yet";
-    if (listing.transactionsCompleted > 0) {
+    if (txCount > 0) {
       var rating = listing.averageRating == null ? "N/A" : listing.averageRating.toFixed(1);
       ratingLine =
-        listing.transactionsCompleted +
+        txCount +
         " transactions completed · " +
         rating +
         '<span class="star-rating">' +
