@@ -40,6 +40,14 @@
     renderComparisonView(selected);
   }
 
+  function closeComparison() {
+    compareList = [];
+    var modal = document.getElementById('comparison-view');
+    if (modal) modal.style.display = 'none';
+    renderBrowseListings();
+  }
+  window.closeComparison = closeComparison;
+
   function renderComparisonView(listings) {
     var existing = document.getElementById('comparison-view');
     var modal = existing || document.createElement('div');
@@ -181,7 +189,7 @@
     modal.innerHTML = '<div style="background:#fff;max-width:' + (280 + listings.length * 220) + 'px;margin:60px auto;border-radius:8px;padding:32px">' +
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">' +
       '<h2 style="margin:0">Compare Listings</h2>' +
-      '<button onclick="document.getElementById(\'comparison-view\').style.display=\'none\'" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>' +
+      '<button onclick="closeComparison()" style="background:none;border:none;font-size:24px;cursor:pointer">×</button>' +
       '</div>' +
       '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">' +
       '<thead style="background:#f9f9f9"><tr>' + headerCols + '</tr></thead>' +
@@ -517,14 +525,16 @@
       '</div>' +
       '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;padding:0">' +
 
-      '<div style="width:100%;height:160px;background:linear-gradient(135deg,var(--color-accent-light),var(--color-border));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
-      (listing.feedstock && listing.feedstock.toLowerCase().indexOf('almond') !== -1 ? '🌰' :
-       listing.feedstock && listing.feedstock.toLowerCase().indexOf('rice') !== -1 ? '🌾' :
-       listing.feedstock && listing.feedstock.toLowerCase().indexOf('wood') !== -1 ? '🪵' :
-       listing.feedstock && listing.feedstock.toLowerCase().indexOf('forest') !== -1 ? '🌲' :
-       listing.feedstock && listing.feedstock.toLowerCase().indexOf('walnut') !== -1 ? '🌰' :
-       listing.feedstock && listing.feedstock.toLowerCase().indexOf('corn') !== -1 ? '🌽' : '⚗️') +
-      '</div>' +
+      (listing.photos && listing.photos.length
+        ? '<img src="' + listing.photos[0] + '" alt="' + htmlEscape(listing.feedstock) + '" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0" />'
+        : '<div style="width:100%;height:160px;background:linear-gradient(135deg,var(--color-accent-light),var(--color-border));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
+          (listing.feedstock && listing.feedstock.toLowerCase().indexOf('almond') !== -1 ? '🌰' :
+           listing.feedstock && listing.feedstock.toLowerCase().indexOf('rice') !== -1 ? '🌾' :
+           listing.feedstock && listing.feedstock.toLowerCase().indexOf('wood') !== -1 ? '🪵' :
+           listing.feedstock && listing.feedstock.toLowerCase().indexOf('forest') !== -1 ? '🌲' :
+           listing.feedstock && listing.feedstock.toLowerCase().indexOf('walnut') !== -1 ? '🌰' :
+           listing.feedstock && listing.feedstock.toLowerCase().indexOf('corn') !== -1 ? '🌽' : '⚗️') +
+          '</div>') +
 
       '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
 

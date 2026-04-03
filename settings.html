@@ -19,8 +19,6 @@
     .settings-nav-item { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-radius:var(--radius-md); font-size:var(--font-size-sm); font-weight:500; color:var(--color-text-secondary); cursor:pointer; border:none; background:none; width:100%; text-align:left; border-left:3px solid transparent; transition:all 0.12s; margin-bottom:2px; }
     .settings-nav-item:hover { background:var(--color-bg); color:var(--color-text-primary); }
     .settings-nav-item.active { background:var(--color-accent-light); color:var(--color-accent); border-left-color:var(--color-accent); font-weight:600; }
-    .settings-nav-item.danger { color:#DC2626; }
-    .settings-nav-item.danger:hover { background:#FEF2F2; }
     .settings-panel { display:none; }
     .settings-panel.active { display:block; }
     .settings-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--space-6); margin-bottom:var(--space-5); }
@@ -53,10 +51,12 @@
         <div class="settings-nav-name" id="settings-nav-name"></div>
         <div class="settings-nav-email" id="settings-nav-email"></div>
         <button class="settings-nav-item active" data-panel="account">👤 Account</button>
-        <button class="settings-nav-item" data-panel="password">🔒 Password</button>
-        <button class="settings-nav-item" data-panel="notifications">🔔 Notifications</button>
-        <div style="height:1px;background:var(--color-border);margin:var(--space-3) 0"></div>
-        <button class="settings-nav-item danger" data-panel="danger">⚠️ Danger zone</button>
+        <button class="settings-nav-item" data-panel="preferences">⚙️ Preferences</button>
+        <button class="settings-nav-item" data-panel="privacy">🔒 Privacy Policy</button>
+        <button class="settings-nav-item" data-panel="terms">📜 Terms of Service</button>
+        <button class="settings-nav-item" data-panel="faq">❓ FAQ</button>
+        <button class="settings-nav-item" data-panel="support">🧭 Help &amp; Support</button>
+        <button class="settings-nav-item" data-panel="about">ℹ️ About</button>
       </aside>
 
       <main>
@@ -81,11 +81,9 @@
               <span id="account-status" style="font-size:var(--font-size-sm)"></span>
             </div>
           </div>
-        </div>
 
-        <div id="panel-password" class="settings-panel">
           <div class="settings-card">
-            <h2>Change password</h2>
+            <h2>Password &amp; security</h2>
             <div style="display:grid;gap:var(--space-4)">
               <div class="form-group"><label>New password</label><input id="s-password" type="password" placeholder="At least 8 characters" /></div>
               <div class="form-group"><label>Confirm new password</label><input id="s-password-confirm" type="password" placeholder="Repeat password" /></div>
@@ -95,9 +93,16 @@
               <span id="password-status" style="font-size:var(--font-size-sm)"></span>
             </div>
           </div>
+
+          <div class="settings-card" style="border-color:#FCA5A5">
+            <h2 style="color:#DC2626">Delete account</h2>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-5)">This action is permanent and cannot be undone.</p>
+            <button id="delete-account-btn" class="btn" style="background:#DC2626;color:white;border:none">Delete my account</button>
+            <span id="delete-status" style="font-size:var(--font-size-sm);margin-left:var(--space-3)"></span>
+          </div>
         </div>
 
-        <div id="panel-notifications" class="settings-panel">
+        <div id="panel-preferences" class="settings-panel">
           <div class="settings-card">
             <h2>Notification preferences</h2>
             <div class="settings-row">
@@ -121,14 +126,61 @@
               <span id="notif-status" style="font-size:var(--font-size-sm)"></span>
             </div>
           </div>
+
+          <div class="settings-card">
+            <h2>Units &amp; display</h2>
+            <div style="display:grid;gap:var(--space-4)">
+              <div class="form-group">
+                <label>Distance units</label>
+                <select id="pref-units">
+                  <option value="imperial">Miles (US)</option>
+                  <option value="metric">Kilometers</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Theme</label>
+                <select id="pref-theme">
+                  <option value="light">Light</option>
+                  <option value="system">System default</option>
+                </select>
+              </div>
+            </div>
+            <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-3)">Display preferences will roll out later this year.</p>
+          </div>
         </div>
 
-        <div id="panel-danger" class="settings-panel">
-          <div class="settings-card" style="border-color:#FCA5A5">
-            <h2 style="color:#DC2626">Danger zone</h2>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-5)">These actions are permanent and cannot be undone.</p>
-            <button id="delete-account-btn" class="btn" style="background:#DC2626;color:white;border:none">Delete my account</button>
-            <span id="delete-status" style="font-size:var(--font-size-sm);margin-left:var(--space-3)"></span>
+        <div id="panel-privacy" class="settings-panel">
+          <div class="settings-card">
+            <h2>Privacy Policy</h2>
+            <p style="color:var(--color-text-muted)">Coming soon.</p>
+          </div>
+        </div>
+
+        <div id="panel-terms" class="settings-panel">
+          <div class="settings-card">
+            <h2>Terms of Service</h2>
+            <p style="color:var(--color-text-muted)">Coming soon.</p>
+          </div>
+        </div>
+
+        <div id="panel-faq" class="settings-panel">
+          <div class="settings-card">
+            <h2>FAQ</h2>
+            <p style="color:var(--color-text-muted)">Coming soon.</p>
+          </div>
+        </div>
+
+        <div id="panel-support" class="settings-panel">
+          <div class="settings-card">
+            <h2>Help &amp; Support</h2>
+            <p style="color:var(--color-text-muted)">Coming soon.</p>
+          </div>
+        </div>
+
+        <div id="panel-about" class="settings-panel">
+          <div class="settings-card">
+            <h2>About</h2>
+            <p style="color:var(--color-text-muted)">Coming soon.</p>
           </div>
         </div>
 

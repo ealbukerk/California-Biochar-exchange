@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/listings.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
@@ -76,6 +77,10 @@
     .contamination-clean { color: var(--color-accent); }
     .contamination-possible_soil { color: var(--color-warning); }
     .contamination-mixed_debris { color: #cc4444; }
+
+    .map-section { padding: var(--space-12) 0; }
+    #feedstock-map { height: 480px; width: 100%; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--color-border); box-shadow: var(--shadow-md); }
+    .map-legend { background: rgba(35, 35, 35, 0.8); color: #fff; padding: 8px 10px; border-radius: 6px; font-size: 12px; display: grid; gap: 4px; }
   </style>
 </head>
 <body>
@@ -424,6 +429,19 @@
     </script>
   </section>
 
+  <section class="map-section">
+    <div class="container">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
+        <div>
+          <h2>Suppliers near you</h2>
+          <p>Showing feedstock suppliers within 250 miles of your location. Updates as new listings go live.</p>
+        </div>
+        <span id="map-producer-count" style="font-size:var(--font-size-sm);color:var(--color-text-muted)"></span>
+      </div>
+      <div id="feedstock-map"></div>
+    </div>
+  </section>
+
   <!-- Contact modal -->
   <div id="contact-modal" class="fs-modal-overlay hidden">
     <div class="fs-modal">
@@ -453,6 +471,7 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/auth-state.js"></script>
   <script src="js/feedstock-data.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
   <script src="js/feedstock.js"></script>
 </body>
 </html>

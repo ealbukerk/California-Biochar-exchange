@@ -813,6 +813,15 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  var toggleBtn = document.getElementById('feedstock-toggle-all');
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', function() {
+      var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name="feedstocks"]'));
+      var allChecked = boxes.length && boxes.every(function(b) { return b.checked; });
+      boxes.forEach(function(b) { b.checked = !allChecked; });
+      toggleBtn.textContent = allChecked ? 'Select all' : 'Deselect all';
+    });
+  }
   var stateEl = document.getElementById('w-state');
   if (stateEl && typeof buildStateSelect === 'function') buildStateSelect(stateEl, true);
   var draft = loadDraft();

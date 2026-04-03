@@ -269,16 +269,6 @@
                     </select>
                   </div>
                   <div class="field">
-                    <label>Current soil issues <span style="color:var(--color-text-muted);font-weight:400">(check all that apply)</span></label>
-                    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2)">
-                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="poor_water_retention" /> Poor water retention</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="nutrient_loss" /> Nutrient loss</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="compaction" /> Compaction</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="acidity" /> Acidity</label>
-                      <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="soil-issues" value="salinity" /> Salinity</label>
-                    </div>
-                  </div>
-                  <div class="field">
                     <label>Farm equipment available <span style="color:var(--color-text-muted);font-weight:400">(for spreading)</span></label>
                     <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);margin-top:var(--space-2)">
                       <label style="display:flex;align-items:center;gap:6px;font-weight:400"><input type="checkbox" name="farm-equipment" value="manure_spreader" /> Manure spreader</label>
@@ -504,7 +494,6 @@
             userData.goals = goalEl.getValue().filter(function(v) { return v !== "All"; });
             userData.soilPH = document.getElementById("su-soil").value;
             userData.soilType = document.getElementById("su-soil-type").value;
-            userData.soilIssues = getCheckedValues("soil-issues");
             userData.farmEquipment = getCheckedValues("farm-equipment");
             userData.acreage = parseFloat(document.getElementById("su-acreage").value) || null;
             userData.applicationRate = parseFloat(document.getElementById("su-apprate").value) || 7;

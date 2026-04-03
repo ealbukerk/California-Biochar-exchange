@@ -164,6 +164,15 @@
   }
 
   function init() {
+    var toggleBtn = document.getElementById('pd-biomass-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function () {
+        var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name="pd-biomass"]'));
+        var allChecked = boxes.length && boxes.every(function (b) { return b.checked; });
+        boxes.forEach(function (b) { b.checked = !allChecked; });
+        toggleBtn.textContent = allChecked ? 'Select all' : 'Deselect all';
+      });
+    }
     firebase.auth().onAuthStateChanged(function (user) {
       var login = document.getElementById('nav-login');
       var profile = document.getElementById('nav-profile');

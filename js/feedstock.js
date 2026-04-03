@@ -662,9 +662,145 @@
       });
   }
 
+  function initMap() {
+    var mapEl = document.getElementById("feedstock-map");
+    if (!mapEl || typeof L === "undefined") return;
+
+    var defaultCenter = [36.7783, -119.4179];
+    var defaultZoom = 7;
+
+    var map = L.map("feedstock-map", { zoomControl: true }).setView(defaultCenter, defaultZoom);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 13
+    }).addTo(map);
+
+    var radiusCircle = null;
+    var supplierLayer = L.layerGroup().addTo(map);
+    var userLayer = L.layerGroup().addTo(map);
+    var feedstockGeo = { lat: null, lng: null };
+
+    function metersFromMiles(miles) { return miles * 1609.34; }
+
+    function htmlEscape(value) {
+      return String(value == null ? "" : value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function plotSuppliers(centerLat, centerLng) {
+      supplierLayer.clearLayers();
+      var allListings = (window.FEEDSTOCK_LISTINGS || []);
+      var firestoreListings = window._firestoreFeedstockListings || [];
+      var combined = allListings.concat(firestoreListings);
+      var geocodePromises = combined.map(function(listing) {
+        var z = listing.locationZip || listing.zipcode || listing.supplierZip;
+        if (!z) return Promise.resolve(null);
+        return geocodeZip(z).then(function(c) {
+          return c ? { listing: listing, coords: c } : null;
+        }).catch(function() { return null; });
+      });
+      Promise.all(geocodePromises).then(function(results) {
+        var visibleCount = 0;
+        results.filter(Boolean).forEach(function(item) {
+          var l = item.listing;
+          var c = item.coords;
+          if (centerLat && centerLng) {
+            var dist = haversine(centerLat, centerLng, c.lat, c.lng);
+            if (dist > 250) return;
+          }
+          visibleCount += 1;
+          var supplierName = l.company || l.supplierName || l.producerName || 'Supplier';
+          var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType || 'Biomass';
+          var price = (l.pricePerTon === 0) ? 'Free to haul' : '$' + (l.pricePerTon || '—') + '/ton';
+          var listingId = l._id || l.id || '';
+          L.circleMarker([c.lat, c.lng], {
+            radius: 10,
+            color: '#fff',
+            fillColor: '#3D6B45',
+            fillOpacity: 0.9,
+            weight: 2
+          }).bindPopup(
+            '<strong>' + htmlEscape(supplierName) + '</strong><br>' +
+            htmlEscape(biomassLabel) + ' · ' + htmlEscape(price) + '<br>' +
+            '<a href="feedstock-listing.html?id=' + encodeURIComponent(listingId) + '" style="color:#3D6B45;font-weight:600">View listing →</a>'
+          ).addTo(supplierLayer);
+        });
+        var countEl = document.getElementById('map-producer-count');
+        if (countEl) countEl.textContent = visibleCount ? (visibleCount + ' suppliers shown') : '';
+      });
+    }
+
+    function plotUserLocation(lat, lng, name) {
+      userLayer.clearLayers();
+      L.circleMarker([lat, lng], {
+        radius: 10,
+        color: '#fff',
+        fillColor: '#B87333',
+        fillOpacity: 0.9,
+        weight: 2
+      }).bindPopup('<strong>Your location</strong><br>' + (name || '')).addTo(userLayer);
+      if (radiusCircle) map.removeLayer(radiusCircle);
+      radiusCircle = L.circle([lat, lng], {
+        radius: metersFromMiles(250),
+        color: '#3D6B45',
+        fillColor: '#3D6B45',
+        fillOpacity: 0.04,
+        weight: 1,
+        dashArray: '6 4'
+      }).addTo(map);
+      map.setView([lat, lng], 7);
+    }
+
+    var legendControl = L.control({ position: 'bottomleft' });
+    legendControl.onAdd = function() {
+      var div = L.DomUtil.create('div', 'map-legend');
+      div.innerHTML =
+        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#3D6B45;display:inline-block"></span> Feedstock supplier</div>' +
+        '<div style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border-radius:50%;background:#B87333;display:inline-block"></span> Your location</div>' +
+        '<div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px">Dashed circle = 250 mi radius</div>';
+      return div;
+    };
+    legendControl.addTo(map);
+
+    plotSuppliers(null, null);
+
+    function centerMapOnUser() {
+      var zip = window.AuthState && window.AuthState.profile && window.AuthState.profile.zipcode
+        ? window.AuthState.profile.zipcode
+        : null;
+      if (!zip) return;
+      geocodeZip(zip).then(function(c) {
+        if (!c) return;
+        feedstockGeo.lat = c.lat;
+        feedstockGeo.lng = c.lng;
+        plotUserLocation(c.lat, c.lng, (window.AuthState && window.AuthState.profile && window.AuthState.profile.businessName) || '');
+        plotSuppliers(c.lat, c.lng);
+      });
+    }
+
+    window._centerMapOnUser = centerMapOnUser;
+    centerMapOnUser();
+
+    db.collection('feedstock_listings').where('status', '==', 'active').onSnapshot(function(snap) {
+      window._firestoreFeedstockListings = [];
+      snap.forEach(function(doc) {
+        var d = doc.data();
+        d._id = doc.id;
+        window._firestoreFeedstockListings.push(d);
+      });
+      plotSuppliers(feedstockGeo.lat, feedstockGeo.lng);
+    }, function() {});
+  }
+
   function init() {
     bindFilters();
     bindModal();
+    initMap();
     if (window.AuthState && typeof window.AuthState.onReady === 'function') {
       window.AuthState.onReady(function(user, profile) {
         if (profile && profile.zipcode) {
@@ -676,6 +812,7 @@
             setZip(profile.zipcode);
           }
         }
+        if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
       });
     }
   document.addEventListener('click', function(e) {
@@ -710,6 +847,7 @@
             if (d.businessName) document.getElementById('modal-company').value = d.businessName;
             document.getElementById('modal-email').value = d.email || user.email || '';
           }
+          if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
         });
       }
       loadListings();

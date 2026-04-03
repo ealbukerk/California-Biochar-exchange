@@ -212,6 +212,15 @@
   }
 
   function init() {
+    var toggleBtn = document.getElementById('f-biomass-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', function () {
+        var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name="f-biomass-types"]'));
+        var allChecked = boxes.length && boxes.every(function (b) { return b.checked; });
+        boxes.forEach(function (b) { b.checked = !allChecked; });
+        toggleBtn.textContent = allChecked ? 'Select all' : 'Deselect all';
+      });
+    }
     document.getElementById('next-1').addEventListener('click', function () {
       if (validateStep1()) goToStep(2);
     });

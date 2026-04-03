@@ -56,6 +56,20 @@
         return '<span class="suitable-tag">' + item + "</span>";
       })
       .join("");
+    var headerClass = "listing-header";
+    var headerStyle = "";
+    if (listing.photos && listing.photos.length) {
+      headerClass += " has-hero";
+      headerStyle = ' style="background-image:url(' + listing.photos[0] + ')"';
+    }
+    var photoStrip = "";
+    if (listing.photos && listing.photos.length) {
+      photoStrip = '<div class="listing-photo-strip">' +
+        listing.photos.map(function (p) {
+          return '<a href="' + p + '" target="_blank" rel="noopener"><img src="' + p + '" alt="Listing photo"></a>';
+        }).join("") +
+        "</div>";
+    }
 
     var ratingLine = "No transactions yet";
     if (listing.transactionsCompleted > 0) {
@@ -80,7 +94,7 @@
 
     container.innerHTML =
       '<div class="listing-shell">' +
-      '<section class="listing-header">' +
+      '<section class="' + headerClass + '"' + headerStyle + ">" +
       "<h1>" +
       listing.producerName +
       "</h1>" +
@@ -104,6 +118,7 @@
       '<span style="margin-left:12px;color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
       (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
       '</span></p>' +
+      photoStrip +
       '<div id="top-card-actions"></div>' +
       '<div id="complete-loop-banner"></div>' +
       "</section>" +

@@ -27,6 +27,8 @@
     .fs-tag-warn { color: #B45309; }
     .fs-photo-gallery { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-4); }
     .fs-photo-gallery img { width: 120px; height: 90px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
+    .fs-photo-strip { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+    .fs-photo-strip img { width: 72px; height: 56px; object-fit: cover; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
     .fs-sidebar-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-6); margin-bottom: var(--space-4); box-shadow: var(--shadow-sm); }
     .fs-sidebar-col .fs-sidebar-card:first-child { position: sticky; top: calc(60px + var(--space-4)); }
     .yield-box { background: var(--color-accent-light); border: 1px solid var(--color-accent); border-radius: var(--radius-md); padding: var(--space-4); margin-top: var(--space-4); }
@@ -134,20 +136,23 @@
         '<h1>' + biomassLabel + '</h1>' +
         '<p>' + (l.company || l.supplierName || '') + ' · ' + (SUPPLIER_LABELS[l.supplierType] || '') + ' · ZIP ' + (l.locationZip || '') + '</p>';
 
-      // Photo gallery
-      var photoHtml = '';
+      // Hero background and photo strip
+      var heroEl = document.getElementById('fs-detail-hero');
+      if (heroEl && l.photos && l.photos.length) {
+        heroEl.style.backgroundImage = 'linear-gradient(135deg, rgba(122,92,30,0.7), rgba(92,68,21,0.7)), url(' + l.photos[0] + ')';
+        heroEl.style.backgroundSize = 'cover';
+        heroEl.style.backgroundPosition = 'center';
+      }
+
+      var photoStripHtml = '';
       if (l.photos && l.photos.length) {
-        photoHtml = '<div class="fs-photo-gallery">' +
-          l.photos.map(function(p) { return '<img src="' + p + '" alt="Material photo">'; }).join('') +
+        photoStripHtml = '<div class="fs-photo-strip">' +
+          l.photos.map(function(p) { return '<a href=\"' + p + '\" target=\"_blank\" rel=\"noopener\"><img src=\"' + p + '\" alt=\"Material photo\"></a>'; }).join('') +
         '</div>';
-      } else {
-        photoHtml = '<div style="width:100%;height:180px;background:linear-gradient(135deg,#f0e8d8,#e0d4b8);display:flex;align-items:center;justify-content:center;font-size:4rem;border-radius:var(--radius-lg);margin-bottom:var(--space-4)">🌾</div>';
       }
 
       // Main body
       document.getElementById('fs-detail-body').innerHTML =
-
-        photoHtml +
 
         '<div class="fs-detail-section">' +
           '<h2>Material specs</h2>' +
@@ -209,6 +214,7 @@
 
       // Sidebar
       document.getElementById('fs-sidebar').innerHTML =
+        (photoStripHtml ? '<div class="fs-sidebar-card">' + photoStripHtml + '</div>' : '') +
         '<div class="fs-sidebar-card">' +
           '<div style="font-size:var(--font-size-2xl);font-weight:700;color:#7A5C1E">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton') + '</div>' +
           (l.negotiable ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">Price negotiable</div>' : '') +
