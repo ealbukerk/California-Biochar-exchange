@@ -86,7 +86,7 @@
   }
 
   function validateStep2() {
-  var required = ['f-particle-size', 'f-contamination-debris', 'f-contamination-ash', 'f-contamination-chemical', 'f-moisture', 'f-age', 'f-loading'];
+  var required = ['f-particle-size', 'f-contamination-debris', 'f-contamination-ash', 'f-contamination-chemical', 'f-contamination-other', 'f-moisture', 'f-age', 'f-loading'];
     for (var i = 0; i < required.length; i++) {
       if (!val(required[i])) {
         document.getElementById(required[i]).focus();
@@ -110,6 +110,7 @@
       ['Physical debris', 'Score ' + (val('f-contamination-debris') || '—') + '/5'],
       ['Soil / ash', 'Score ' + (val('f-contamination-ash') || '—') + '/5'],
       ['Chemical risk', 'Score ' + (val('f-contamination-chemical') || '—') + '/5'],
+      ['Other contamination', 'Score ' + (val('f-contamination-other') || '—') + '/5'],
       ['Moisture', MOISTURE_LABELS[val('f-moisture')] || val('f-moisture')],
       ['Age', val('f-age').replace(/_/g, ' ')],
       ['Loading', LOADING_LABELS[val('f-loading')] || val('f-loading')],
@@ -179,7 +180,8 @@
         contaminationDebris: val('f-contamination-debris'),
         contaminationAsh: val('f-contamination-ash'),
         contaminationChemical: val('f-contamination-chemical'),
-        contaminationRisk: [val('f-contamination-debris'), val('f-contamination-ash'), val('f-contamination-chemical')].filter(Boolean).length > 0
+        contaminationOther: val('f-contamination-other'),
+        contaminationRisk: [val('f-contamination-debris'), val('f-contamination-ash'), val('f-contamination-chemical'), val('f-contamination-other')].filter(Boolean).length > 0
           ? 'scored'
           : 'unknown',
         ageOfMaterial: val('f-age'),

@@ -674,9 +674,7 @@
     var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS.slice() : [];
     var search = (document.getElementById("search").value || "").trim().toLowerCase();
     var feedstock = getMultiSelectValues("ms-feedstock");
-    var region = getMultiSelectValues("ms-region");
     var cert = getMultiSelectValues("ms-cert");
-    var stateValue = (document.getElementById("filter-state") ? document.getElementById("filter-state").value : "").trim();
     var sort = document.getElementById("filter-sort").value;
 
     var radiusEl = document.getElementById('filter-radius');
@@ -689,34 +687,25 @@
         listing.county.toLowerCase().indexOf(search) !== -1;
 
       var feedstockActive = feedstock.length && feedstock.indexOf("All") === -1;
-      var regionActive = region.length && region.indexOf("All") === -1;
       var certActive = cert.length && cert.indexOf("All") === -1;
-      var stateActive = !!stateValue && stateValue !== "All States";
 
       var matchesFeedstock = !feedstockActive || feedstock.indexOf(listing.feedstock) !== -1;
-      var matchesRegion = !regionActive || region.indexOf(listing.region) !== -1;
       var matchesCert =
         !certActive ||
         listing.certifications.some(function (item) {
           return cert.indexOf(item) !== -1;
         });
-      var listingState = String(listing.state || "").toLowerCase();
-      var listingRegion = String(listing.region || "").toLowerCase();
-      var stateNeedle = stateValue.toLowerCase();
-      var matchesState =
-        !stateActive ||
-        listingState.indexOf(stateNeedle) !== -1 ||
-        listingRegion.indexOf(stateNeedle) !== -1;
 
-      if (radiusMiles > 0 && buyerGeo.lat && listing.producerZip) {
-        var cached = buyerGeo['_zip_' + listing.producerZip];
+      var listingZip = listing.producerZip || listing.zipcode;
+      if (radiusMiles > 0 && buyerGeo.lat && listingZip) {
+        var cached = buyerGeo['_zip_' + listingZip];
         if (cached === undefined) return true;
         if (cached === null) return true;
         var dist = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
         if (dist > radiusMiles) return false;
       }
 
-      return matchesSearch && matchesFeedstock && matchesRegion && matchesCert && matchesState;
+      return matchesSearch && matchesFeedstock && matchesCert;
     });
     var verifiedOnly = document.getElementById('filter-verified-only');
     if (verifiedOnly && verifiedOnly.checked) {
@@ -859,23 +848,15 @@
       "All Feedstocks"
     );
 
-    makeMultiSelect(
-      document.getElementById("ms-region"),
-      ["Sacramento Valley", "San Joaquin Valley", "North Coast", "Central Coast", "Sierra Foothills", "Pacific Northwest", "Great Plains", "Southeast", "Northeast", "Midwest"],
-      "All Regions"
-    );
-
     makeMultiSelect(document.getElementById("ms-cert"), ["OMRI Listed", "IBI Certified", "California Organic"], "Any Certification");
 
     document.getElementById("search").addEventListener("input", renderBrowseListings);
     document.getElementById("filter-sort").addEventListener("change", renderBrowseListings);
     var verifiedCheck = document.getElementById('filter-verified-only');
     if (verifiedCheck) verifiedCheck.addEventListener('change', renderBrowseListings);
-    var stateSelect = document.getElementById("filter-state");
-    if (stateSelect) {
-      stateSelect.addEventListener("change", renderBrowseListings);
-    }
-    ["ms-feedstock", "ms-region", "ms-cert"].forEach(function (id) {
+    var radiusSelect = document.getElementById('filter-radius');
+    if (radiusSelect) radiusSelect.addEventListener('change', renderBrowseListings);
+    ["ms-feedstock", "ms-cert"].forEach(function (id) {
       var el = document.getElementById(id);
       el.addEventListener("change", renderBrowseListings);
     });
@@ -889,13 +870,9 @@
         const allBoxes = document.querySelectorAll('.filter-pill-group input[value="All"]')
         allBoxes.forEach(function (cb) { cb.checked = true })
         var feedstockEl = document.getElementById("ms-feedstock");
-        var regionEl = document.getElementById("ms-region");
         var certEl = document.getElementById("ms-cert");
         if (feedstockEl && typeof feedstockEl.setValue === "function") feedstockEl.setValue(["All"]);
-        if (regionEl && typeof regionEl.setValue === "function") regionEl.setValue(["All"]);
         if (certEl && typeof certEl.setValue === "function") certEl.setValue(["All"]);
-        var stateFilter = document.getElementById("filter-state");
-        if (stateFilter) stateFilter.value = "";
         renderListings()
       })
     }
@@ -1161,21 +1138,13 @@
             if (appRateDisplay) appRateDisplay.textContent = '';
           }
           if (state.profile && state.profile.zipcode) {
-            var zipInput = document.getElementById('filter-buyer-zip');
-            var statusEl = document.getElementById('buyer-zip-status');
-            if (zipInput) {
-              zipInput.value = state.profile.zipcode;
-              var radiusSelect = document.getElementById('filter-radius');
-              if (radiusSelect && radiusSelect.value === '0') radiusSelect.value = '100';
-              geocodeBuyerZip(state.profile.zipcode).then(function(c) {
-                buyerGeo.lat = c.lat;
-                buyerGeo.lng = c.lng;
-                if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = 'var(--color-accent)'; }
-                renderBrowseListings();
-              }).catch(function() {
-                if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = 'red'; }
-              });
-            }
+            var radiusSelect = document.getElementById('filter-radius');
+            if (radiusSelect && radiusSelect.value === '0') radiusSelect.value = '100';
+            geocodeBuyerZip(state.profile.zipcode).then(function(c) {
+              buyerGeo.lat = c.lat;
+              buyerGeo.lng = c.lng;
+              renderBrowseListings();
+            }).catch(function() {});
           }
           injectDeliveredCosts();
         })
@@ -1216,24 +1185,8 @@
   }
 
   function bindDistanceFilter() {
-    var zipInput = document.getElementById('filter-buyer-zip');
     var radiusSelect = document.getElementById('filter-radius');
-    var statusEl = document.getElementById('buyer-zip-status');
-    if (!zipInput || !radiusSelect) return;
-
-    zipInput.addEventListener('change', function() {
-      var z = this.value.trim();
-      if (z.length !== 5) return;
-      geocodeBuyerZip(z).then(function(c) {
-        buyerGeo.lat = c.lat;
-        buyerGeo.lng = c.lng;
-        if (statusEl) { statusEl.textContent = '✓'; statusEl.style.color = 'var(--color-accent)'; }
-        renderBrowseListings();
-      }).catch(function() {
-        if (statusEl) { statusEl.textContent = '✗'; statusEl.style.color = 'red'; }
-      });
-    });
-
+    if (!radiusSelect) return;
     radiusSelect.addEventListener('change', function() {
       if (buyerGeo.lat) renderBrowseListings();
     });

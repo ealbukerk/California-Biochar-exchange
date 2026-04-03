@@ -239,7 +239,7 @@
                   </div>
 
                   <div id="contamination-explainer" style="display:none;background:var(--color-bg);border:1px solid var(--color-border);border-radius:var(--radius-md);padding:var(--space-4);margin-bottom:var(--space-4);font-size:var(--font-size-sm)">
-                    <p style="font-weight:600;margin-bottom:var(--space-3)">There are three separate contamination risks producers care about. Answer each one honestly — misrepresentation can result in rejected loads, kiln damage, and listing removal.</p>
+                    <p style="font-weight:600;margin-bottom:var(--space-3)">There are four separate contamination risks producers care about. Answer each one honestly — misrepresentation can result in rejected loads, kiln damage, and listing removal.</p>
                     <div style="display:grid;gap:var(--space-4)">
                       <div>
                         <div style="font-weight:600;color:var(--color-text-primary);margin-bottom:4px">1. Physical debris risk</div>
@@ -256,10 +256,15 @@
                         <div style="color:var(--color-text-muted)">Treated wood, pesticides, heavy metals that make output biochar unsafe for food crops. Verifiable by: EPA Method 3051A heavy metals scan (~$80–150). Ask your lab for the IBI-recommended metals panel.</div>
                         <div style="margin-top:4px;color:var(--color-text-muted)">Score 1 = single-source agricultural material, no treatments known. Score 5 = mixed urban/industrial source, unknown history.</div>
                       </div>
+                      <div>
+                        <div style="font-weight:600;color:var(--color-text-primary);margin-bottom:4px">4. Other contamination risk</div>
+                        <div style="color:var(--color-text-muted)">Any other contamination not covered above (e.g. mixed plastics, unknown additives, off-farm sources). Verifiable by: visual inspection and supplier documentation.</div>
+                        <div style="margin-top:4px;color:var(--color-text-muted)">Score 1 = clean, well-documented source. Score 5 = mixed sources with unknown handling history.</div>
+                      </div>
                     </div>
                   </div>
 
-                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-4)">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
                     <div class="form-group" style="margin:0">
                       <label style="font-size:var(--font-size-sm)">Physical debris <span class="required-star">*</span></label>
                       <p class="field-hint">Rocks, wire, plastic, metal</p>
@@ -296,8 +301,20 @@
                         <option value="5">5 — Mixed urban/industrial source, unknown history</option>
                       </select>
                     </div>
+                    <div class="form-group" style="margin:0">
+                      <label style="font-size:var(--font-size-sm)">Other contamination <span class="required-star">*</span></label>
+                      <p class="field-hint">Other mixed sources</p>
+                      <select id="f-contamination-other" required>
+                        <option value="">Select…</option>
+                        <option value="1">1 — Clean, well documented</option>
+                        <option value="2">2 — Minor unknowns</option>
+                        <option value="3">3 — Moderate unknowns</option>
+                        <option value="4">4 — Significant unknowns</option>
+                        <option value="5">5 — Mixed sources, unknown history</option>
+                      </select>
+                    </div>
                   </div>
-                  <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">All three scores are shown to producers on your listing. Scores above 3 on any dimension may reduce match rate. Scores can be verified via lab report — see explainer above.</p>
+                  <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">All four scores are shown to producers on your listing. Scores above 3 on any dimension may reduce match rate. Scores can be verified via lab report — see explainer above.</p>
                 </div>
                 <div class="form-group">
                   <label>Moisture content estimate <span class="required-star">*</span></label>

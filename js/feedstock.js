@@ -66,6 +66,14 @@
     return dots;
   }
 
+  function contaminationAvg(l) {
+    var c1 = parseInt(l.contaminationDebris || 1);
+    var c2 = parseInt(l.contaminationAsh || 1);
+    var c3 = parseInt(l.contaminationChemical || 1);
+    var c4 = parseInt(l.contaminationOther || 1);
+    return Math.round((c1 + c2 + c3 + c4) / 4 * 10) / 10;
+  }
+
   var state = {
     listings: [],
     filtered: [],
@@ -124,12 +132,8 @@
       if (f.biomassType && l.biomassType !== f.biomassType &&
           !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
       if (f.contaminationMax) {
-        var avg = Math.round(
-          (parseInt(l.contaminationDebris || 1) +
-            parseInt(l.contaminationAsh || 1) +
-            parseInt(l.contaminationChemical || 1)) / 3
-        );
-        if (avg > parseInt(f.contaminationMax)) return false;
+        var avg = contaminationAvg(l);
+        if (avg > parseFloat(f.contaminationMax)) return false;
       }
       if (f.verifiedOnly && !l.verified) return false;
       if (f.radius > 0 && (!l._dist || l._dist > f.radius)) return false;
@@ -202,23 +206,8 @@
         '</div>';
     var supplierLabel = SUPPLIER_LABELS[l.supplierType] || l.supplierType;
     var moistureLabel = MOISTURE_LABELS[l.moistureContent] || l.moistureContent;
-    var contamLabel = CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk;
     var particleLabel = PARTICLE_LABELS[l.particleSize] || l.particleSize;
-    var hasScores = l.contaminationDebris || l.contaminationAsh || l.contaminationChemical;
-    var maxScore = hasScores ? Math.max(
-      parseInt(l.contaminationDebris || 1),
-      parseInt(l.contaminationAsh || 1),
-      parseInt(l.contaminationChemical || 1)
-    ) : null;
-    var contamClass = maxScore === null ? 'contamination-clean' :
-      maxScore <= 2 ? 'contamination-clean' :
-      maxScore <= 3 ? 'contamination-possible_soil' :
-      'contamination-mixed_debris';
-    var avgContam = Math.round(
-      (parseInt(l.contaminationDebris || 1) +
-        parseInt(l.contaminationAsh || 1) +
-        parseInt(l.contaminationChemical || 1)) / 3
-    );
+    var avgContam = contaminationAvg(l);
     var contamColor = avgContam <= 2 ? '#3D6B45' : avgContam <= 3 ? '#B87333' : '#cc4444';
     var negTag = '';
     var verifiedTag = '';
@@ -273,13 +262,10 @@
         '</div>' +
 
         '<div class="fs-card-stats">' +
-          '<div class="fs-stat"><div class="fs-stat-label">Quantity</div><div class="fs-stat-val">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Min pickup</div><div class="fs-stat-val">' + l.minimumPickupTons + ' tons</div></div>' +
-          '<div class="fs-stat"><div class="fs-stat-label">Price</div><div class="fs-stat-val">' + priceDisplay + '</div></div>' +
           '<div class="fs-stat"><div class="fs-stat-label">Moisture</div><div class="fs-stat-val">' + moistureLabel + '</div></div>' +
           '<div class="fs-stat"><div class="fs-stat-label">Particle size</div><div class="fs-stat-val">' + particleLabel + '</div></div>' +
+          '<div class="fs-stat"><div class="fs-stat-label">Contamination</div><div class="fs-stat-val" style="color:' + contamColor + '">'+ avgContam.toFixed(1) + ' / 5</div></div>' +
         '</div>' +
-        '<div style="font-size:var(--font-size-xs);font-weight:600;margin-top:4px;color:' + contamColor + '">Contamination: ' + avgContam + '/5</div>' +
 
         deliveredHtml +
         yieldHtml(l) +
@@ -302,7 +288,7 @@
       { label: 'Min pickup', value: l.minimumPickupTons ? l.minimumPickupTons + ' tons' : '—', score: l.minimumPickupTons || 999, higherBetter: false },
       { label: 'Price/ton', value: l.pricePerTon === 0 ? 'Free' : ('$' + l.pricePerTon + '/ton'), score: l.pricePerTon || 999, higherBetter: false },
       { label: 'Moisture', value: (MOISTURE_LABELS && MOISTURE_LABELS[l.moistureContent]) || l.moistureContent || '—', score: 0, higherBetter: false },
-      { label: 'Contamination', value: (CONTAMINATION_LABELS && CONTAMINATION_LABELS[l.contaminationRisk]) || l.contaminationRisk || '—', score: l.contaminationRisk === 'clean' ? 1 : 0, higherBetter: true },
+      { label: 'Contamination', value: contaminationAvg(l).toFixed(1) + ' / 5', score: 0, higherBetter: false },
       { label: 'Availability', value: l.availabilityWindow || '—', score: 0, higherBetter: false }
     ];
     return '<div style="flex:1;min-width:200px;max-width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5)">' +
@@ -539,13 +525,19 @@
     geocodeZip(zip).then(function (c) {
       state.buyerLat = c.lat;
       state.buyerLng = c.lng;
-      document.getElementById('zip-status').textContent = '✓';
-      document.getElementById('zip-status').style.color = 'var(--color-accent)';
+      var statusEl = document.getElementById('zip-status');
+      if (statusEl) {
+        statusEl.textContent = '✓';
+        statusEl.style.color = 'var(--color-accent)';
+      }
       computeDistances();
       applyFilters();
     }).catch(function () {
-      document.getElementById('zip-status').textContent = '✗';
-      document.getElementById('zip-status').style.color = 'red';
+      var statusEl = document.getElementById('zip-status');
+      if (statusEl) {
+        statusEl.textContent = '✗';
+        statusEl.style.color = 'red';
+      }
     });
   }
 
@@ -558,10 +550,6 @@
     });
     document.getElementById('filter-contamination').addEventListener('change', function () {
       state.filters.contaminationMax = this.value; applyFilters();
-    });
-    document.getElementById('zip-input').addEventListener('change', function () {
-      var z = this.value.trim();
-      if (z.length === 5) setZip(z);
     });
     var radiusEl = document.getElementById('filter-radius');
     if (radiusEl) radiusEl.addEventListener('change', function() {
@@ -769,13 +757,9 @@
     if (window.AuthState && typeof window.AuthState.onReady === 'function') {
       window.AuthState.onReady(function(user, profile) {
         if (profile && profile.zipcode) {
-          var zipEl = document.getElementById('zip-input');
-          if (zipEl) {
-            zipEl.value = profile.zipcode;
-            var radiusEl = document.getElementById('filter-radius');
-            if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
-            setZip(profile.zipcode);
-          }
+          var radiusEl = document.getElementById('filter-radius');
+          if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
+          setZip(profile.zipcode);
         }
         if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
       });
@@ -796,7 +780,6 @@
         firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
           if (doc.exists && doc.data().zipcode) {
             var z = doc.data().zipcode;
-            document.getElementById('zip-input').value = z;
             var radiusEl = document.getElementById('filter-radius');
             if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
             setZip(z);
