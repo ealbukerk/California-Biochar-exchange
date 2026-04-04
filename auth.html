@@ -190,6 +190,21 @@
                 <div class="field"><label for="su-confirm">Confirm password</label><input id="su-confirm" type="password" required /></div>
                 <div class="field"><label for="su-name">Full name</label><input id="su-name" type="text" required /></div>
                 <div class="field"><label for="su-business">Farm or business name</label><input id="su-business" type="text" required /></div>
+                <div class="field">
+                  <label for="su-business-type">Business type</label>
+                  <select id="su-business-type" required>
+                    <option value="">Select...</option>
+                    <option value="sole_proprietorship">Sole Proprietorship</option>
+                    <option value="llc">LLC</option>
+                    <option value="corporation">Corporation</option>
+                    <option value="partnership">Partnership</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="su-ein">Business EIN</label>
+                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">9-digit federal tax ID — used for commission invoicing only.</p>
+                  <input id="su-ein" type="text" name="ein" placeholder="XX-XXXXXXX" pattern="[0-9]{2}-[0-9]{7}" required />
+                </div>
               </div>
 
               <div class="step" data-step="2">
@@ -206,21 +221,7 @@
                     </article>
                   </div>
                 </div>
-                <div id="buyer-use-wrap" style="display:none">
-                  <label style="display:block;font-size:var(--font-size-sm);font-weight:600;margin-bottom:var(--space-1)">Primary use for biochar</label>
-                  <select id="buyer-use-type" style="width:100%;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)">
-                    <option value="agriculture">Agriculture / soil amendment</option>
-                    <option value="water_filtration">Water filtration & treatment</option>
-                    <option value="construction">Construction / concrete additive</option>
-                    <option value="carbon_removal">Carbon removal / offsets</option>
-                  </select>
-                </div>
-                <div class="field seller-only-field">
-                  <label for="su-ein">Business EIN</label>
-                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">9-digit federal tax ID — used for commission invoicing only.</p>
-                  <input id="su-ein" type="text" name="ein" placeholder="XX-XXXXXXX" pattern="[0-9]{2}-[0-9]{7}" />
-                </div>
-                <div class="field seller-only-field">
+                <div class="field">
                   <label for="su-business-website">Business website</label>
                   <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Your company website or LinkedIn. Helps us verify your operation.</p>
                   <input id="su-business-website" type="url" name="businessWebsite" placeholder="https://yourcompany.com" />
@@ -326,6 +327,10 @@
 
               <div class="step" data-step="4">
                 <h2>Step 4 - Location</h2>
+                <div class="field">
+                  <label for="su-street">Street address</label>
+                  <input id="su-street" type="text" name="street" placeholder="123 Main St" required />
+                </div>
                 <div class="field"><label for="state-signup">State</label><select name="state" id="state-signup" required></select><script>buildStateSelect(document.getElementById('state-signup'), true)</script></div>
                 <div class="field">
                   <label for="su-zipcode">ZIP code</label>
@@ -427,7 +432,9 @@
             var confirm = document.getElementById("su-confirm").value;
             var name = document.getElementById("su-name").value.trim();
             var businessName = document.getElementById("su-business").value.trim();
-            if (!email || !password || !confirm || !name || !businessName) {
+            var businessType = document.getElementById("su-business-type").value.trim();
+            var ein = document.getElementById("su-ein").value.trim();
+            if (!email || !password || !confirm || !name || !businessName || !businessType || !ein) {
               signupError.textContent = "Please complete all required fields in Step 1.";
               return false;
             }
@@ -447,8 +454,10 @@
             }
           }
           if (step === 4) {
+            var street = document.getElementById("su-street").value.trim();
             var selectedState = document.getElementById("state-signup").value.trim();
             var zipcode = document.getElementById("su-zipcode").value.trim();
+            if (!street) { signupError.textContent = "Please enter your street address."; return false; }
             if (!selectedState) { signupError.textContent = "Please select a state."; return false; }
             if (!/^[0-9]{5}$/.test(zipcode)) { signupError.textContent = "Please enter a valid 5-digit ZIP code."; return false; }
           }
@@ -465,15 +474,19 @@
           var password = document.getElementById("su-password").value;
           var name = document.getElementById("su-name").value.trim();
           var businessName = document.getElementById("su-business").value.trim();
+          var businessType = document.getElementById("su-business-type").value.trim();
+          var ein = document.getElementById("su-ein").value.trim();
+          var businessWebsite = document.getElementById("su-business-website").value.trim() || null;
+          var street = document.getElementById("su-street").value.trim();
           var state = document.getElementById("state-signup").value.trim();
           var zipcode = document.getElementById("su-zipcode").value.trim();
           var country = document.getElementById("su-country").value;
-          var ein = selectedRole === "seller" ? document.getElementById("su-ein").value.trim() : null;
-          var businessWebsite = selectedRole === "seller" ? document.getElementById("su-business-website").value.trim() : null;
 
           var userData = {
             name: name,
             businessName: businessName,
+            businessType: businessType,
+            businessStreet: street,
             role: selectedRole,
             state: state,
             zipcode: zipcode,
@@ -493,7 +506,6 @@
             userData.acreage = parseFloat(document.getElementById("su-acreage").value) || null;
             userData.applicationRate = parseFloat(document.getElementById("su-apprate").value) || 7;
             userData.spreadCostPerTonne = parseFloat(document.getElementById("su-spreadcost").value) || 60;
-            userData.buyerType = document.getElementById("buyer-use-type").value;
           }
 
           if (selectedRole === "seller") {
@@ -530,8 +542,6 @@
             document.querySelectorAll('.seller-only-field').forEach(function (el) {
               el.style.display = selectedRole === "seller" ? "block" : "none";
             });
-            var buyerUseWrap = document.getElementById("buyer-use-wrap");
-            if (buyerUseWrap) buyerUseWrap.style.display = selectedRole === "buyer" ? "block" : "none";
             var farmFields = document.getElementById("buyer-farm-fields");
             if (farmFields) farmFields.style.display = selectedRole === "buyer" ? "block" : "none";
           });
