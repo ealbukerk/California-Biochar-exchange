@@ -1,6 +1,7 @@
 window.LISTINGS = [
   {
     id: "cbx-001",
+    status: "active",
     producerName: "Valley Carbon Cooperative",
     county: "Fresno",
     producerZip: "93706",
@@ -35,6 +36,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-002",
+    status: "active",
     producerName: "Delta Pyro Materials",
     county: "Yolo",
     producerZip: "95616",
@@ -69,6 +71,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-003",
+    status: "active",
     producerName: "Redwood Soil Carbon",
     county: "Humboldt",
     producerZip: "95501",
@@ -103,6 +106,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-004",
+    status: "active",
     producerName: "Sonoma Circular Char",
     county: "Sonoma",
     producerZip: "95401",
@@ -137,6 +141,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-005",
+    status: "active",
     producerName: "Central Coast Nut Carbon",
     county: "Santa Barbara",
     producerZip: "93101",
@@ -171,6 +176,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-006",
+    status: "active",
     producerName: "Foothill Biomass Exchange",
     county: "El Dorado",
     producerZip: "95667",
@@ -205,6 +211,7 @@ window.LISTINGS = [
   },
   {
     id: "cbx-007",
+    status: "active",
     producerName: "San Joaquin Carbon Works",
     county: "Kings",
     producerZip: "93230",

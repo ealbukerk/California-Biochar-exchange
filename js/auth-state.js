@@ -11,7 +11,11 @@
     'seller.html':               { role: 'seller', market: 'biochar' },
     'apply-wizard.html':         { role: 'seller', market: 'biochar' },
     'list-feedstock.html':       { role: 'seller', market: 'biomass' },
-    'producer-demand.html':      { role: 'seller', market: 'biomass' }
+    'producer-demand.html':      { role: 'seller', market: 'biomass' },
+    'carbon.html':               { role: 'buyer',  market: 'carbon' },
+    'carbon-listing.html':       { role: 'buyer',  market: 'carbon' },
+    'list-credit.html':          { role: 'seller', market: 'carbon' },
+    'carbon-dealroom.html':      { role: 'buyer',  market: 'carbon' }
   };
 
   var DEST = {
@@ -27,8 +31,10 @@
   }
 
   function navigate(role, market) {
-    localStorage.setItem('bm_nav_role',   role);
-    localStorage.setItem('bm_nav_market', market);
+    if (market !== 'carbon') {
+      localStorage.setItem('bm_nav_role',   role);
+      localStorage.setItem('bm_nav_market', market);
+    }
     var dest = DEST[role] && DEST[role][market] ? DEST[role][market] : 'buyer.html';
     var currentPage = window.location.pathname.split('/').pop() || 'index.html';
     if (currentPage !== dest) window.location.href = dest;
@@ -58,6 +64,7 @@
     var ctx = getContext(currentPage, profileRole);
     var role   = ctx.role;
     var market = ctx.market;
+    var isCarbon = market === 'carbon';
 
     var initial  = profile ? (profile.businessName || profile.name || '') : '';
     var initials = initial ? initial.charAt(0).toUpperCase() : '?';
@@ -66,23 +73,25 @@
       '<div class="container bm-nav-inner">' +
         '<a class="bm-nav-logo" href="index.html">Biochar.market</a>' +
 
-        (user ?
-          '<div style="display:flex;align-items:center;gap:var(--space-3)">' +
-
-            '<div class="bm-mode-bar" style="gap:0">' +
-              '<button id="bm-role-buyer"  class="bm-mode-btn' + (role==='buyer'  ? ' active buy'  : '') + '">Buyer</button>' +
-              '<button id="bm-role-seller" class="bm-mode-btn' + (role==='seller' ? ' active sell' : '') + '">Seller</button>' +
-            '</div>' +
-
-            '<div class="bm-mode-bar" style="gap:0">' +
-              '<button id="bm-mkt-biochar" class="bm-mode-btn' + (market==='biochar' ? ' active buy'  : '') + '">Biochar</button>' +
-              '<button id="bm-mkt-biomass" class="bm-mode-btn' + (market==='biomass' ? ' active sell' : '') + '">Biomass</button>' +
-            '</div>' +
-
-          '</div>'
-        : '') +
+        (isCarbon
+          ? '<div style="flex:1;display:flex;justify-content:center">' +
+              '<div style="font-weight:600;color:#2D4A3E">Carbon Credits</div>' +
+            '</div>'
+          : (user
+            ? '<div style="display:flex;align-items:center;gap:var(--space-3);flex:1;justify-content:center">' +
+                '<div class="bm-mode-bar" style="gap:0">' +
+                  '<button id="bm-role-buyer"  class="bm-mode-btn' + (role==='buyer'  ? ' active buy'  : '') + '">Buyer</button>' +
+                  '<button id="bm-role-seller" class="bm-mode-btn' + (role==='seller' ? ' active sell' : '') + '">Seller</button>' +
+                '</div>' +
+                '<div class="bm-mode-bar" style="gap:0">' +
+                  '<button id="bm-mkt-biochar" class="bm-mode-btn' + (market==='biochar' ? ' active buy'  : '') + '">Biochar</button>' +
+                  '<button id="bm-mkt-biomass" class="bm-mode-btn' + (market==='biomass' ? ' active sell' : '') + '">Biomass</button>' +
+                '</div>' +
+              '</div>'
+            : '<div style="flex:1"></div>')) +
 
         '<div class="bm-nav-right">' +
+          '<a href="carbon.html" class="bm-nav-link" style="color:#2D4A3E">Carbon Credits</a>' +
           (user ?
             '<div style="position:relative">' +
               '<button class="bm-avatar" id="bm-avatar-btn" title="Account">' + initials + '</button>' +
@@ -105,7 +114,7 @@
       document.body.insertBefore(nav, document.body.firstChild);
     }
 
-    if (user) {
+    if (user && !isCarbon) {
       document.getElementById('bm-role-buyer').addEventListener('click',  function() { navigate('buyer',  market); });
       document.getElementById('bm-role-seller').addEventListener('click', function() { navigate('seller', market); });
       document.getElementById('bm-mkt-biochar').addEventListener('click', function() { navigate(role, 'biochar'); });

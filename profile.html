@@ -43,12 +43,14 @@
       }
       #my-feedstock-section,
       #my-demand-section,
-      #producer-details-section {
+      #producer-details-section,
+      #carbon-listings-section {
         border-left: 4px solid #7A5C1E;
       }
       #prefs-section,
       #history-section,
-      #scheduled-section {
+      #scheduled-section,
+      #carbon-purchases-section {
         border-left: 4px solid var(--color-accent);
       }
       #carbon-section {
@@ -426,6 +428,16 @@
         <section class="profile-section" id="carbon-section">
           <h2>🌍 Carbon impact</h2>
           <div id="carbon-dashboard-wrap"></div>
+        </section>
+
+        <section class="profile-section" id="carbon-listings-section" style="display:none">
+          <h2>My Carbon Listings</h2>
+          <div id="carbon-listings-wrap" style="margin-top:var(--space-6)"></div>
+        </section>
+
+        <section class="profile-section" id="carbon-purchases-section" style="display:none">
+          <h2>Carbon Credit Purchases</h2>
+          <div id="carbon-purchases-wrap" style="margin-top:var(--space-6)"></div>
         </section>
 
         <section class="profile-section" id="dealrooms-section">

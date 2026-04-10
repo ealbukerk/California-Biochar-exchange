@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Carbon Credits — Biochar.market</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --carbon-accent: #2D4A3E; --carbon-accent-light: #E8EFEA; }
+    .carbon-hero { background: linear-gradient(135deg, #1F332A, #2D4A3E); padding: var(--space-12) 0; color: white; text-align: center; }
+    .carbon-hero h1 { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .carbon-hero p { margin-top: var(--space-4); font-size: var(--font-size-lg); color: rgba(255,255,255,0.85); }
+    .carbon-hero-actions { margin-top: var(--space-6); display: flex; justify-content: center; gap: var(--space-3); flex-wrap: wrap; }
+    .carbon-hero-actions .btn { background: white; color: var(--carbon-accent); }
+    .carbon-hero-actions .btn-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.6); }
+    .filter-bar { padding: var(--space-5) 0; border-bottom: 1px solid var(--color-border); margin-bottom: var(--space-6); }
+    .filter-search-row { margin-bottom: var(--space-4); }
+    .filter-search-row input { width: 100%; }
+    .filter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
+    .filter-grid > * { width: 100%; min-width: 0; }
+    .carbon-card { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; text-decoration: none; color: inherit; display: flex; flex-direction: column; box-shadow: var(--shadow-sm); transition: box-shadow 0.15s, transform 0.15s; }
+    .carbon-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .carbon-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--carbon-accent-light); color: var(--carbon-accent); font-size: var(--font-size-xs); font-weight: var(--font-weight-semibold); padding: 4px 10px; border-radius: 999px; }
+    .carbon-badge.dark { background: #1F332A; color: white; }
+    .carbon-verified { background: #D1FAE5; color: #065F46; border-radius: 999px; padding: 3px 10px; font-size: var(--font-size-xs); font-weight: 700; }
+    .carbon-meta { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+    .carbon-cobenefits { display: flex; flex-wrap: wrap; gap: 6px; margin-top: var(--space-2); }
+    .carbon-cobenefit { background: var(--color-bg); border: 1px solid var(--color-border); border-radius: 999px; padding: 3px 10px; font-size: var(--font-size-xs); color: var(--color-text-muted); }
+    #list-credits-btn { display: none; }
+  </style>
+</head>
+<body>
+  <nav id="bm-nav-placeholder" style="background:var(--color-surface);border-bottom:1px solid var(--color-border);height:60px"></nav>
+
+  <section class="carbon-hero">
+    <div class="container">
+      <h1>Carbon Credit Marketplace</h1>
+      <p>Verified carbon removal and reduction credits from West Coast projects.</p>
+      <div class="carbon-hero-actions">
+        <a id="list-credits-btn" href="list-carbon.html" class="btn">List your credits</a>
+        <a href="learn.html" class="btn btn-outline">How it works</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="listings-section">
+    <div class="container">
+      <div id="filter-bar" class="filter-bar">
+        <div class="filter-search-row">
+          <input id="carbon-search" type="text" placeholder="Search projects, locations, standards..." />
+        </div>
+        <div class="filter-grid">
+          <select id="filter-type">
+            <option value="">All project types</option>
+            <option value="biochar">Biochar</option>
+            <option value="forestry">Forestry</option>
+            <option value="soil_carbon">Soil carbon</option>
+            <option value="methane">Methane</option>
+            <option value="dac">Direct air capture</option>
+          </select>
+          <select id="filter-standard">
+            <option value="">All standards</option>
+            <option value="VCS">VCS</option>
+            <option value="GoldStandard">Gold Standard</option>
+            <option value="ACR">ACR</option>
+            <option value="CAR">CAR</option>
+            <option value="self_certified">Self certified</option>
+          </select>
+          <select id="filter-vintage">
+            <option value="">All vintage years</option>
+          </select>
+          <select id="filter-price">
+            <option value="">All prices</option>
+            <option value="25">Up to $25/tonne</option>
+            <option value="50">Up to $50/tonne</option>
+            <option value="75">Up to $75/tonne</option>
+            <option value="100">Up to $100/tonne</option>
+          </select>
+          <select id="filter-cobenefit">
+            <option value="">All co-benefits</option>
+            <option value="habitat">Habitat</option>
+            <option value="soil health">Soil health</option>
+            <option value="water">Water</option>
+            <option value="community jobs">Community jobs</option>
+            <option value="air quality">Air quality</option>
+            <option value="biodiversity">Biodiversity</option>
+            <option value="innovation">Innovation</option>
+          </select>
+          <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-sm);cursor:pointer;height:42px">
+            <input type="checkbox" id="filter-verified" style="accent-color:var(--carbon-accent)" />
+            Verified only
+          </label>
+          <button id="reset-filters" class="btn-secondary">Reset all</button>
+        </div>
+      </div>
+
+      <div id="carbon-grid" class="listings-grid"></div>
+      <div id="carbon-empty" class="fs-empty" style="display:none">
+        <p>No carbon credit listings match your filters.</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script src="js/carbon-data.js"></script>
+  <script>
+    (function() {
+      var db = firebase.firestore();
+      var state = { listings: [], filtered: [] };
+
+      function normalize(text) { return (text || '').toString().toLowerCase(); }
+      function benefitIcon(label) {
+        var l = normalize(label);
+        if (l.indexOf('soil') !== -1) return '🌱';
+        if (l.indexOf('water') !== -1) return '💧';
+        if (l.indexOf('habitat') !== -1 || l.indexOf('biodiversity') !== -1) return '🦉';
+        if (l.indexOf('air') !== -1) return '🌬️';
+        if (l.indexOf('community') !== -1 || l.indexOf('jobs') !== -1) return '🤝';
+        if (l.indexOf('innovation') !== -1) return '🔬';
+        return '✅';
+      }
+
+      function cardHtml(l) {
+        return '<a href="carbon-listing.html?id=' + encodeURIComponent(l.id) + '" class="carbon-card">' +
+          '<div style="padding:var(--space-5);display:flex;flex-direction:column;gap:var(--space-3)">' +
+            '<div class="carbon-meta">' +
+              '<span class="carbon-badge">' + l.projectType.replace('_',' ') + '</span>' +
+              '<span class="carbon-badge dark">' + l.standard + '</span>' +
+              '<span class="carbon-badge">' + l.vintageYear + '</span>' +
+              (l.verified ? '<span class="carbon-verified">✓ Verified</span>' : '') +
+            '</div>' +
+            '<div>' +
+              '<h3 style="margin:0 0 4px 0;font-size:var(--font-size-lg)">' + l.projectName + '</h3>' +
+              '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">' + l.projectLocation + '</div>' +
+            '</div>' +
+            '<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:var(--space-3)">' +
+              '<div><span style="font-size:var(--font-size-2xl);font-weight:700">$' + l.pricePerTonne + '</span><span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">/tonne</span></div>' +
+              '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted)">' + Number(l.volumeTonnes).toLocaleString() + ' tCO₂e</div>' +
+            '</div>' +
+            '<div class="carbon-cobenefits">' +
+              (l.cobenefits || []).slice(0, 4).map(function(b) {
+                return '<span class="carbon-cobenefit">' + benefitIcon(b) + ' ' + b + '</span>';
+              }).join('') +
+            '</div>' +
+          '</div>' +
+        '</a>';
+      }
+
+      function render() {
+        var grid = document.getElementById('carbon-grid');
+        var empty = document.getElementById('carbon-empty');
+        if (!state.filtered.length) {
+          grid.innerHTML = '';
+          empty.style.display = 'block';
+          return;
+        }
+        empty.style.display = 'none';
+        grid.innerHTML = state.filtered.map(cardHtml).join('');
+      }
+
+      function applyFilters() {
+        var type = document.getElementById('filter-type').value;
+        var standard = document.getElementById('filter-standard').value;
+        var vintage = document.getElementById('filter-vintage').value;
+        var price = Number(document.getElementById('filter-price').value) || 0;
+        var benefit = document.getElementById('filter-cobenefit').value;
+        var verified = document.getElementById('filter-verified').checked;
+        var search = normalize(document.getElementById('carbon-search').value);
+        state.filtered = state.listings.filter(function(l) {
+          if (type && l.projectType !== type) return false;
+          if (standard && l.standard !== standard) return false;
+          if (vintage && String(l.vintageYear) !== String(vintage)) return false;
+          if (price && Number(l.pricePerTonne) > price) return false;
+          if (benefit && (!l.cobenefits || l.cobenefits.indexOf(benefit) === -1)) return false;
+          if (verified && !l.verified) return false;
+          if (search) {
+            var hay = normalize(l.projectName + ' ' + l.projectLocation + ' ' + l.standard);
+            if (hay.indexOf(search) === -1) return false;
+          }
+          return true;
+        });
+        render();
+      }
+
+      function bindFilters() {
+        ['filter-type','filter-standard','filter-vintage','filter-price','filter-cobenefit'].forEach(function(id) {
+          document.getElementById(id).addEventListener('change', applyFilters);
+        });
+        document.getElementById('filter-verified').addEventListener('change', applyFilters);
+        document.getElementById('carbon-search').addEventListener('input', applyFilters);
+        document.getElementById('reset-filters').addEventListener('click', function() {
+          document.getElementById('filter-type').value = '';
+          document.getElementById('filter-standard').value = '';
+          document.getElementById('filter-vintage').value = '';
+          document.getElementById('filter-price').value = '';
+          document.getElementById('filter-cobenefit').value = '';
+          document.getElementById('filter-verified').checked = false;
+          document.getElementById('carbon-search').value = '';
+          applyFilters();
+        });
+      }
+
+      function seedVintageOptions(listings) {
+        var years = {};
+        listings.forEach(function(l) { years[l.vintageYear] = true; });
+        var select = document.getElementById('filter-vintage');
+        Object.keys(years).sort().reverse().forEach(function(y) {
+          var opt = document.createElement('option');
+          opt.value = y;
+          opt.textContent = y;
+          select.appendChild(opt);
+        });
+      }
+
+      function loadListings() {
+        var demo = window.CARBON_LISTINGS ? window.CARBON_LISTINGS.slice() : [];
+        state.listings = demo;
+        seedVintageOptions(demo);
+        applyFilters();
+
+        db.collection('carbon_listings').where('status','==','active')
+          .onSnapshot(function(snap) {
+            var live = [];
+            snap.forEach(function(doc) {
+              var d = doc.data();
+              d.id = doc.id;
+              live.push(d);
+            });
+            state.listings = demo.concat(live);
+            seedVintageOptions(state.listings);
+            applyFilters();
+          }, function() {});
+      }
+
+      window.AuthState.onReady(function(user, profile) {
+        var listBtn = document.getElementById('list-credits-btn');
+        if (listBtn && user && profile && profile.role === 'seller') {
+          listBtn.style.display = 'inline-flex';
+        }
+      });
+
+      bindFilters();
+      loadListings();
+    })();
+  </script>
+</body>
+</html>

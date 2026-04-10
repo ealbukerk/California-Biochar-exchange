@@ -186,19 +186,27 @@
               <div class="step active" data-step="1">
                 <h2>Step 1 - Account</h2>
                 <div class="field"><label for="su-email">Email</label><input id="su-email" type="email" required /></div>
-                <div class="field"><label for="su-password">Password</label><input id="su-password" type="password" minlength="8" required /></div>
+                <div class="field">
+                  <label for="su-password">Password</label>
+                  <input id="su-password" type="password" minlength="8" required />
+                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Minimum 8 characters.</p>
+                </div>
                 <div class="field"><label for="su-confirm">Confirm password</label><input id="su-confirm" type="password" required /></div>
                 <div class="field"><label for="su-name">Full name</label><input id="su-name" type="text" required /></div>
                 <div class="field"><label for="su-business">Farm or business name</label><input id="su-business" type="text" required /></div>
                 <div class="field">
                   <label for="su-business-type">Business type</label>
                   <select id="su-business-type" required>
-                    <option value="">Select...</option>
-                    <option value="sole_proprietorship">Sole Proprietorship</option>
+                    <option value="">Select business type</option>
+                    <option value="sole_prop">Sole Proprietorship</option>
                     <option value="llc">LLC</option>
                     <option value="corporation">Corporation</option>
                     <option value="partnership">Partnership</option>
                   </select>
+                </div>
+                <div class="field">
+                  <label for="su-street">Street address</label>
+                  <input id="su-street" type="text" name="street" placeholder="123 Main St" required />
                 </div>
                 <div class="field">
                   <label for="su-ein">Business EIN</label>
@@ -307,10 +315,14 @@
                   <div class="field">
                     <label for="su-contamination-tolerance">Contamination tolerance</label>
                     <select id="su-contamination-tolerance">
-                      <option value="clean_only">Clean only</option>
-                      <option value="soil_acceptable">Soil acceptable</option>
-                      <option value="mixed_acceptable">Mixed acceptable</option>
+                      <option value="">Select tolerance level</option>
+                      <option value="1">1 — Very clean material only</option>
+                      <option value="2">2 — Minor contamination acceptable</option>
+                      <option value="3">3 — Moderate contamination acceptable</option>
+                      <option value="4">4 — Most contamination acceptable</option>
+                      <option value="5">5 — Tolerant of all contamination levels</option>
                     </select>
+                    <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">1 = very clean only, 5 = tolerant of most material.</p>
                   </div>
                   <div class="field">
                     <label for="su-max-distance">Maximum sourcing distance (miles)</label>
@@ -327,10 +339,6 @@
 
               <div class="step" data-step="4">
                 <h2>Step 4 - Location</h2>
-                <div class="field">
-                  <label for="su-street">Street address</label>
-                  <input id="su-street" type="text" name="street" placeholder="123 Main St" required />
-                </div>
                 <div class="field"><label for="state-signup">State</label><select name="state" id="state-signup" required></select><script>buildStateSelect(document.getElementById('state-signup'), true)</script></div>
                 <div class="field">
                   <label for="su-zipcode">ZIP code</label>
@@ -348,7 +356,7 @@
                 <div id="buyer-farm-fields">
                   <div class="field">
                     <label for="su-acreage">Farm acreage</label>
-                    <input id="su-acreage" type="number" min="0" placeholder="e.g. 250" required />
+                    <input id="su-acreage" type="number" min="0" placeholder="e.g. 250" />
                   </div>
                   <div class="field">
                     <label for="su-apprate">Biochar application rate <span style="color:var(--color-text-muted);font-weight:400">(tons/acre, optional — default 7)</span></label>
@@ -365,7 +373,7 @@
 
               <div class="step-actions">
                 <button id="signup-back" class="btn btn-secondary" type="button">Back</button>
-                <button id="signup-next" class="btn btn-primary" type="button">Next</button>
+                <button id="signup-next" class="btn btn-primary" type="button" disabled>Next</button>
               </div>
               <p id="signup-error" class="auth-error"></p>
               <p id="signup-success" class="auth-success"></p>
@@ -390,6 +398,10 @@
         var signupSuccess = document.getElementById("signup-success");
         var loginError = document.getElementById("login-error");
         var roleCards = Array.prototype.slice.call(document.querySelectorAll(".role-card"));
+        var emailField = document.getElementById("su-email");
+        var passwordField = document.getElementById("su-password");
+        var confirmField = document.getElementById("su-confirm");
+        var submitBtn = document.getElementById("signup-next");
 
         var currentStep = 1;
         var selectedRole = "";
@@ -401,6 +413,77 @@
         makeMultiSelect(cropEl, ["Almond Orchards","Walnut Orchards","Pistachio Orchards","Grapevine / Vineyards","Corn","Wheat","Rice","Row Crops","Pasture","Forestry"], "Select crop types");
         makeMultiSelect(goalEl, ["Improve Water Retention","Increase Nutrient Holding","Raise Soil pH","Reduce Fertilizer Use","Carbon Sequestration"], "Select goals");
         makeMultiSelect(biomassEl, ["Orchard Prunings","Almond Shells","Pistachio Shells","Walnut Shells","Corn Stover","Rice Husks","Forestry Slash","Logging Residue","Thinning Material","Clean Wood Waste","Construction Wood","Tree Service Chips"], "Select biomass types");
+
+        function setFieldState(el, isValid) {
+          if (!el) return;
+          el.classList.toggle("field-valid", isValid);
+          el.classList.toggle("field-error", !isValid);
+        }
+
+        function validateEmailField() {
+          if (!emailField) return false;
+          var value = emailField.value.trim();
+          var hasSpace = /\s/.test(value);
+          var atCount = (value.match(/@/g) || []).length;
+          var hasDotAfterAt = false;
+          if (atCount === 1) {
+            var parts = value.split("@");
+            hasDotAfterAt = parts[1] && parts[1].indexOf(".") !== -1;
+          }
+          var isValid = !!value && !hasSpace && atCount === 1 && hasDotAfterAt;
+          setFieldState(emailField, isValid);
+          return isValid;
+        }
+
+        function validatePasswordField() {
+          if (!passwordField) return false;
+          var isValid = passwordField.value.length >= 8;
+          setFieldState(passwordField, isValid);
+          return isValid;
+        }
+
+        function validateConfirmField() {
+          if (!confirmField || !passwordField) return false;
+          var passValid = passwordField.value.length >= 8;
+          var isValid = passValid && confirmField.value === passwordField.value;
+          setFieldState(confirmField, isValid);
+          return isValid;
+        }
+
+        function updateSubmitState() {
+          if (!submitBtn) return;
+          var ok = emailField && passwordField && confirmField &&
+            emailField.classList.contains("field-valid") &&
+            passwordField.classList.contains("field-valid") &&
+            confirmField.classList.contains("field-valid");
+          submitBtn.disabled = !ok;
+        }
+
+        if (emailField) {
+          emailField.addEventListener("blur", function() {
+            validateEmailField();
+            updateSubmitState();
+          });
+        }
+
+        if (passwordField) {
+          passwordField.addEventListener("blur", function() {
+            validatePasswordField();
+            validateConfirmField();
+            updateSubmitState();
+          });
+          passwordField.addEventListener("input", function() {
+            validateConfirmField();
+            updateSubmitState();
+          });
+        }
+
+        if (confirmField) {
+          confirmField.addEventListener("blur", function() {
+            validateConfirmField();
+            updateSubmitState();
+          });
+        }
 
         function setMode(mode) {
           var isLogin = mode === "login";
@@ -433,8 +516,9 @@
             var name = document.getElementById("su-name").value.trim();
             var businessName = document.getElementById("su-business").value.trim();
             var businessType = document.getElementById("su-business-type").value.trim();
+            var street = document.getElementById("su-street").value.trim();
             var ein = document.getElementById("su-ein").value.trim();
-            if (!email || !password || !confirm || !name || !businessName || !businessType || !ein) {
+            if (!email || !password || !confirm || !name || !businessName || !businessType || !street || !ein) {
               signupError.textContent = "Please complete all required fields in Step 1.";
               return false;
             }
@@ -454,10 +538,8 @@
             }
           }
           if (step === 4) {
-            var street = document.getElementById("su-street").value.trim();
             var selectedState = document.getElementById("state-signup").value.trim();
             var zipcode = document.getElementById("su-zipcode").value.trim();
-            if (!street) { signupError.textContent = "Please enter your street address."; return false; }
             if (!selectedState) { signupError.textContent = "Please select a state."; return false; }
             if (!/^[0-9]{5}$/.test(zipcode)) { signupError.textContent = "Please enter a valid 5-digit ZIP code."; return false; }
           }
@@ -512,7 +594,8 @@
             userData.pyroTech = document.getElementById("su-pyro-tech").value;
             userData.acceptedBiomassTypes = biomassEl.getValue().filter(function(v) { return v !== "All"; });
             userData.maxMoistureAccepted = document.getElementById("su-max-moisture").value;
-            userData.contaminationTolerance = document.getElementById("su-contamination-tolerance").value;
+            var contamTol = parseInt(document.getElementById("su-contamination-tolerance").value, 10);
+            userData.contaminationTolerance = Number.isNaN(contamTol) ? null : contamTol;
             userData.maxSourcingDistance = document.getElementById("su-max-distance").value;
           }
 

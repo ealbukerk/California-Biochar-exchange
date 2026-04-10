@@ -71,12 +71,14 @@
   function validateStep1() {
     var biomassChecked = Array.prototype.slice.call(document.querySelectorAll('input[name=\"f-biomass-types\"]:checked'));
     if (!biomassChecked.length) {
+      console.warn('Feedstock wizard validation failed: no biomass types selected');
       alert('Please select at least one biomass type.');
       return false;
     }
     var required = ['f-supplier-type', 'f-zip', 'f-quantity', 'f-min-pickup', 'f-price'];
     for (var i = 0; i < required.length; i++) {
       if (!val(required[i])) {
+        console.warn('Feedstock wizard validation failed: missing ' + required[i]);
         document.getElementById(required[i]).focus();
         document.getElementById(required[i]).style.borderColor = '#cc4444';
         setTimeout(function (id) { document.getElementById(id).style.borderColor = ''; }, 2000, required[i]);
@@ -90,6 +92,7 @@
   var required = ['f-particle-size', 'f-contamination-debris', 'f-contamination-ash', 'f-contamination-chemical', 'f-contamination-other', 'f-moisture', 'f-age', 'f-loading'];
     for (var i = 0; i < required.length; i++) {
       if (!val(required[i])) {
+        console.warn('Feedstock wizard validation failed: missing ' + required[i]);
         document.getElementById(required[i]).focus();
         document.getElementById(required[i]).style.borderColor = '#cc4444';
         setTimeout(function (id) { document.getElementById(id).style.borderColor = ''; }, 2000, required[i]);
@@ -106,7 +109,7 @@
       ['ZIP code', val('f-zip')],
       ['Quantity', val('f-quantity') + ' tons'],
       ['Min pickup', val('f-min-pickup') + ' tons'],
-      ['Price', '$' + val('f-price') + '/ton' + (checked('f-negotiable') ? ' (negotiable)' : '')],
+      ['Price', '$' + val('f-price') + '/ton'],
       ['Particle size', PARTICLE_LABELS[val('f-particle-size')] || val('f-particle-size')],
       ['Physical debris', 'Score ' + (val('f-contamination-debris') || '—') + '/5'],
       ['Soil / ash', 'Score ' + (val('f-contamination-ash') || '—') + '/5'],

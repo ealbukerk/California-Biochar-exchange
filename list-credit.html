@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>List Carbon Credits — Biochar.market</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root { --carbon-accent: #2D4A3E; --carbon-accent-light: #E8EFEA; }
+    .page-hero { background: linear-gradient(135deg, #1F332A, #2D4A3E); padding: var(--space-10) 0; color: white; }
+    .page-hero h1 { font-size: var(--font-size-3xl); font-weight: var(--font-weight-bold); }
+    .page-hero p { color: rgba(255,255,255,0.85); margin-top: var(--space-3); }
+    .wizard-wrap { max-width: 960px; margin: 0 auto; padding: var(--space-10) var(--space-6); }
+    .wizard-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--space-3); margin-bottom: var(--space-6); }
+    .wizard-step { display:flex; align-items:center; gap:8px; font-size:var(--font-size-sm); color:var(--color-text-muted); }
+    .wizard-step .dot { width:28px;height:28px;border-radius:50%;background:var(--color-border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--color-text-muted); }
+    .wizard-step.active .dot { background: var(--carbon-accent); color: white; }
+    .wizard-step.active { color: var(--carbon-accent); font-weight: 600; }
+    .wizard-panel { display:none; }
+    .wizard-panel.active { display:block; }
+    .wizard-panel h2 { font-size: var(--font-size-2xl); margin-bottom: var(--space-4); }
+    .wizard-grid { display:grid; grid-template-columns:1fr 1fr; gap: var(--space-4); }
+    .wizard-grid .full { grid-column:1/-1; }
+    .field label { display:block; font-size:var(--font-size-sm); font-weight:600; margin-bottom:6px; }
+    .field input, .field select { width:100%; height:42px; border:1px solid var(--color-border); border-radius:var(--radius-md); padding:0 var(--space-3); font-size:var(--font-size-sm); font-family:inherit; }
+    .field small { color: var(--color-text-muted); font-size: 11px; }
+    .wizard-nav { display:flex; justify-content:space-between; margin-top: var(--space-6); }
+    .btn-primary { background: var(--carbon-accent); }
+    .btn-secondary { border: 1px solid var(--color-border); background: white; }
+    .doc-upload { border:2px dashed var(--color-border); border-radius:var(--radius-md); padding:var(--space-6); text-align:center; cursor:pointer; background:var(--color-bg); }
+    .doc-list { display:grid; gap:6px; margin-top: var(--space-3); }
+    .doc-item { padding:6px 10px; border:1px solid var(--color-border); border-radius:6px; font-size:12px; color:var(--color-text-muted); }
+    .auth-gate { text-align:center; padding: var(--space-12) 0; }
+  </style>
+</head>
+<body>
+  <nav id="bm-nav-placeholder" style="background:var(--color-surface);border-bottom:1px solid var(--color-border);height:60px"></nav>
+
+  <section class="page-hero">
+    <div class="container">
+      <h1>List Carbon Credits</h1>
+      <p>Publish verified carbon credit availability for buyers on Biochar.market.</p>
+      <div style="margin-top:var(--space-4)">
+        <a href="carbon.html" style="color:rgba(255,255,255,0.9);text-decoration:none;font-size:var(--font-size-sm)">← Back to Carbon Credits</a>
+      </div>
+    </div>
+  </section>
+
+  <div id="auth-gate" class="auth-gate" style="display:none">
+    <p style="color:var(--color-text-muted)">Please <a href="auth.html">sign in</a> to list carbon credits.</p>
+  </div>
+
+  <div id="wizard-wrap" class="wizard-wrap">
+    <div class="wizard-steps">
+      <div class="wizard-step active" data-step="1"><span class="dot">1</span> Project Info</div>
+      <div class="wizard-step" data-step="2"><span class="dot">2</span> Credit Details</div>
+      <div class="wizard-step" data-step="3"><span class="dot">3</span> Documentation</div>
+      <div class="wizard-step" data-step="4"><span class="dot">4</span> Review</div>
+    </div>
+
+    <div class="wizard-panel active" id="lc-step-1">
+      <h2>Project info</h2>
+      <div class="wizard-grid">
+        <div class="field full">
+          <label for="lc-project-name">Project name</label>
+          <input id="lc-project-name" type="text" placeholder="e.g. North Coast Forest Recovery" />
+        </div>
+        <div class="field">
+          <label for="lc-project-type">Project type</label>
+          <select id="lc-project-type">
+            <option value="">Select…</option>
+            <option value="biochar">Biochar</option>
+            <option value="forestry">Forestry</option>
+            <option value="soil_carbon">Soil carbon</option>
+            <option value="methane">Methane</option>
+            <option value="dac">Direct air capture</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lc-standard">Verification standard</label>
+          <select id="lc-standard">
+            <option value="">Select…</option>
+            <option value="VCS">VCS</option>
+            <option value="GoldStandard">Gold Standard</option>
+            <option value="ACR">ACR</option>
+            <option value="CAR">CAR</option>
+            <option value="self_certified">Self certified</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="lc-vintage">Vintage year</label>
+          <input id="lc-vintage" type="number" min="2000" max="2030" placeholder="2024" />
+        </div>
+        <div class="field">
+          <label for="lc-location">Project location</label>
+          <input id="lc-location" type="text" placeholder="County, State" />
+        </div>
+        <div class="field full">
+          <label for="lc-registry">Registry URL</label>
+          <input id="lc-registry" type="url" placeholder="https://registry.example.com/..." />
+          <div style="display:flex;align-items:center;gap:var(--space-3);margin-top:8px">
+            <button type="button" id="lc-verify-link" class="btn btn-secondary">Verify link</button>
+            <span id="lc-verify-status" style="font-size:var(--font-size-sm);color:var(--color-text-muted)"></span>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <span></span>
+        <button class="btn btn-primary" id="lc-next-1">Continue →</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" id="lc-step-2">
+      <h2>Credit details</h2>
+      <div class="wizard-grid">
+        <div class="field">
+          <label for="lc-volume">Volume (tCO₂e)</label>
+          <input id="lc-volume" type="number" min="1" placeholder="1000" />
+        </div>
+        <div class="field">
+          <label for="lc-price">Price per tonne</label>
+          <input id="lc-price" type="number" min="0" step="0.01" placeholder="45" />
+        </div>
+        <div class="field full">
+          <label>Co-benefits</label>
+          <div style="display:flex;flex-wrap:wrap;gap:var(--space-3)">
+            <label><input type="checkbox" name="lc-cobenefit" value="Biodiversity" /> Biodiversity</label>
+            <label><input type="checkbox" name="lc-cobenefit" value="Community Development" /> Community Development</label>
+            <label><input type="checkbox" name="lc-cobenefit" value="Water" /> Water</label>
+            <label><input type="checkbox" name="lc-cobenefit" value="Gender Equity" /> Gender Equity</label>
+            <label><input type="checkbox" name="lc-cobenefit" value="None" /> None</label>
+          </div>
+        </div>
+      </div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary" id="lc-back-2">← Back</button>
+        <button class="btn btn-primary" id="lc-next-2">Continue →</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" id="lc-step-3">
+      <h2>Documentation</h2>
+      <p style="color:var(--color-text-muted);margin-bottom:var(--space-4)">Upload at least one document: issuance certificate, monitoring report, or methodology.</p>
+      <div class="doc-upload" id="lc-doc-drop">Click to upload documents (PDF, JPG, PNG)</div>
+      <input id="lc-doc-input" type="file" accept="application/pdf,image/*" multiple style="display:none" />
+      <div id="lc-doc-list" class="doc-list"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary" id="lc-back-3">← Back</button>
+        <button class="btn btn-primary" id="lc-next-3">Continue →</button>
+      </div>
+    </div>
+
+    <div class="wizard-panel" id="lc-step-4">
+      <h2>Review</h2>
+      <div id="lc-review" class="carbon-section"></div>
+      <div class="wizard-nav">
+        <button class="btn btn-secondary" id="lc-back-4">← Back</button>
+        <button class="btn btn-primary" id="lc-submit">Submit listing</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth-state.js"></script>
+  <script src="js/list-credit.js"></script>
+</body>
+</html>

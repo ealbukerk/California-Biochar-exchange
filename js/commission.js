@@ -64,3 +64,17 @@ function calculateBiomassCommission(transactionValueUSD) {
 }
 
 window.calculateBiomassCommission = calculateBiomassCommission;
+
+function calculateCarbonCommission(transactionValueUSD) {
+  var value = Number(transactionValueUSD) || 0;
+  var rate = 0.025;
+  return {
+    rate: rate,
+    rateDisplay: (rate * 100).toFixed(1) + "%",
+    commissionAmount: Math.round(value * rate * 100) / 100,
+    bracketLabel: "Flat 2.5%",
+    isCarbon: true
+  };
+}
+
+window.calculateCarbonCommission = calculateCarbonCommission;

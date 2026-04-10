@@ -324,6 +324,9 @@ nav {
 
 .bm-avatar-dropdown .signout-btn { color: #DC2626; border-top: 1px solid var(--color-border); margin-top: 4px; }
 
+.field-error  { border-color: #C0392B !important; }
+.field-valid  { border-color: #27AE60 !important; }
+
 .btn {
   display: inline-flex;
   align-items: center;

@@ -146,11 +146,14 @@
 
     wrap.innerHTML = '<p style="color:var(--color-text-muted)">Calculating your carbon impact...</p>';
 
-    db.collection("transactions")
-      .where("buyerUID", "==", state.user.uid)
-      .get()
-      .then(function(snap) {
-        if (snap.empty) {
+    Promise.all([
+      db.collection("transactions").where("buyerUID", "==", state.user.uid).get(),
+      db.collection("carbon_transactions").where("buyerUID", "==", state.user.uid).get()
+    ])
+      .then(function(results) {
+        var bioSnap = results[0];
+        var carbonSnap = results[1];
+        if (bioSnap.empty) {
           wrap.innerHTML = '<p style="color:var(--color-text-muted)">No completed transactions yet. Your carbon impact will appear here once you purchase biochar.</p>';
           return;
         }
@@ -158,20 +161,30 @@
         var totalTonnes = 0;
         var totalCO2 = 0;
 
-        snap.forEach(function(doc) {
+        bioSnap.forEach(function(doc) {
           var tx = doc.data();
           var tonnes = tx.tonnes || 0;
-          // Use stored carbonContent if available, fall back to listing lookup
           var carbonPct = tx.carbonContentPercent || null;
           if (!carbonPct) {
             var listing = (window.LISTINGS || []).find(function(l) {
               return l.id === tx.listingId;
             });
-            carbonPct = listing ? listing.scorecard.carbonContent : 70; // default 70% if unknown
+            carbonPct = listing ? listing.scorecard.carbonContent : 70;
           }
           totalTonnes += tonnes;
           totalCO2 += tonnes * (carbonPct / 100) * 3.67;
         });
+
+        var carbonRetired = 0;
+        if (carbonSnap && !carbonSnap.empty) {
+          carbonSnap.forEach(function(doc) {
+            var tx = doc.data() || {};
+            var status = (tx.status || '').toLowerCase();
+            if (status === 'completed' && tx.retirementCertUrl) {
+              carbonRetired += Number(tx.volumeTonnes || 0);
+            }
+          });
+        }
 
         var carsEquivalent = (totalCO2 / 4.6).toFixed(1);
 
@@ -193,11 +206,82 @@
               '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:4px 0 0">cars / year</p>' +
             '</div>' +
           '</div>' +
-          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-3)">Estimated using biochar carbon content × 3.67 CO₂ conversion factor. Equivalent cars calculated at 4.6t CO₂/year per vehicle.</p>';
+          '<p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-4)"><strong>Carbon credits retired:</strong> ' + carbonRetired.toFixed(1) + ' tCO₂e</p>' +
+          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">Estimated using biochar carbon content × 3.67 CO₂ conversion factor. Equivalent cars calculated at 4.6t CO₂/year per vehicle.</p>';
       })
       .catch(function() {
         wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load carbon data.</p>';
       });
+  }
+
+  function renderCarbonListings(uid) {
+    var wrap = document.getElementById('carbon-listings-wrap');
+    if (!wrap) return;
+    firebase.firestore().collection('carbon_listings')
+      .where('supplierUID', '==', uid)
+      .where('status', '==', 'active')
+      .get()
+      .then(function (snap) {
+        if (snap.empty) {
+          wrap.innerHTML = '<p class="empty-state">You haven\'t listed any carbon credits yet. <a href="list-credit.html">List your credits →</a></p>';
+          return;
+        }
+        var rows = '';
+        snap.forEach(function (doc) {
+          var d = doc.data();
+          var badge = d.verified ? '<span class="deal-chip">Verified</span>' : '<span class="deal-chip">Unverified</span>';
+          rows += '<div class="deal-row">' +
+            '<div class="deal-left-meta">' +
+              '<strong>' + htmlEscape(d.projectName || 'Carbon project') + '</strong>' +
+              '<span class="deal-chip">' + htmlEscape(d.standard || '') + '</span>' +
+              '<span class="deal-round">' + htmlEscape(d.vintageYear || '') + '</span>' +
+              '<span class="deal-round">' + (d.volumeTonnes ? d.volumeTonnes + ' tCO₂e' : '-') + '</span>' +
+              '<span class="deal-round">$' + (d.pricePerTonne || '-') + '/t</span>' +
+              badge +
+            '</div>' +
+            '<div class="deal-right-meta">' +
+              '<a class="btn btn-secondary" href="carbon-listing.html?id=' + encodeURIComponent(doc.id) + '">View</a>' +
+            '</div>' +
+          '</div>';
+        });
+        wrap.innerHTML = rows;
+      })
+      .catch(function () { wrap.innerHTML = '<p class="empty-state">Could not load carbon listings.</p>'; });
+  }
+
+  function renderCarbonPurchases(uid) {
+    var wrap = document.getElementById('carbon-purchases-wrap');
+    if (!wrap) return;
+    firebase.firestore().collection('carbon_transactions')
+      .where('buyerUID', '==', uid)
+      .get()
+      .then(function (snap) {
+        if (snap.empty) {
+          wrap.innerHTML = '<p class="empty-state">No carbon credit purchases yet. <a href="carbon.html">Browse carbon credits →</a></p>';
+          return;
+        }
+        var rows = '';
+        snap.forEach(function (doc) {
+          var d = doc.data() || {};
+          var paid = d.totalPaid || d.totalValue || d.amount || 0;
+          var completedDate = d.completedAt || d.dateCompleted || d.createdAt || '';
+          var cert = d.retirementCertUrl
+            ? '<a href="' + d.retirementCertUrl + '" target="_blank" rel="noopener">Download Retirement Certificate</a>'
+            : '<span style="color:var(--color-text-muted)">Awaiting retirement certificate from seller.</span>';
+          rows += '<div class="deal-row">' +
+            '<div class="deal-left-meta">' +
+              '<strong>' + htmlEscape(d.projectName || (d.listing && d.listing.projectName) || 'Carbon project') + '</strong>' +
+              '<span class="deal-chip">' + htmlEscape(d.vintageYear || (d.listing && d.listing.vintageYear) || '') + '</span>' +
+              '<span class="deal-round">' + (d.volumeTonnes ? d.volumeTonnes + ' tCO₂e' : '-') + '</span>' +
+              '<span class="deal-round">' + toCurrency(paid, 0) + '</span>' +
+              '<span class="deal-round">' + toDateLabel(completedDate) + '</span>' +
+            '</div>' +
+            '<div class="deal-right-meta">' + cert + '</div>' +
+          '</div>';
+        });
+        wrap.innerHTML = rows;
+      })
+      .catch(function () { wrap.innerHTML = '<p class="empty-state">Could not load carbon purchases.</p>'; });
   }
 
   function renderMyFeedstockListings(uid) {
@@ -269,13 +353,13 @@
     if (!wrap || !profile) return;
     var PYRO = { kiln: 'Kiln', retort: 'Retort', continuous_reactor: 'Continuous reactor', gasifier: 'Gasifier', other: 'Other' };
     var MOISTURE = { under_15: 'Under 15%', under_25: 'Under 25%', under_40: 'Under 40%', any: 'Any' };
-    var CONTAM = { clean_only: 'Clean only', soil_acceptable: 'Soil acceptable', mixed_acceptable: 'Mixed acceptable' };
+    var CONTAM = { 1: 'Very clean only', 2: 'Minor contamination acceptable', 3: 'Moderate contamination acceptable', 4: 'Most contamination acceptable', 5: 'Tolerant of all contamination levels' };
     var types = (profile.acceptedBiomassTypes || []).map(function (v) { return v.replace(/_/g, ' '); }).join(', ') || 'Not specified';
     wrap.innerHTML =
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Pyrolysis tech</div><div style="margin-top:4px;font-weight:600">' + (PYRO[profile.pyroTech] || 'Not specified') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max moisture</div><div style="margin-top:4px;font-weight:600">' + (MOISTURE[profile.maxMoistureAccepted] || 'Not specified') + '</div></div>' +
-        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Contamination</div><div style="margin-top:4px;font-weight:600">' + (CONTAM[profile.contaminationTolerance] || 'Not specified') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Contamination</div><div style="margin-top:4px;font-weight:600">' + (CONTAM[parseInt(profile.contaminationTolerance, 10)] || 'Not specified') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max distance</div><div style="margin-top:4px;font-weight:600">' + (profile.maxSourcingDistance === 'any' ? 'Any distance' : (profile.maxSourcingDistance || '?') + ' miles') + '</div></div>' +
         '<div style="grid-column:1/-1"><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Biomass types accepted</div><div style="margin-top:4px;text-transform:capitalize">' + types + '</div></div>' +
       '</div>';
@@ -316,6 +400,9 @@
       if (prefsSection) prefsSection.hidden = false;
       if (myFeedstock) myFeedstock.style.display = 'block';
       renderMyFeedstockListings(uid);
+      var carbonPurchases = document.getElementById('carbon-purchases-section');
+      if (carbonPurchases) carbonPurchases.style.display = 'block';
+      renderCarbonPurchases(uid);
     }
     if (role === 'seller') {
       if (myDemand) myDemand.style.display = 'block';
@@ -324,6 +411,9 @@
       renderMyDemandListings(uid);
       renderFeedstockInquiries(uid);
       renderProducerDetails(profile);
+      var carbonListings = document.getElementById('carbon-listings-section');
+      if (carbonListings) carbonListings.style.display = 'block';
+      renderCarbonListings(uid);
     }
     if (role === 'third_party') {
       if (thirdParty) thirdParty.style.display = 'block';

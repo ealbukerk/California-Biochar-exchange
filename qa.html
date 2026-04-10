@@ -138,7 +138,7 @@ var PAGES = [
   'dealroom.html','feedstock-listing.html','feedstock.html','how-it-works.html','index.html','learn.html',
   'list-feedstock.html','listing.html','listings.html','match.html','producer-demand-browse.html',
   'producer-demand.html','profile.html','qa.html','seller.html','settings.html','terms.html',
-  'understanding-biochar.html'
+  'understanding-biochar.html','carbon.html','carbon-listing.html','list-credit.html','carbon-dealroom.html'
 ];
 
 var PAGE_CHECKS = {
@@ -178,6 +178,22 @@ var PAGE_CHECKS = {
     mustContain: ['scheduled-section','repeat-modal-backdrop','carbon-dashboard-wrap','bm-nav-placeholder'],
     mustNotContain: []
   },
+  'carbon.html': {
+    mustContain: ['bm-nav-placeholder','filter-bar','carbon-grid','list-credits-btn'],
+    mustNotContain: []
+  },
+  'carbon-listing.html': {
+    mustContain: ['bm-nav-placeholder','carbon-hero','carbon-purchase-btn','View registry entry'],
+    mustNotContain: []
+  },
+  'list-credit.html': {
+    mustContain: ['bm-nav-placeholder','wizard-wrap','lc-doc-input'],
+    mustNotContain: []
+  },
+  'carbon-dealroom.html': {
+    mustContain: ['bm-nav-placeholder','message','bid','retirement'],
+    mustNotContain: []
+  },
   'index.html': {
     mustContain: ['hero'],
     mustNotContain: []
@@ -190,7 +206,7 @@ var JS_FILES = [
   'js/list-feedstock.js','js/apply-wizard.js','js/listing.js',
   'js/match.js','js/admin.js','js/commission.js','js/verified.js',
   'js/feedstock-data.js','js/data.js','js/producer-demand-browse.js',
-  'js/producer-demand.js'
+  'js/producer-demand.js','js/carbon-data.js'
 ];
 
 var CSS_FILES = ['css/style.css','css/listings.css'];
@@ -204,7 +220,9 @@ var KEY_STRINGS = {
   'js/feedstock.js': ['feedstock-listing.html','renderDemandTab'],
   'js/profile.js': ['scheduleRepeatOrder','loadScheduledOrders','advanceDateByFrequency'],
   'js/admin.js': ['loadPendingListings','approveListing','rejectListing'],
-  'js/match.js': ['scoreListing','isBroadRegionMatch']
+  'js/match.js': ['scoreListing','isBroadRegionMatch'],
+  'js/commission.js': ['calculateCarbonCommission'],
+  'js/carbon-data.js': ['window.CARBON_LISTINGS']
 };
 
 function addSection(id, title) {
@@ -271,6 +289,10 @@ async function checkJsFiles(container) {
     var keyChecks = KEY_STRINGS[file];
     if (!keyChecks) { addRow(container, file, 'pass', null); continue; }
     var missing = keyChecks.filter(function(s) { return text.indexOf(s) === -1; });
+    if (!missing.length && file === 'js/carbon-data.js') {
+      var count = (text.match(/projectName/g) || []).length;
+      if (count < 1) missing.push('CARBON_LISTINGS length > 0');
+    }
     if (missing.length) addRow(container, file, 'fail', 'Missing functions/strings:\n' + missing.join('\n'));
     else addRow(container, file, 'pass', null);
   }
@@ -324,6 +346,29 @@ async function checkDeliveredCostLoaded(container) {
   }
 }
 
+async function checkCarbonLinks(container) {
+  var carbonHtml = await fetchText(BASE + 'carbon.html');
+  if (!carbonHtml) {
+    addRow(container, 'carbon.html', 'fail', 'Could not fetch carbon.html');
+  } else {
+    addRow(container, 'carbon.html links', carbonHtml.indexOf('carbon-listing.html') !== -1 ? 'pass' : 'fail', 'carbon-listing.html link missing');
+  }
+
+  var listCreditHtml = await fetchText(BASE + 'list-credit.html');
+  if (!listCreditHtml) {
+    addRow(container, 'list-credit.html', 'fail', 'Could not fetch list-credit.html');
+  } else {
+    addRow(container, 'list-credit.html links', listCreditHtml.indexOf('carbon.html') !== -1 ? 'pass' : 'fail', 'carbon.html link missing');
+  }
+
+  var dealroomHtml = await fetchText(BASE + 'carbon-dealroom.html');
+  if (!dealroomHtml) {
+    addRow(container, 'carbon-dealroom.html', 'fail', 'Could not fetch carbon-dealroom.html');
+  } else {
+    addRow(container, 'carbon-dealroom nav', dealroomHtml.indexOf('bm-nav-placeholder') !== -1 ? 'pass' : 'fail', 'bm-nav-placeholder missing');
+  }
+}
+
 async function runAll() {
   results = { pass: 0, fail: 0, warn: 0 };
   document.getElementById('output').innerHTML = '';
@@ -347,16 +392,23 @@ async function runAll() {
   var p6 = addSection('dc', '6 — delivered-cost.js loaded where needed');
   await checkDeliveredCostLoaded(p6);
 
-  var p7 = addSection('manual', '7 — Manual validation (auth or live data required)');
+  var p7 = addSection('carbon', '7 — Carbon credits');
+  await checkCarbonLinks(p7);
+
+  var p8 = addSection('manual', '8 — Manual validation (auth or live data required)');
   [
     'Feedstock compare auto-trigger at 3 selections (manual only)',
     'ZIP autofill from profile (manual only)',
     'Feedstock contamination score averaging on cards',
     'Demand tab hidden state',
     'New listings stored with verified:false (manual only)',
-    'Listing cards show primary photo when available'
+    'Listing cards show primary photo when available',
+    'Stripe payment flow (manual only)',
+    'Retirement cert upload (manual only)',
+    'Firestore carbon_deals writes (manual only)',
+    'Firestore carbon_transactions writes (manual only)'
   ].forEach(function(label) {
-    addRow(p7, label, 'warn', 'manual only');
+    addRow(p8, label, 'warn', 'manual only');
   });
 
   document.getElementById('sum-pass').textContent = results.pass;
