@@ -30,10 +30,10 @@
       .profile-section {
         background: var(--color-surface);
         border: 1px solid var(--color-border);
-        border-radius: var(--radius-lg);
-        padding: var(--space-8);
+        border-radius: 8px;
+        padding: 24px;
         box-shadow: var(--shadow-sm);
-        margin-bottom: var(--space-5);
+        margin-bottom: 20px;
       }
       .profile-section h2 {
         font-size: var(--font-size-xl);
@@ -324,6 +324,11 @@
 
     <main class="profile-page">
       <div class="container profile-shell">
+        <section class="profile-section" id="profile-completeness-section">
+          <h2>Profile Completeness</h2>
+          <div id="profile-completeness-wrap"></div>
+        </section>
+
         <section class="profile-section" id="account-section">
           <h2>Your Profile</h2>
           <div class="info-grid" id="account-info-grid"></div>
@@ -522,27 +527,5 @@
     <script src="js/multiselect.js"></script>
     <script src="js/data.js"></script>
     <script src="js/profile.js"></script>
-    <script>
-      window.AuthState.onReady(function (user, profile) {
-        if (!login || !profile || !logout) return
-        if (user) {
-          login.style.display = 'none'
-          profile.style.display = 'inline-flex'
-          logout.style.display = 'inline-flex'
-          db.collection('users').doc(user.uid).get().then(function (doc) {
-            var profileData = doc.exists ? doc.data() : null;
-            if (typeof applyRoleConditionalSections === 'function') {
-              applyRoleConditionalSections(profileData, user.uid);
-            }
-          });
-        } else {
-          login.style.display = 'inline-flex'
-          profile.style.display = 'none'
-          logout.style.display = 'none'
-        }
-      })
-        auth.signOut().then(function () { window.location.href = 'index.html' })
-      })
-    </script>
   </body>
 </html>

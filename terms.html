@@ -21,7 +21,7 @@
 
       <section>
         <h2 style="font-size:var(--font-size-lg);font-weight:600;margin-bottom:var(--space-3)">1. What Biochar.market is</h2>
-        <p>Biochar.market is a B2B marketplace connecting US biochar producers with agricultural buyers and biomass feedstock suppliers. The platform facilitates introductions, negotiations, and transaction coordination. It does not take title to any goods.</p>
+        <p>Biochar.market is a B2B marketplace connecting US biochar producers with commercial buyers and biomass feedstock suppliers. The platform facilitates introductions, negotiations, and transaction coordination. It does not take title to any goods.</p>
       </section>
 
       <section>
@@ -81,11 +81,5 @@
 
   <script src="js/firebase-config.js"></script>
   <script src="js/auth-state.js"></script>
-  <script>
-    window.AuthState.onReady(function(user, profile) {
-        firebase.auth().signOut().then(function() { window.location.href = 'index.html'; });
-      });
-    });
-  </script>
 </body>
 </html>

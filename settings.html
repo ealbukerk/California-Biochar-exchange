@@ -14,6 +14,7 @@
   <style>
     .settings-shell { display:grid; grid-template-columns:220px 1fr; gap:var(--space-8); padding:var(--space-10) 0; min-height:80vh; }
     .settings-nav { position:sticky; top:calc(60px + var(--space-6)); height:fit-content; }
+    .settings-summary { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--space-4); margin-bottom:var(--space-4); box-shadow:var(--shadow-sm); }
     .settings-avatar { width:64px; height:64px; border-radius:50%; background:var(--color-accent); color:white; font-size:var(--font-size-2xl); font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:var(--space-4); overflow:hidden; }
     .settings-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
     .settings-photo-preview { width:80px; height:80px; border-radius:50%; background:var(--color-accent); color:white; font-size:var(--font-size-2xl); font-weight:700; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:var(--space-3); }
@@ -27,10 +28,15 @@
     .settings-panel.active { display:block; }
     .settings-card { background:var(--color-surface); border:1px solid var(--color-border); border-radius:var(--radius-lg); padding:var(--space-6); margin-bottom:var(--space-5); }
     .settings-card h2 { font-size:var(--font-size-lg); font-weight:600; margin-bottom:var(--space-5); padding-bottom:var(--space-3); border-bottom:1px solid var(--color-border); }
+    .settings-panel > h2 { font-size:var(--font-size-xl); font-weight:700; margin-bottom:var(--space-5); padding-bottom:var(--space-3); border-bottom:1px solid var(--color-border); }
     .settings-row { display:flex; align-items:center; justify-content:space-between; padding:var(--space-3) 0; border-bottom:1px solid var(--color-bg); }
     .settings-row:last-child { border-bottom:none; }
     .settings-row-label { font-size:var(--font-size-sm); font-weight:500; }
     .settings-row-sub { font-size:var(--font-size-xs); color:var(--color-text-muted); margin-top:2px; }
+    .form-group { margin-bottom:20px; }
+    .form-group label { font-weight:600; }
+    .form-group p { color:#888; font-size:13px; }
+    .settings-role-badge { display:inline-flex; align-items:center; gap:6px; border-radius:999px; background:var(--color-accent-light); color:var(--color-accent); padding:4px 10px; font-size:12px; font-weight:700; margin-top:var(--space-2); }
     .notif-toggle { position:relative; width:40px; height:22px; }
     .notif-toggle input { opacity:0; width:0; height:0; }
     .notif-slider { position:absolute; inset:0; background:#ccc; border-radius:22px; cursor:pointer; transition:0.2s; }
@@ -51,21 +57,25 @@
     <div class="settings-shell">
 
       <aside class="settings-nav">
-        <div class="settings-avatar" id="settings-avatar">?</div>
-        <div class="settings-nav-name" id="settings-nav-name"></div>
-        <div class="settings-nav-email" id="settings-nav-email"></div>
-        <button class="settings-nav-item active" data-panel="account">👤 Account</button>
-        <button class="settings-nav-item" data-panel="preferences">⚙️ Preferences</button>
+        <div class="settings-summary">
+          <div class="settings-avatar" id="settings-avatar">?</div>
+          <div class="settings-nav-name" id="settings-nav-name"></div>
+          <div class="settings-nav-email" id="settings-nav-email"></div>
+          <div class="settings-role-badge" id="settings-role-badge">Buyer</div>
+        </div>
+        <button class="settings-nav-item active" data-panel="account">⚙ Account</button>
+        <button class="settings-nav-item" data-panel="preferences">🔔 Preferences</button>
         <button class="settings-nav-item" data-panel="privacy">🔒 Privacy Policy</button>
-        <button class="settings-nav-item" data-panel="terms">📜 Terms of Service</button>
+        <button class="settings-nav-item" data-panel="terms">📄 Terms of Service</button>
         <button class="settings-nav-item" data-panel="faq">❓ FAQ</button>
-        <button class="settings-nav-item" data-panel="support">🧭 Help &amp; Support</button>
-        <button class="settings-nav-item" data-panel="about">ℹ️ About</button>
+        <button class="settings-nav-item" data-panel="support">💬 Help &amp; Support</button>
+        <button class="settings-nav-item" data-panel="about">ℹ About</button>
       </aside>
 
       <main>
 
         <div id="panel-account" class="settings-panel active">
+          <h2>Account</h2>
           <div class="settings-card">
             <h2>Account details</h2>
             <div style="display:grid;gap:var(--space-4)">
@@ -87,7 +97,7 @@
               <div class="form-group"><label>Business website</label><input id="s-website" type="url" placeholder="https://..." /></div>
             </div>
             <div style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-3)">
-              <button id="save-account-btn" class="btn btn-primary">Save changes</button>
+              <button id="save-account-btn" class="btn btn-primary" style="width:100%">Save changes</button>
               <span id="account-status" style="font-size:var(--font-size-sm)"></span>
             </div>
           </div>
@@ -113,6 +123,7 @@
         </div>
 
         <div id="panel-preferences" class="settings-panel">
+          <h2>Preferences</h2>
           <div class="settings-card">
             <h2>Notification preferences</h2>
             <div class="settings-row">
@@ -160,6 +171,7 @@
         </div>
 
         <div id="panel-privacy" class="settings-panel">
+          <h2>Privacy Policy</h2>
           <div class="settings-card">
             <h2>Privacy Policy</h2>
             <p style="color:var(--color-text-muted)">Coming soon.</p>
@@ -167,6 +179,7 @@
         </div>
 
         <div id="panel-terms" class="settings-panel">
+          <h2>Terms of Service</h2>
           <div class="settings-card">
             <h2>Terms of Service</h2>
             <p style="color:var(--color-text-muted)">Coming soon.</p>
@@ -174,6 +187,7 @@
         </div>
 
         <div id="panel-faq" class="settings-panel">
+          <h2>FAQ</h2>
           <div class="settings-card">
             <h2>FAQ</h2>
             <p style="color:var(--color-text-muted)">Coming soon.</p>
@@ -181,6 +195,7 @@
         </div>
 
         <div id="panel-support" class="settings-panel">
+          <h2>Help &amp; Support</h2>
           <div class="settings-card">
             <h2>Help &amp; Support</h2>
             <p style="color:var(--color-text-muted)">Coming soon.</p>
@@ -188,6 +203,7 @@
         </div>
 
         <div id="panel-about" class="settings-panel">
+          <h2>About</h2>
           <div class="settings-card">
             <h2>About</h2>
             <p style="color:var(--color-text-muted)">Coming soon.</p>
@@ -258,6 +274,7 @@
       renderSettingsAvatar(document.getElementById('settings-photo-preview'), profile && profile.profilePhotoUrl, initial);
       document.getElementById('settings-nav-name').textContent = (profile && (profile.businessName || profile.name)) || '';
       document.getElementById('settings-nav-email').textContent = user.email || '';
+      document.getElementById('settings-role-badge').textContent = profile && profile.role ? (profile.role.charAt(0).toUpperCase() + profile.role.slice(1)) : 'Buyer';
 
       if (profile) {
         document.getElementById('s-name').value = profile.name || '';

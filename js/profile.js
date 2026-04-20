@@ -191,6 +191,7 @@
         }
 
         var carsEquivalent = (totalCO2 / 4.6).toFixed(1);
+        var milestonePct = Math.min(100, Math.round((totalCO2 / 100) * 100));
 
         wrap.innerHTML =
           '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:var(--space-4)">' +
@@ -210,6 +211,9 @@
               '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:4px 0 0">cars / year</p>' +
             '</div>' +
           '</div>' +
+          (totalCO2 > 0
+            ? '<div style="margin-top:var(--space-5)"><div style="display:flex;justify-content:space-between;gap:12px;margin-bottom:8px;font-size:var(--font-size-sm);color:var(--color-text-secondary)"><strong>Progress to 100-tonne milestone</strong><span>' + milestonePct + '%</span></div><div style="height:12px;background:rgba(255,255,255,0.65);border-radius:999px;overflow:hidden"><div style="height:100%;width:' + milestonePct + '%;background:linear-gradient(90deg,var(--color-accent),#7CCB8A);border-radius:999px"></div></div></div>'
+            : "") +
           '<p style="font-size:var(--font-size-sm);color:var(--color-text-secondary);margin-top:var(--space-4)"><strong>Carbon credits retired:</strong> ' + carbonRetired.toFixed(1) + ' tCO₂e</p>' +
           '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">Estimated using biochar carbon content × 3.67 CO₂ conversion factor. Equivalent cars calculated at 4.6t CO₂/year per vehicle.</p>';
       })
@@ -217,6 +221,34 @@
         if (window.UIUtils) UIUtils.showError(wrap, "Could not load carbon data.", renderCarbonDashboard);
         else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load carbon data.</p>';
       });
+  }
+
+  function renderProfileCompleteness() {
+    var wrap = document.getElementById("profile-completeness-wrap");
+    var profile = state.profile || {};
+    if (!wrap) return;
+
+    var fields = [
+      !!profile.name,
+      !!profile.businessName,
+      !!profile.zipcode
+    ];
+    if ((profile.role || "").toLowerCase() === "seller") {
+      fields.push(!!profile.pyroTech, !!profile.optimalRadius);
+    } else {
+      fields.push(!!profile.acreage, !!profile.applicationRate);
+    }
+
+    var completed = fields.filter(Boolean).length;
+    var total = fields.length || 1;
+    var pct = Math.round((completed / total) * 100);
+
+    wrap.innerHTML =
+      '<div style="display:grid;gap:10px">' +
+        '<div style="display:flex;justify-content:space-between;gap:12px;font-size:var(--font-size-sm);color:var(--color-text-secondary)"><span>Key profile fields completed</span><strong>' + pct + '%</strong></div>' +
+        '<div style="height:12px;background:var(--color-bg);border-radius:999px;overflow:hidden"><div style="height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--color-accent),#7CCB8A);border-radius:999px"></div></div>' +
+        '<p style="margin:0;font-size:var(--font-size-sm);color:var(--color-text-muted)">Completing your profile improves listing quality and matching accuracy across the platform.</p>' +
+      "</div>";
   }
 
   function renderCarbonListings(uid) {
@@ -962,6 +994,7 @@
       state.profile.businessWebsite = "";
     }
 
+    renderProfileCompleteness();
     renderAccountInfo();
     initPreferencesSection();
     await loadTransactions();

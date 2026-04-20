@@ -247,6 +247,33 @@
         margin-bottom: var(--space-4);
       }
 
+      .buyer-types {
+        padding: var(--space-12) 0;
+      }
+
+      .buyer-types h2 {
+        font-size: var(--font-size-2xl);
+        font-weight: var(--font-weight-bold);
+        text-align: center;
+      }
+
+      .buyer-types-grid {
+        margin-top: var(--space-8);
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--space-4);
+      }
+
+      .buyer-types-grid .surface-card {
+        padding: var(--space-5);
+      }
+
+      .buyer-types-grid p {
+        margin-top: var(--space-2);
+        color: var(--color-text-secondary);
+        font-size: var(--font-size-sm);
+      }
+
       @media (max-width: 760px) {
         .hero-cards {
           flex-direction: column;
@@ -278,23 +305,51 @@
       <div class="container-narrow hero-inner">
         <h1>The US biochar supply chain, coordinated</h1>
         <p class="hero-sub">
-          Connect with verified producers, arrange logistics, and source biomass feedstock — all in one platform. Built for industrial buyers, agricultural operations, and carbon programs.
+          Connect with verified producers, arrange logistics, and source biomass feedstock — all in one platform. Built for industrial buyers, commercial operations, and carbon programs.
         </p>
         <div class="hero-cards">
           <div class="hero-card-buy">
             <h3>I want to buy biochar</h3>
-            <p>Find verified producers and match biochar to your soil.</p>
+            <p>Find verified producers and source biochar for your operation.</p>
             <a class="btn" href="buyer.html">Get Started</a>
           </div>
           <div class="hero-card-sell">
             <h3>I want to sell biochar</h3>
-            <p>List your material and reach agricultural buyers across the US.</p>
+            <p>List your material and reach commercial buyers across the US.</p>
             <a class="btn" href="seller.html">Apply to List</a>
           </div>
           <div class="hero-card-feedstock">
             <h3>I have biomass feedstock</h3>
-            <p>List agricultural, forestry, or wood waste material for pyrolysis producers.</p>
+            <p>List biomass, forestry, or wood waste material for pyrolysis producers.</p>
             <a class="btn" href="feedstock.html">List Feedstock</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="buyer-types">
+      <div class="container">
+        <h2>Who buys through the platform</h2>
+        <div class="buyer-types-grid">
+          <div class="surface-card">
+            <h3>Farms &amp; Growers</h3>
+            <p>Soil health and water retention programs.</p>
+          </div>
+          <div class="surface-card">
+            <h3>Construction</h3>
+            <p>Biochar concrete and low-carbon materials.</p>
+          </div>
+          <div class="surface-card">
+            <h3>Remediation</h3>
+            <p>Contaminated site restoration and recovery.</p>
+          </div>
+          <div class="surface-card">
+            <h3>Water Treatment</h3>
+            <p>Filtration media and polishing systems.</p>
+          </div>
+          <div class="surface-card">
+            <h3>Carbon Programs</h3>
+            <p>Sequestration and credit-linked procurement.</p>
           </div>
         </div>
       </div>
@@ -327,32 +382,5 @@
     </footer>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-state.js"></script>
-    <script>
-      window.AuthState.onReady(async function (user, profile) {
-        var heroCards = document.querySelector('.hero-cards')
-        if (!login || !profile || !logout) return
-        if (user) {
-          login.style.display = 'none'
-          profile.style.display = 'inline-flex'
-          logout.style.display = 'inline-flex'
-          if (heroCards) heroCards.style.display = 'none'
-          try {
-            var doc = await db.collection('users').doc(user.uid).get()
-            var role = doc.exists ? doc.data().role : 'buyer'
-            var redirect = role === 'seller' ? 'seller.html' : role === 'third_party' ? 'profile.html' : 'buyer.html'
-            window.location.href = redirect
-          } catch (e) {
-            // no-op
-          }
-        } else {
-          login.style.display = 'inline-flex'
-          profile.style.display = 'none'
-          logout.style.display = 'none'
-          if (heroCards) heroCards.style.display = ''
-        }
-      })
-        auth.signOut()
-      })
-    </script>
   </body>
 </html>

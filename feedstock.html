@@ -93,7 +93,7 @@
   <section class="buyer-hero">
     <div class="container-narrow">
       <h1>Find biomass feedstock</h1>
-      <p>Browse agricultural, forestry, and wood waste material available for pyrolysis producers across the US.</p>
+      <p>Browse biomass, forestry, and wood waste material available for pyrolysis producers across the US.</p>
     </div>
   </section>
 
@@ -165,7 +165,7 @@
       <div id="aggregator-section" style="margin-bottom:var(--space-8)">
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
           <div>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">These suppliers collect, process, and test material from multiple farms — providing bulk loads with verified specs.</p>
+            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">These suppliers collect, process, and test material from multiple operations — providing bulk loads with verified specs.</p>
           </div>
         </div>
         <div id="aggregator-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)"></div>
@@ -173,8 +173,8 @@
       </div>
 
       <div style="background:linear-gradient(135deg,#7A5C1E12,#7A5C1E06);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-8)">
-        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Are you a farmer with biomass to sell?</div>
-        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Individual farm volumes are often too small for direct producer sales. Find aggregators near you who collect, chip, and test material — then sell bulk loads to pyrolysis producers.</div>
+        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Do you have biomass to sell?</div>
+        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Smaller operation volumes are often too small for direct producer sales. Find aggregators near you who collect, chip, and test material — then sell bulk loads to pyrolysis producers.</div>
         <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
           <div class="filter-group">
             <span class="filter-group-label">Your ZIP</span>
@@ -310,7 +310,7 @@
                     '<div style="font-weight:700;font-size:var(--font-size-sm);margin-bottom:2px">' + (m.d.company||m.d.supplierName||'Aggregator') + '</div>' +
                     '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + m.dist + ' mi away &nbsp;·&nbsp; ZIP ' + m.d.locationZip + '</div>' +
                     '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:var(--space-3)">' + types + '</div>' +
-                    '<a href="mailto:' + (m.d.contactEmail||'') + '?subject=Biomass inquiry from farmer ZIP ' + zip + '" style="display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600">Contact →</a>' +
+                    '<a href="mailto:' + (m.d.contactEmail||'') + '?subject=Biomass inquiry from operation ZIP ' + zip + '" style="display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600">Contact →</a>' +
                   '</div>';
                 }).join('') +
               '</div>';
