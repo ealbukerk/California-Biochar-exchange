@@ -64,6 +64,13 @@
     return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
   }
 
+  function getServiceAreaText(listing) {
+    var radius = listing && listing.optimalRadius ? listing.optimalRadius : "";
+    var zip = (listing && (listing.producerZip || listing.zipcode)) || "";
+    if (!radius || radius === "none") return "Nationwide";
+    return "Serves within ~" + radius + "mi" + (zip ? " of " + zip : "");
+  }
+
   function getSortTime(value) {
     if (!value) return 0;
     if (value.toDate && typeof value.toDate === "function") {
@@ -346,7 +353,7 @@
           '<span class="status-badge ' + statusClass + '">' + htmlEscape(status) + "</span>" +
           '<article class="listing-card">' +
           '<h3>' + htmlEscape(listing.producerName || (state.profile.businessName || "Your Listing")) + "</h3>" +
-          '<p class="listing-meta">' + htmlEscape((listing.county || "") + " County · " + (listing.region || "")) + "</p>" +
+          '<p class="listing-meta">' + htmlEscape(getServiceAreaText(listing)) + "</p>" +
           '<span class="feedstock-tag">' + htmlEscape(listing.feedstock || "-") + "</span>" +
           '<p><strong>$' + htmlEscape(listing.pricePerTonne || "-") + '</strong> /tonne</p>' +
           '<p class="listing-meta">Available: ' + htmlEscape(listing.availableTonnes || "-") + " tonnes</p>" +
@@ -578,6 +585,14 @@
     var fileList = document.getElementById("file-list");
     var selectedFiles = [];
 
+    function isLikelyScreenshot(file) {
+      if (!file) return false;
+      var type = String(file.type || "").toLowerCase();
+      if (type !== "image/png" && type !== "image/jpeg") return false;
+      var name = String(file.name || "");
+      return /screenshot|screen shot|screen_shot/i.test(name) || /^IMG_\d+/i.test(name);
+    }
+
     function valuesToString(values) {
       return (values || [])
         .filter(function (value) {
@@ -636,6 +651,14 @@
 
     certDocsInput.addEventListener("change", function () {
       var incoming = Array.from(certDocsInput.files || []);
+      if (incoming.some(isLikelyScreenshot)) {
+        certDocsInput.value = "";
+        selectedFiles = [];
+        if (fileList) {
+          fileList.innerHTML = '<div class="upload-inline-warning">This looks like a screenshot — please upload the original document file (PDF preferred).</div>';
+        }
+        return;
+      }
       incoming.forEach(function (file) {
         var exists = selectedFiles.some(function (item) {
           return item.name === file.name && item.size === file.size && item.lastModified === file.lastModified;

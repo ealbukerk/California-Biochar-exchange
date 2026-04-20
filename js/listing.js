@@ -22,6 +22,66 @@
     });
   }
 
+  function toDateOnly(value) {
+    if (!value) return null;
+    var date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    if (Number.isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function daysBetween(start, end) {
+    return Math.round((end - start) / 86400000);
+  }
+
+  function getAvailabilityMeta(listing) {
+    var today = toDateOnly(new Date());
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    var indicatorText = "Availability on request";
+    var indicatorClass = "muted";
+    if (from && from > today) {
+      var daysUntil = daysBetween(today, from);
+      if (daysUntil <= 30) {
+        indicatorText = "🕐 Available in " + daysUntil + " day" + (daysUntil !== 1 ? "s" : "");
+        indicatorClass = "warn";
+      } else {
+        indicatorText = "Available " + from.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+      }
+    } else if (until) {
+      var daysLeft = daysBetween(today, until);
+      if (daysLeft <= 14) {
+        indicatorText = "⚠ Available now · Expires in " + Math.max(daysLeft, 0) + " day" + (Math.max(daysLeft, 0) !== 1 ? "s" : "");
+        indicatorClass = "warn";
+      } else {
+        indicatorText = "✓ Available now · Until " + formatDate(until);
+        indicatorClass = "ready";
+      }
+    }
+
+    var fillPercent = 100;
+    if (from && until && until > from) {
+      if (today <= from) fillPercent = 0;
+      else if (today >= until) fillPercent = 100;
+      else fillPercent = Math.max(0, Math.min(100, Math.round(((today - from) / (until - from)) * 100)));
+    }
+
+    var timeline =
+      '<div class="availability-timeline">' +
+      '<div class="availability-timeline-head">' +
+      '<div><span class="availability-timeline-label">From</span><strong>' + (from ? formatDate(from) : 'Now') + '</strong></div>' +
+      '<div style="text-align:right"><span class="availability-timeline-label">Until</span><strong>' + (until ? formatDate(until) : 'Open ended') + '</strong></div>' +
+      '</div>' +
+      '<div class="availability-bar"><div class="availability-bar-fill" style="width:' + fillPercent + '%"></div></div>' +
+      '<div class="availability-indicator ' + indicatorClass + '">' + indicatorText + '</div>' +
+      '</div>';
+
+    return {
+      summary: '<div class="availability-indicator ' + indicatorClass + '">' + indicatorText + '</div>',
+      timeline: timeline
+    };
+  }
+
   function renderStars(rating) {
     if (rating == null) {
       return "";
@@ -45,9 +105,47 @@
     });
   }
 
+  function parseOptimalRadius(value) {
+    if (!value || value === "none") return null;
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function getServiceAreaText(listing) {
+    var radius = parseOptimalRadius(listing.optimalRadius);
+    var zip = listing.producerZip || listing.zipcode || "";
+    if (!radius) return "Nationwide";
+    return "Serves within ~" + radius + "mi" + (zip ? " of " + zip : "");
+  }
+
+  function getVerificationDisplay(listing) {
+    if (listing.verifiedLevel1 && listing.verifiedLevel2) {
+      return {
+        badge: '<span class="verification-badge verification-badge--trusted">✓✓ Trusted Seller</span>',
+        explanation: 'Reviewed by the platform and earned trusted status through repeat transactions and strong ratings.'
+      };
+    }
+    if (listing.verifiedLevel1 || (listing.verified === true && !listing.verifiedLevel1)) {
+      return {
+        badge: '<span class="verification-badge verification-badge--reviewed">✓ Reviewed</span>',
+        explanation: 'Reviewed by the platform for basic listing and seller information.'
+      };
+    }
+    if (listing.verified === false) {
+      return {
+        badge: '<span class="verification-badge verification-badge--unverified">Unverified</span>',
+        explanation: 'This listing is live but has not yet been reviewed by the platform.'
+      };
+    }
+    return null;
+  }
+
   function renderNotFound(container) {
-    container.innerHTML =
-      '<p class="not-found">Listing not found.</p>';
+    if (window.UIUtils) {
+      UIUtils.showError(container, "Listing not found.", function () { window.location.reload(); });
+      return;
+    }
+    container.innerHTML = '<p class="not-found">Listing not found.</p>';
   }
 
   function renderListing(container, listing) {
@@ -64,10 +162,10 @@
       headerStyle = ' style="background-image:url(' + listing.photos[0] + ')"';
     }
     var photoStrip = "";
-    if (listing.photos && listing.photos.length) {
+    if (listing.photos && listing.photos.length > 1) {
       photoStrip = '<div class="listing-photo-strip">' +
-        listing.photos.map(function (p) {
-          return '<a href="' + p + '" target="_blank" rel="noopener"><img src="' + p + '" alt="Listing photo"></a>';
+        listing.photos.slice(1).map(function (p) {
+          return '<button type="button" class="listing-photo-thumb" data-photo="' + p + '" style="border:none;background:none;padding:0;cursor:pointer"><img src="' + p + '" alt="Listing photo"></button>';
         }).join("") +
         "</div>";
     }
@@ -93,6 +191,10 @@
 
     var verificationClass = listing.scorecard.labVerified ? "verified" : "self";
     var verificationText = listing.scorecard.labVerified ? "Lab Verified" : "Self Reported";
+    var listingVerification = getVerificationDisplay(listing);
+    var availabilityMeta = getAvailabilityMeta(listing);
+
+    var locationText = [listing.county ? listing.county + " County" : "", listing.state || ""].filter(Boolean).join(", ");
 
     container.innerHTML =
       '<div class="listing-shell">' +
@@ -101,25 +203,27 @@
       listing.producerName +
       "</h1>" +
       '<p class="listing-location">' +
-      listing.county +
-      ", " +
-      listing.region +
+      locationText +
       "</p>" +
       '<div class="listing-top-meta"><span class="feedstock-tag">' +
       listing.feedstock +
-      "</span></div>" +
+      '</span><div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-2)">' + getServiceAreaText(listing) + '</div></div>' +
       '<div class="headline-row">' +
       '<span class="headline-price">$' + listing.pricePerTonne + '</span><span class="headline-unit">/tonne</span>' +
       '<span class="headline-detail">' + listing.availableTonnes + ' t available &nbsp;·&nbsp; Min order: ' + listing.minOrderTonnes + ' t</span>' +
       '</div>' +
-      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-2)">' +
-      formatDate(listing.availableFrom) + ' — ' + formatDate(listing.availableUntil) +
-      '</div>' +
+      '<div style="margin-top:var(--space-3)">' + availabilityMeta.summary + '</div>' +
       '<p class="rating-line">' +
       ratingLine +
       '<span style="margin-left:12px;color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' +
       (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') +
       '</span></p>' +
+      (listingVerification
+        ? '<div style="margin-top:var(--space-3)">' +
+            listingVerification.badge +
+            '<div style="font-size:var(--font-size-xs);color:' + (headerClass.indexOf("has-hero") !== -1 ? 'rgba(255,255,255,0.88)' : 'var(--color-text-muted)') + ';margin-top:6px">' + listingVerification.explanation + '</div>' +
+          '</div>'
+        : '') +
       photoStrip +
       '<div id="top-card-actions"></div>' +
       '<div id="complete-loop-banner"></div>' +
@@ -202,6 +306,7 @@
       '<section class="availability-section"><h2>Delivery</h2><div class="availability-list">' +
       "<p>" + leadTimeText + "</p>" +
       '</div>' +
+      availabilityMeta.timeline +
       '<div style="margin-top:var(--space-6);padding-top:var(--space-6);border-top:1px solid var(--color-border)">' +
         '<h3 style="font-size:var(--font-size-base);font-weight:var(--font-weight-semibold);margin-bottom:var(--space-4)">Delivery options</h3>' +
         '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3)">' +
@@ -236,6 +341,7 @@
     if (!container) {
       return;
     }
+    if (window.UIUtils) UIUtils.showLoading(container, "Loading listing...");
 
     var params = new URLSearchParams(window.location.search);
     var id = params.get("id") || "";
@@ -251,6 +357,15 @@
     }
 
     renderListing(container, listing);
+    document.addEventListener('click', function (event) {
+      var thumb = event.target.closest('.listing-photo-thumb');
+      if (!thumb) return;
+      var photo = thumb.getAttribute('data-photo');
+      var hero = document.querySelector('.listing-header');
+      if (!photo || !hero) return;
+      hero.classList.add('has-hero');
+      hero.style.backgroundImage = 'url(' + photo + ')';
+    });
     (function() {
       document.addEventListener('DOMContentLoaded', function() {
       var spreadSlider = document.getElementById('dc-spread');
@@ -289,8 +404,11 @@
             return;
           }
 
-          calcBtn.textContent = 'Calculating...';
-          calcBtn.disabled = true;
+          if (window.UIUtils) UIUtils.setButtonLoading(calcBtn, true, 'Calculating...');
+          else {
+            calcBtn.textContent = 'Calculating...';
+            calcBtn.disabled = true;
+          }
 
           window.DeliveredCost.calc({
             producerZip: listing.producerZip,
@@ -308,12 +426,21 @@
             var perAcreEl = document.getElementById('dc-per-acre');
             perAcreEl.textContent = r.costPerAcre ? '$' + Math.round(r.costPerAcre).toLocaleString() + ' / acre' : '';
             document.getElementById('dc-result').style.display = 'block';
-            calcBtn.textContent = 'Recalculate';
-            calcBtn.disabled = false;
+            if (window.UIUtils) {
+              UIUtils.setButtonLoading(calcBtn, false);
+              calcBtn.textContent = 'Recalculate';
+            } else {
+              calcBtn.textContent = 'Recalculate';
+              calcBtn.disabled = false;
+            }
           }).catch(function() {
-            alert('Could not calculate — check ZIP codes and try again.');
-            calcBtn.textContent = 'Calculate';
-            calcBtn.disabled = false;
+            if (window.UIUtils) UIUtils.toast('Could not calculate delivered cost.', 'error', 2800);
+            else alert('Could not calculate — check ZIP codes and try again.');
+            if (window.UIUtils) UIUtils.setButtonLoading(calcBtn, false);
+            else {
+              calcBtn.textContent = 'Calculate';
+              calcBtn.disabled = false;
+            }
           });
         });
       }

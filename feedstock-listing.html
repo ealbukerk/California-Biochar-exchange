@@ -43,6 +43,16 @@
     .agg-result-card .agg-tags { display:flex; flex-wrap:wrap; gap:var(--space-2); margin-bottom:var(--space-3); }
     .agg-result-card .agg-tag { background:var(--color-bg); border:1px solid var(--color-border); border-radius:var(--radius-sm); padding:2px var(--space-2); font-size:var(--font-size-xs); color:var(--color-text-secondary); }
     .agg-result-card .agg-distance { font-size:var(--font-size-sm); font-weight:600; color:var(--color-accent); }
+    .fs-availability-timeline { margin-top:var(--space-4); border:1px solid var(--color-border); border-radius:var(--radius-md); padding:var(--space-4); background:var(--color-bg); }
+    .fs-availability-head { display:flex; justify-content:space-between; gap:var(--space-4); margin-bottom:var(--space-3); font-size:var(--font-size-sm); }
+    .fs-availability-head strong { display:block; color:var(--color-text-primary); }
+    .fs-availability-label { display:block; font-size:11px; color:var(--color-text-muted); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+    .fs-availability-bar { height:10px; border-radius:999px; background:#E5E7EB; overflow:hidden; }
+    .fs-availability-fill { height:100%; border-radius:999px; background:linear-gradient(90deg,#7A5C1E,#C29045); }
+    .fs-availability-pill { display:inline-block; margin-top:var(--space-3); padding:4px 10px; border-radius:999px; font-size:var(--font-size-xs); font-weight:700; }
+    .fs-availability-pill.ready { background:#DCFCE7; color:#166534; }
+    .fs-availability-pill.warn { background:#FEF3C7; color:#B45309; }
+    .fs-availability-pill.muted { background:var(--color-bg); color:var(--color-text-muted); }
   </style>
 </head>
 <body>
@@ -77,10 +87,18 @@
   </footer>
 
   <script src="js/firebase-config.js"></script>
+  <script src="js/ui-utils.js"></script>
   <script src="js/auth-state.js"></script>
   <script src="js/delivered-cost.js"></script>
   <script src="js/feedstock-data.js"></script>
   <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var body = document.getElementById('fs-detail-body');
+      var hero = document.getElementById('fs-hero-content');
+      if (body && window.UIUtils) UIUtils.showLoading('fs-detail-body', 'Loading listing...');
+      else if (body) body.innerHTML = '<p style="padding:var(--space-8);color:var(--color-text-muted)">Loading listing...</p>';
+      if (hero) hero.innerHTML = '<p style="color:rgba(255,255,255,0.6)">Loading…</p>';
+    });
     var BIOMASS_LABELS = {
       orchard_prunings:'Orchard Prunings', almond_shells:'Almond Shells',
       pistachio_shells:'Pistachio Shells', walnut_shells:'Walnut Shells',
@@ -119,12 +137,82 @@
       return new URLSearchParams(window.location.search).get(name);
     }
 
+    function toDateOnly(value) {
+      if (!value) return null;
+      var date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+      if (isNaN(date.getTime())) return null;
+      date.setHours(0, 0, 0, 0);
+      return date;
+    }
+
+    function daysBetween(start, end) {
+      return Math.round((end - start) / 86400000);
+    }
+
+    function formatShortDate(value) {
+      var date = toDateOnly(value);
+      if (!date) return '—';
+      return date.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    }
+
+    function formatMonthYear(value) {
+      var date = toDateOnly(value);
+      if (!date) return '';
+      return date.toLocaleDateString('en-US', { month:'long', year:'numeric' });
+    }
+
+    function availabilityMeta(l) {
+      var today = toDateOnly(new Date());
+      var from = toDateOnly(l.availableFrom);
+      var until = toDateOnly(l.availableUntil);
+      var indicatorText = l.availabilityWindow || 'Availability on request';
+      var indicatorClass = 'muted';
+      if (from && from > today) {
+        var daysUntil = daysBetween(today, from);
+        if (daysUntil <= 30) {
+          indicatorText = '🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '');
+          indicatorClass = 'warn';
+        } else {
+          indicatorText = 'Available ' + formatMonthYear(from);
+        }
+      } else if (until) {
+        var daysLeft = daysBetween(today, until);
+        if (daysLeft <= 14) {
+          indicatorText = '⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '');
+          indicatorClass = 'warn';
+        } else {
+          indicatorText = '✓ Available now · Until ' + formatShortDate(until);
+          indicatorClass = 'ready';
+        }
+      }
+      var fillPercent = 100;
+      if (from && until && until > from) {
+        if (today <= from) fillPercent = 0;
+        else if (today >= until) fillPercent = 100;
+        else fillPercent = Math.max(0, Math.min(100, Math.round(((today - from) / (until - from)) * 100)));
+      }
+      return {
+        text: indicatorText,
+        pillClass: indicatorClass,
+        timeline:
+          '<div class="fs-availability-timeline">' +
+            '<div class="fs-availability-head">' +
+              '<div><span class="fs-availability-label">From</span><strong>' + (from ? formatShortDate(from) : 'Now') + '</strong></div>' +
+              '<div style="text-align:right"><span class="fs-availability-label">Until</span><strong>' + (until ? formatShortDate(until) : 'Open ended') + '</strong></div>' +
+            '</div>' +
+            '<div class="fs-availability-bar"><div class="fs-availability-fill" style="width:' + fillPercent + '%"></div></div>' +
+            '<div class="fs-availability-pill ' + indicatorClass + '">' + indicatorText + '</div>' +
+          '</div>'
+      };
+    }
+
     function renderListing(l) {
       window._renderedListing = l;
       if (!l) { document.getElementById('fs-detail-body').innerHTML = '<p style="padding:var(--space-8);color:var(--color-text-muted)">Listing not found.</p>'; return; }
       var biomassLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType || 'Biomass';
       var yieldRatio = (window.FEEDSTOCK_YIELD_RATIOS || {})[l.biomassType];
       var yieldTons = yieldRatio ? Math.round(l.estimatedQuantityTons * yieldRatio) : null;
+      var availMeta = availabilityMeta(l);
       l.estimatedQuantityTons = l.estimatedQuantityTons || 0;
       l.minimumPickupTons = l.minimumPickupTons || 0;
       l.pricePerTon = l.pricePerTon || 0;
@@ -143,6 +231,10 @@
         heroEl.style.backgroundImage = 'linear-gradient(135deg, rgba(122,92,30,0.7), rgba(92,68,21,0.7)), url(' + l.photos[0] + ')';
         heroEl.style.backgroundSize = 'cover';
         heroEl.style.backgroundPosition = 'center';
+      } else if (heroEl) {
+        heroEl.style.backgroundImage = 'linear-gradient(135deg, #7A5C1E 0%, #5C4415 100%)';
+        heroEl.style.backgroundSize = '';
+        heroEl.style.backgroundPosition = '';
       }
 
       var photoStripHtml = '';
@@ -190,7 +282,7 @@
               : '<div class="fs-spec-item"><div class="label">Contamination risk</div><div class="value">' + (CONTAMINATION_LABELS[l.contaminationRisk] || l.contaminationRisk || 'Not scored') + '</div></div>') +
             '<div class="fs-spec-item"><div class="label">Age of material</div><div class="value">' + (AGE_LABELS[l.ageOfMaterial] || l.ageOfMaterial || '—') + '</div></div>' +
             '<div class="fs-spec-item"><div class="label">Loading</div><div class="value">' + (LOADING_LABELS[l.loadingType] || l.loadingType || '—') + '</div></div>' +
-            '<div class="fs-spec-item"><div class="label">Availability</div><div class="value">' + (l.availabilityWindow || '—') + '</div></div>' +
+            '<div class="fs-spec-item" style="grid-column:1/-1"><div class="label">Availability window</div><div class="value">' + availMeta.timeline + '</div></div>' +
           '</div>' +
         '</div>' +
 
@@ -220,7 +312,7 @@
           '<div style="font-size:var(--font-size-2xl);font-weight:700;color:#7A5C1E">' + (l.pricePerTon === 0 ? 'Free to haul' : '$' + l.pricePerTon + '/ton') + '</div>' +
           (l.negotiable ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">Price negotiable</div>' : '') +
           '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-muted)">' +
-            (l.availabilityWindow || '') +
+            '<span class="fs-availability-pill ' + availMeta.pillClass + '">' + availMeta.text + '</span>' +
           '</div>' +
           '<div style="margin:var(--space-4) 0;border-top:1px solid var(--color-border);padding-top:var(--space-4);display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3)">' +
             '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Available</div><div style="font-weight:700;margin-top:2px">' + l.estimatedQuantityTons.toLocaleString() + ' tons</div></div>' +
@@ -249,6 +341,7 @@
         var resultEl = document.getElementById('fs-cost-result');
         if (!zip || zip.length !== 5) { resultEl.textContent = 'Please enter a valid 5-digit ZIP.'; return; }
         if (!l.locationZip) { resultEl.textContent = 'Supplier ZIP not available for this listing.'; return; }
+        resultEl.setAttribute('data-delivered-cost-status', 'true');
         resultEl.textContent = 'Calculating…';
         window.DeliveredCost.calc({
           producerZip: l.locationZip,
@@ -302,9 +395,12 @@
     function openAggModal(listing) {
       _currentListing = listing;
       var overlay = document.getElementById('agg-modal-overlay');
+      if (!overlay) return;
       overlay.classList.add('open');
-      document.getElementById('agg-results').innerHTML = '';
-      document.getElementById('agg-zip-input').value = '';
+      var results = document.getElementById('agg-results');
+      var zipInput = document.getElementById('agg-zip-input');
+      if (results) results.innerHTML = '';
+      if (zipInput) zipInput.value = '';
     }
 
     document.addEventListener('click', function(e) {
@@ -392,6 +488,7 @@
 
     function renderAggResults(results, biomassType, radius) {
       var resultsEl = document.getElementById('agg-results');
+      if (!resultsEl) return;
       var biomassLabel = biomassType ? (BIOMASS_LABELS_MODAL[biomassType] || biomassType) : 'this material';
 
       if (results.length === 0) {
@@ -472,7 +569,10 @@
           l._id = doc.id;
           renderListing(l);
         })
-        .catch(function() { document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Error loading listing</h1>'; });
+        .catch(function() {
+          if (window.UIUtils) UIUtils.showError('fs-detail-body', 'Could not load listing.', function() { window.location.reload(); });
+          document.getElementById('fs-hero-content').innerHTML = '<h1 style="color:rgba(255,255,255,0.6)">Error loading listing</h1>';
+        });
     });
   </script>
 

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>List Carbon Credits — Biochar.market</title>
   <link rel="stylesheet" href="css/style.css" />
+  <script src="js/ui-utils.js"></script>
   <style>
     :root { --carbon-accent: #2D4A3E; --carbon-accent-light: #E8EFEA; }
     .page-hero { background: linear-gradient(135deg, #1F332A, #2D4A3E); padding: var(--space-10) 0; color: white; }
@@ -143,6 +144,7 @@
       <p style="color:var(--color-text-muted);margin-bottom:var(--space-4)">Upload at least one document: issuance certificate, monitoring report, or methodology.</p>
       <div class="doc-upload" id="lc-doc-drop">Click to upload documents (PDF, JPG, PNG)</div>
       <input id="lc-doc-input" type="file" accept="application/pdf,image/*" multiple style="display:none" />
+      <div id="lc-doc-warning" class="upload-inline-warning" style="display:none"></div>
       <div id="lc-doc-list" class="doc-list"></div>
       <div class="wizard-nav">
         <button class="btn btn-secondary" id="lc-back-3">← Back</button>

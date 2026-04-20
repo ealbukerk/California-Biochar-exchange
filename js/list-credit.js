@@ -2,6 +2,7 @@
   'use strict';
 
   var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+  var CLOUDINARY_RAW_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/raw/upload';
   var CLOUDINARY_PRESET = 'biochar_certs';
 
   var wizardData = {
@@ -21,6 +22,21 @@
 
   var currentStep = 1;
   var docFiles = [];
+
+  function isLikelyScreenshot(file) {
+    if (!file) return false;
+    var type = String(file.type || '').toLowerCase();
+    if (type !== 'image/png' && type !== 'image/jpeg') return false;
+    var name = String(file.name || '');
+    return /screenshot|screen shot|screen_shot/i.test(name) || /^IMG_\d+/i.test(name);
+  }
+
+  function setDocWarning(message) {
+    var warning = document.getElementById('lc-doc-warning');
+    if (!warning) return;
+    warning.textContent = message || '';
+    warning.style.display = message ? 'block' : 'none';
+  }
 
   function showStep(step) {
     document.querySelectorAll('.wizard-panel').forEach(function(p) { p.classList.remove('active'); });
@@ -92,7 +108,14 @@
   }
 
   function handleDocSelect(files) {
-    docFiles = Array.prototype.slice.call(files, 0, 5);
+    var incoming = Array.prototype.slice.call(files, 0, 5);
+    if (incoming.find(isLikelyScreenshot)) {
+      docFiles = [];
+      setDocWarning('This looks like a screenshot — please upload the original document file (PDF preferred).');
+      return false;
+    }
+    setDocWarning('');
+    docFiles = incoming;
     var list = document.getElementById('lc-doc-list');
     list.innerHTML = '';
     docFiles.forEach(function(file) {
@@ -104,15 +127,23 @@
   }
 
   function uploadDocs() {
-    var promises = docFiles.map(function(file) {
-      var fd = new FormData();
-      fd.append('file', file);
-      fd.append('upload_preset', CLOUDINARY_PRESET);
-      return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
-        .then(function(r) { return r.json(); })
-        .then(function(d) { return d.secure_url || ''; });
+    var urls = [];
+    return docFiles.reduce(function(chain, file) {
+      return chain.then(function() {
+        var fd = new FormData();
+        var name = String(file.name || '').toLowerCase();
+        var isPdf = file.type === 'application/pdf' || /\.pdf$/.test(name);
+        fd.append('file', file);
+        fd.append('upload_preset', CLOUDINARY_PRESET);
+        return fetch(isPdf ? CLOUDINARY_RAW_UPLOAD_URL : CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+          .then(function(r) { return r.json(); })
+          .then(function(d) {
+            if (d && d.secure_url) urls.push(d.secure_url);
+          });
+      });
+    }, Promise.resolve()).then(function() {
+      return urls;
     });
-    return Promise.all(promises);
   }
 
   function submitListing(user) {
@@ -170,7 +201,10 @@
       document.getElementById('lc-doc-input').click();
     });
     document.getElementById('lc-doc-input').addEventListener('change', function(e) {
-      handleDocSelect(e.target.files);
+      if (handleDocSelect(e.target.files) === false) {
+        e.target.value = '';
+        document.getElementById('lc-doc-list').innerHTML = '';
+      }
     });
   }
 

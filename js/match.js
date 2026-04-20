@@ -108,48 +108,12 @@
     return matched || "";
   }
 
-  function getStateRegionBucket(stateName) {
-    if (!stateName) {
-      return "";
+  function parseOptimalRadius(value) {
+    if (!value || value === "none") {
+      return null;
     }
-
-    var buckets = {
-      california: ["California"],
-      pacific_northwest: ["Washington", "Oregon", "Idaho"],
-      great_plains: ["Montana", "Wyoming", "Colorado", "New Mexico", "North Dakota", "South Dakota", "Nebraska", "Kansas", "Oklahoma", "Texas"],
-      southeast: ["Florida", "Georgia", "South Carolina", "North Carolina", "Virginia", "West Virginia", "Kentucky", "Tennessee", "Alabama", "Mississippi", "Arkansas", "Louisiana"],
-      northeast: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland"],
-      midwest: ["Ohio", "Michigan", "Indiana", "Illinois", "Wisconsin", "Minnesota", "Iowa", "Missouri"]
-    };
-
-    var key = Object.keys(buckets).find(function (bucketKey) {
-      return buckets[bucketKey].indexOf(stateName) !== -1;
-    });
-
-    return key || "";
-  }
-
-  function getListingRegionBucket(regionName) {
-    var regionBuckets = {
-      california: ["Sacramento Valley", "San Joaquin Valley", "North Coast", "Central Coast", "Sierra Foothills"],
-      pacific_northwest: ["Pacific Northwest"],
-      great_plains: ["Great Plains"],
-      southeast: ["Southeast"],
-      northeast: ["Northeast"],
-      midwest: ["Midwest"]
-    };
-
-    var key = Object.keys(regionBuckets).find(function (bucketKey) {
-      return regionBuckets[bucketKey].indexOf(regionName) !== -1;
-    });
-
-    return key || "";
-  }
-
-  function isBroadRegionMatch(stateName, listingRegion) {
-    var stateBucket = getStateRegionBucket(stateName);
-    var regionBucket = getListingRegionBucket(listingRegion);
-    return stateBucket && regionBucket && stateBucket === regionBucket;
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 
   function buildExplanation(score, reasons) {
@@ -258,9 +222,9 @@
       reasons.push("organic-compatible certification");
     }
 
-    if (isBroadRegionMatch(user.locationState, listing.region)) {
+    if (!parseOptimalRadius(listing.optimalRadius)) {
       score += 10;
-      reasons.push("regional proximity advantage");
+      reasons.push("nationwide service area");
     } else {
       score += 5;
     }

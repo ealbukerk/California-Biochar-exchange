@@ -296,8 +296,8 @@
                   (d.description ? '<div style="margin-top:var(--space-3);font-size:var(--font-size-sm);color:var(--color-text-secondary);line-height:1.6">' + d.description.slice(0, 200) + (d.description.length > 200 ? '…' : '') + '</div>' : '') +
                 '</div>' +
                 '<div style="display:flex;flex-direction:column;gap:var(--space-2);min-width:140px">' +
-                  '<button onclick="approveListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:var(--color-accent);color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✓ Verify</button>' +
-                  '<button onclick="rejectListing(\\'' + id + '\\', \\'' + (d.contactEmail || '') + '\\')" style="padding:var(--space-2) var(--space-4);background:none;border:1px solid #DC2626;color:#DC2626;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✗ Remove</button>' +
+                  '<button onclick="approveListing(&quot;' + id + '&quot;, &quot;' + (d.contactEmail || '') + '&quot;)" style="padding:var(--space-2) var(--space-4);background:var(--color-accent);color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✓ Level 1 Verify</button>' +
+                  '<button onclick="rejectListing(&quot;' + id + '&quot;, &quot;' + (d.contactEmail || '') + '&quot;)" style="padding:var(--space-2) var(--space-4);background:none;border:1px solid #DC2626;color:#DC2626;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer">✗ Remove</button>' +
                 '</div>' +
               '</div>' +
               '<div id="pending-status-' + id + '" style="margin-top:var(--space-2);font-size:var(--font-size-sm)"></div>' +
@@ -314,14 +314,43 @@
   window.approveListing = function(id, email) {
     var statusEl = document.getElementById('pending-status-' + id);
     if (statusEl) { statusEl.textContent = 'Approving…'; statusEl.style.color = 'var(--color-text-muted)'; }
-    db.collection('listings').doc(id).update({ status: 'active', verified: true, verifiedAt: firebase.firestore.FieldValue.serverTimestamp() })
+    var listingRef = db.collection('listings').doc(id);
+    var listingData = null;
+    listingRef.get()
+      .then(function(doc) {
+        listingData = doc.exists ? doc.data() : null;
+        return listingRef.update({
+          status: 'active',
+          verified: true,
+          verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+          verifiedLevel1: true,
+          verifiedLevel1At: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      })
+      .then(function() {
+        if (!listingData || !listingData.producerUID) return null;
+        return db.collection('users').doc(listingData.producerUID).get().then(function(userDoc) {
+          if (!userDoc.exists) return null;
+          var userData = userDoc.data() || {};
+          var stats = userData.verifiedStats || {};
+          var txCount = Number(stats.transactionsCompleted || stats.totalTransactions || userData.transactionsCompleted || 0);
+          var avgRating = Number(stats.averageRating || userData.averageRating || 0);
+          if (txCount >= 3 && avgRating >= 4.0) {
+            return listingRef.update({
+              verifiedLevel2: true,
+              verifiedLevel2At: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+          return null;
+        });
+      })
       .then(function() {
         var row = document.getElementById('pending-row-' + id);
         if (row) {
           row.style.opacity = '0.5';
           row.style.pointerEvents = 'none';
         }
-        if (statusEl) { statusEl.textContent = '✓ Approved — listing is now live.'; statusEl.style.color = 'var(--color-accent)'; }
+        if (statusEl) { statusEl.textContent = '✓ Level 1 verified — listing is now live.'; statusEl.style.color = 'var(--color-accent)'; }
         var countEl = document.getElementById('pending-count');
         if (countEl) {
           var n = parseInt(countEl.textContent) || 1;

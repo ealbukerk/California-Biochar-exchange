@@ -1,42 +1,24 @@
-function makeDateSelect(id, labelText, required) {
-  var now = new Date();
-  var currentYear = now.getFullYear();
-  var nowMonth = String(now.getMonth() + 1).padStart(2, '0');
-  var nowDay = String(now.getDate()).padStart(2, '0');
-  var nowYear = String(currentYear);
-  var years = '';
-  for (var y = currentYear; y <= currentYear + 3; y++) {
-    var ys = String(y);
-    years += '<option value="' + y + '"' + (ys === nowYear ? ' selected' : '') + '>' + y + '</option>';
-  }
-  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map(function(m, i) {
-    var val = String(i + 1).padStart(2, '0');
-    return '<option value="' + val + '"' + (val === nowMonth ? ' selected' : '') + '>' + m + '</option>';
-  }).join('');
-  var days = '';
-  for (var d = 1; d <= 31; d++) {
-    var dv = String(d).padStart(2, '0');
-    days += '<option value="' + dv + '"' + (dv === nowDay ? ' selected' : '') + '>' + d + '</option>';
-  }
-  return '<div style="display:flex;gap:var(--space-2)">' +
-    '<select id="' + id + '-month" style="flex:1;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
-      '<option value="">Month</option>' + months +
-    '</select>' +
-    '<select id="' + id + '-day" style="flex:1;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
-      '<option value="">Day</option>' + days +
-    '</select>' +
-    '<select id="' + id + '-year" style="flex:1.2;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-2);font-size:var(--font-size-sm)">' +
-      '<option value="">Year</option>' + years +
-    '</select>' +
-  '</div>';
+// Pikaday supersedes the old makeDateSelect/getDateSelectValue handoff rule for wizard dates.
+function renderDateInput(id, placeholder) {
+  return '<input type="text" id="' + id + '" class="date-picker-input" placeholder="' + (placeholder || 'Select date') + '" readonly style="width:100%;height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit;background:var(--color-surface);cursor:pointer">';
 }
 
-function getDateSelectValue(id) {
-  var m = document.getElementById(id + '-month');
-  var d = document.getElementById(id + '-day');
-  var y = document.getElementById(id + '-year');
-  if (!m || !d || !y || !m.value || !d.value || !y.value) return '';
-  return y.value + '-' + m.value + '-' + d.value;
+function initDatePicker(id, options) {
+  var input = document.getElementById(id);
+  if (!input || input.dataset.pikadayBound === 'true') return;
+  input.dataset.pikadayBound = 'true';
+  if (typeof Pikaday !== 'function') return;
+  var pickerOptions = options || {};
+  new Pikaday({
+    field: input,
+    format: 'YYYY-MM-DD',
+    minDate: pickerOptions.minDate || new Date(),
+    maxDate: pickerOptions.maxDate || null,
+    onSelect: function(date) {
+      input.value = this.toString();
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  });
 }
 
 const wizardData = {
@@ -77,6 +59,55 @@ function loadPriceSuggestion(index, feedstockType) {
     'Corn Stover':     { min: 220, max: 360, median: 290 }
   };
   var range = MARKET_RANGES[feedstockType];
+  var saved = wizardData.properties[feedstockType] || {};
+  var carbonValue = parseFloat(saved.carbonContent || (document.getElementById('carbon-' + index) || {}).value);
+  var surfaceValue = parseFloat(saved.surfaceArea || (document.getElementById('surface-' + index) || {}).value);
+  var moistureValue = parseFloat(saved.moisture || (document.getElementById('moisture-' + index) || {}).value);
+  var labVerified = !!(saved.labVerified || (document.getElementById('labverified-' + index) && document.getElementById('labverified-' + index).checked));
+  var certs = Array.isArray(saved.certifications) ? saved.certifications.slice() : [];
+  if (!certs.length) {
+    certs = Array.from(document.querySelectorAll('input[name="cert-' + index + '"]:checked')).map(function(c) { return c.value; });
+  }
+
+  function renderAdjusted(baseMedian) {
+    var hasScorecard = !Number.isNaN(carbonValue) || !Number.isNaN(surfaceValue) || !Number.isNaN(moistureValue) || labVerified || certs.length;
+    if (!hasScorecard) {
+      el.innerHTML =
+        '📊 <strong>Base market range:</strong> $' + range.min + '–$' + range.max + '/t' +
+        '<br><span style="font-size:var(--font-size-xs);color:var(--color-text-muted)">Complete material properties to see a quality-adjusted suggestion.</span>';
+      el.style.color = 'var(--color-accent)';
+      return;
+    }
+
+    var multiplier = 0;
+    if (!Number.isNaN(carbonValue)) {
+      if (carbonValue > 75) multiplier += 0.08;
+      else if (carbonValue < 60) multiplier -= 0.08;
+    }
+    if (!Number.isNaN(surfaceValue)) {
+      if (surfaceValue > 200) multiplier += 0.06;
+      else if (surfaceValue < 100) multiplier -= 0.05;
+    }
+    if (!Number.isNaN(moistureValue)) {
+      if (moistureValue < 8) multiplier += 0.04;
+      else if (moistureValue > 15) multiplier -= 0.06;
+    }
+    if (labVerified) multiplier += 0.05;
+    if (certs.indexOf('OMRI Listed') !== -1 || certs.indexOf('IBI Certified') !== -1) multiplier += 0.10;
+
+    var adjustedMedian = baseMedian * (1 + multiplier);
+    var suggestedLow = Math.round(adjustedMedian * 0.85);
+    var suggestedHigh = Math.round(adjustedMedian * 1.15);
+    var pct = Math.round(multiplier * 100);
+    var pctLabel = (pct >= 0 ? '+' : '') + pct + '%';
+
+    el.innerHTML =
+      '📊 <strong>Base market range:</strong> $' + range.min + '–$' + range.max + '/t' +
+      '<br><strong>Suggested range for this material:</strong> $' + suggestedLow + '–$' + suggestedHigh + '/t' +
+      '<br><strong>Quality adjustment:</strong> ' + pctLabel;
+    el.style.color = 'var(--color-accent)';
+  }
+
   if (!range) {
     db.collection('transactions')
       .where('feedstock', '==', feedstockType)
@@ -91,15 +122,16 @@ function loadPriceSuggestion(index, feedstockType) {
         if (!prices.length) return;
         var sorted = prices.slice().sort(function(a,b){return a-b;});
         var median = sorted[Math.floor(sorted.length/2)];
-        var lo = Math.round(median * 0.85);
-        var hi = Math.round(median * 1.15);
-        el.innerHTML = '📊 Market range based on ' + prices.length + ' recent transactions: <strong>$' + lo + '–$' + hi + '/t</strong>';
-        el.style.color = 'var(--color-accent)';
+        range = {
+          min: Math.round(median * 0.85),
+          max: Math.round(median * 1.15),
+          median: median
+        };
+        renderAdjusted(median);
       }).catch(function(){});
     return;
   }
-  el.innerHTML = '📊 Typical market range for ' + feedstockType + ': <strong>$' + range.min + '–$' + range.max + '/t</strong> · Median $' + range.median + '/t';
-  el.style.color = 'var(--color-accent)';
+  renderAdjusted(range.median);
 }
 
 function saveDraft() {
@@ -122,6 +154,50 @@ function loadDraft() {
 
 function clearDraft() {
   try { localStorage.removeItem('biochar_wizard_draft'); } catch(e) {}
+}
+
+function isLikelyScreenshot(file) {
+  if (!file) return false;
+  var type = String(file.type || '').toLowerCase();
+  if (type !== 'image/png' && type !== 'image/jpeg') return false;
+  var name = String(file.name || '');
+  return /screenshot|screen shot|screen_shot/i.test(name) || /^IMG_\d+/i.test(name);
+}
+
+function setUploadWarning(inputId, message) {
+  var el = document.getElementById(inputId + '-warning');
+  if (!el) return;
+  el.textContent = message || '';
+  el.style.display = message ? 'block' : 'none';
+}
+
+function setUploadFilename(inputId, message) {
+  var el = document.getElementById(inputId + '-filename');
+  if (!el) return;
+  el.textContent = message || '';
+}
+
+function bindDocumentInput(inputId) {
+  var input = document.getElementById(inputId);
+  if (!input || input.dataset.bound === 'true') return;
+  input.dataset.bound = 'true';
+  input.addEventListener('change', function () {
+    var files = Array.prototype.slice.call(input.files || []);
+    if (!files.length) {
+      setUploadWarning(inputId, '');
+      setUploadFilename(inputId, '');
+      return;
+    }
+    var invalid = files.find(isLikelyScreenshot);
+    if (invalid) {
+      input.value = '';
+      setUploadFilename(inputId, '');
+      setUploadWarning(inputId, 'This looks like a screenshot — please upload the original document file (PDF preferred).');
+      return;
+    }
+    setUploadWarning(inputId, '');
+    setUploadFilename(inputId, files.length === 1 ? files[0].name : (files.length + ' files selected'));
+  });
 }
 
 function validateStep2() {
@@ -238,13 +314,14 @@ function buildPropertiesTabs() {
       '<div class="lab-fields-grid">' +
         '<div class="form-group">' +
           '<label for="labreportdate-' + i + '">Lab report date <span class="required-star">*</span></label>' +
-          makeDateSelect('labreportdate-' + i, 'Lab report date') +
+          renderDateInput('labreportdate-' + i, 'YYYY-MM-DD') +
         '</div>' +
         '<div class="form-group">' +
           '<label for="labreport-' + i + '">Upload lab report <span class="required-star">*</span></label>' +
           '<p class="field-hint">PDF, JPG, or PNG. Max 5MB.</p>' +
-          '<input type="file" id="labreport-' + i + '" accept=".pdf,.jpg,.jpeg,.png">' +
+          '<input type="file" id="labreport-' + i + '" accept=".pdf,.jpg,.jpeg,.png" multiple>' +
           '<div id="labreport-filename-' + i + '" style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)"></div>' +
+          '<div id="labreport-' + i + '-warning" class="upload-inline-warning" style="display:none"></div>' +
         '</div>' +
       '</div>' +
 
@@ -261,6 +338,8 @@ function buildPropertiesTabs() {
         '<label for="certdocs-' + i + '">Upload certification documents</label>' +
         '<p class="field-hint">Upload OMRI, IBI, or CDFA certificate PDFs. Max 5MB per file.</p>' +
         '<input type="file" id="certdocs-' + i + '" accept=".pdf,.jpg,.jpeg,.png" multiple>' +
+        '<div id="certdocs-' + i + '-filename" style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)"></div>' +
+        '<div id="certdocs-' + i + '-warning" class="upload-inline-warning" style="display:none"></div>' +
       '</div>'
 
     const allInputs = panel.querySelectorAll('input, select')
@@ -270,6 +349,9 @@ function buildPropertiesTabs() {
     })
 
     panelsEl.appendChild(panel)
+    bindDocumentInput('labreport-' + i)
+    bindDocumentInput('certdocs-' + i)
+    initDatePicker('labreportdate-' + i, { minDate: new Date('2015-01-01T00:00:00') })
   })
 }
 
@@ -297,7 +379,8 @@ function updateCompleteness(index, feedstock) {
     if (el && el.value) filledOptional++
   })
 
-  var labDateVal = getDateSelectValue('labreportdate-' + index)
+  var labDateInput = document.getElementById('labreportdate-' + index)
+  var labDateVal = labDateInput ? labDateInput.value : ''
   if (labDateVal) filledOptional++
 
   var labFileEl = document.getElementById('labreport-' + index)
@@ -338,7 +421,7 @@ function savePropertiesData(index, feedstock) {
     ashContent: document.getElementById('ash-' + index) ? document.getElementById('ash-' + index).value : '',
     electricalConductivity: document.getElementById('ec-' + index) ? document.getElementById('ec-' + index).value : '',
     labVerified: document.getElementById('labverified-' + index) ? document.getElementById('labverified-' + index).checked : false,
-    labReportDate: getDateSelectValue('labreportdate-' + index),
+    labReportDate: document.getElementById('labreportdate-' + index) ? document.getElementById('labreportdate-' + index).value : '',
     certifications: certs
   }
 }
@@ -415,17 +498,22 @@ function buildAvailabilityTabs() {
           '<div id="price-suggestion-' + i + '" style="margin-top:var(--space-2);font-size:var(--font-size-xs);color:var(--color-text-muted)"></div>' +
         '</div>' +
         '<div class="form-group">' +
+          '<label for="hard-floor-' + i + '">Negotiation floor</label>' +
+          '<p class="field-hint">The lowest price you\'ll accept — bids below this are automatically rejected. This amount is never shown to buyers.</p>' +
+          '<input type="number" id="hard-floor-' + i + '" min="0" step="0.01" placeholder="Optional — e.g. 320">' +
+        '</div>' +
+        '<div class="form-group">' +
           '<label for="lead-time-' + i + '">Lead time (days) <span class="required-star">*</span></label>' +
           '<p class="field-hint">How many days from order confirmation to ready for delivery or collection.</p>' +
           '<input type="number" id="lead-time-' + i + '" min="0" placeholder="e.g. 14" required>' +
         '</div>' +
         '<div class="form-group">' +
           '<label for="avail-from-' + i + '">Available from</label>' +
-          makeDateSelect('avail-from-' + i, 'Available from') +
+          renderDateInput('avail-from-' + i, 'YYYY-MM-DD') +
         '</div>' +
         '<div class="form-group">' +
           '<label for="avail-until-' + i + '">Available until</label>' +
-          makeDateSelect('avail-until-' + i, 'Available until') +
+          renderDateInput('avail-until-' + i, 'YYYY-MM-DD') +
         '</div>' +
       '</div>' +
       '<div class="form-group">' +
@@ -435,31 +523,12 @@ function buildAvailabilityTabs() {
           '<label><input type="checkbox" name="delivery-' + i + '" value="Buyer collects"> Buyer collects</label>' +
           '<label><input type="checkbox" name="delivery-' + i + '" value="Third party freight"> Third party freight</label>' +
         '</div>' +
-      '</div>' +
-      '<div class="form-group">' +
-        '<label>Regions served</label>' +
-        '<div class="checkbox-group">' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Sacramento Valley"> Sacramento Valley</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="San Joaquin Valley"> San Joaquin Valley</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="North Coast"> North Coast</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Central Coast"> Central Coast</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Sierra Foothills"> Sierra Foothills</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Pacific Northwest"> Pacific Northwest</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Great Plains"> Great Plains</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Southeast"> Southeast</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Northeast"> Northeast</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Midwest"> Midwest</label>' +
-          '<label><input type="checkbox" name="regions-' + i + '" value="Nationwide"> Nationwide</label>' +
-        '</div>' +
-      '</div>' +
-      '<div class="form-group">' +
-        '<label for="hard-floor-' + i + '">Minimum acceptable price per tonne (private)</label>' +
-        '<p class="field-hint">This is your hard floor — bids below this are auto-rejected. Buyers never see this number. Leave blank for no floor.</p>' +
-        '<input type="number" id="hard-floor-' + i + '" min="0" step="0.01" placeholder="Optional — e.g. 320">' +
       '</div>'
 
     setTimeout(function() { loadPriceSuggestion(i, feedstock); }, 100);
     panelsEl.appendChild(panel)
+    initDatePicker('avail-from-' + i, { minDate: new Date() })
+    initDatePicker('avail-until-' + i, { minDate: new Date() })
   })
 
   wizardData.feedstocks.forEach(function(feedstock, i) {
@@ -476,17 +545,15 @@ function buildAvailabilityTabs() {
 function saveAvailabilityData() {
   wizardData.feedstocks.forEach(function(feedstock, i) {
     const deliveryInputs = document.querySelectorAll('input[name="delivery-' + i + '"]:checked')
-    const regionInputs = document.querySelectorAll('input[name="regions-' + i + '"]:checked')
     wizardData.availability[feedstock] = {
       availableTonnes: document.getElementById('avail-tonnes-' + i) ? document.getElementById('avail-tonnes-' + i).value : '',
       minOrderTonnes: document.getElementById('min-order-' + i) ? document.getElementById('min-order-' + i).value : '',
       pricePerTonne: document.getElementById('price-tonne-' + i) ? document.getElementById('price-tonne-' + i).value : '',
       leadTimeDays: document.getElementById('lead-time-' + i) ? document.getElementById('lead-time-' + i).value : '',
-      availableFrom: getDateSelectValue('avail-from-' + i),
-      availableUntil: getDateSelectValue('avail-until-' + i),
+      availableFrom: document.getElementById('avail-from-' + i) ? document.getElementById('avail-from-' + i).value : '',
+      availableUntil: document.getElementById('avail-until-' + i) ? document.getElementById('avail-until-' + i).value : '',
       hardFloor: document.getElementById('hard-floor-' + i) ? document.getElementById('hard-floor-' + i).value : '',
-      deliveryMethods: Array.from(deliveryInputs).map(function(c) { return c.value }),
-      regionsServed: Array.from(regionInputs).map(function(c) { return c.value })
+      deliveryMethods: Array.from(deliveryInputs).map(function(c) { return c.value })
     }
   })
 }
@@ -567,7 +634,8 @@ function buildReviewStep() {
       'EIN': wizardData.business.ein,
       'Website': wizardData.business.businessWebsite || 'Not provided',
       'Equipment': wizardData.business.equipmentType,
-      'Capacity': wizardData.business.annualCapacity ? wizardData.business.annualCapacity + ' tonnes/year' : '—'
+      'Capacity': wizardData.business.annualCapacity ? wizardData.business.annualCapacity + ' tonnes/year' : '—',
+      'Optimal sourcing radius': wizardData.business.optimalRadius === 'none' || !wizardData.business.optimalRadius ? 'No preference' : wizardData.business.optimalRadius + ' miles'
     }).map(function(entry) {
       return '<div class="review-row"><span class="review-row-label">' + entry[0] + '</span><span class="review-row-value">' + entry[1] + '</span></div>'
     }).join('') +
@@ -825,6 +893,7 @@ function prefillWizard(profile, user) {
     email: profile.email || (user && user.email) || '',
     state: profile.state || '',
     zipcode: profile.zipcode || '',
+    optimalRadius: profile.optimalRadius || '',
     ein: profile.ein || '',
     businessWebsite: profile.businessWebsite || '',
     equipmentType: profile.equipmentType || profile.pyroTech || '',
@@ -834,6 +903,7 @@ function prefillWizard(profile, user) {
 }
 
 var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+var CLOUDINARY_RAW_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/raw/upload';
 var CLOUDINARY_PRESET = 'biochar_certs';
 var sellerPhotoFiles = [];
 
@@ -897,6 +967,13 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             var labVerified = document.getElementById('labverified-' + i);
             if (labVerified && props.labVerified) labVerified.checked = true;
+            var labReportDate = document.getElementById('labreportdate-' + i);
+            if (labReportDate && props.labReportDate) labReportDate.value = props.labReportDate;
+            var avail = wizardData.availability[feedstock] || {};
+            var availFrom = document.getElementById('avail-from-' + i);
+            var availUntil = document.getElementById('avail-until-' + i);
+            if (availFrom && avail.availableFrom) availFrom.value = avail.availableFrom;
+            if (availUntil && avail.availableUntil) availUntil.value = avail.availableUntil;
           });
         }
       }
@@ -921,6 +998,32 @@ function uploadSellerPhotos() {
       .catch(function() { return null; });
   });
   return Promise.all(promises);
+}
+
+function getInputFiles(id) {
+  var input = document.getElementById(id);
+  return input && input.files ? Array.prototype.slice.call(input.files) : [];
+}
+
+function uploadDocumentFilesSequential(files) {
+  var urls = [];
+  return files.reduce(function (chain, file) {
+    return chain.then(function () {
+      var fd = new FormData();
+      var name = String(file.name || '').toLowerCase();
+      var isPdf = file.type === 'application/pdf' || /\.pdf$/.test(name);
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      return fetch(isPdf ? CLOUDINARY_RAW_UPLOAD_URL : CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.secure_url) urls.push(d.secure_url);
+        })
+        .catch(function () {});
+    });
+  }, Promise.resolve()).then(function () {
+    return urls;
+  });
 }
 
 window.AuthState.onReady(function(user, profile) {
@@ -958,10 +1061,19 @@ document.addEventListener('click', function(e) {
   btn.textContent = 'Submitting…'
 
   uploadSellerPhotos().then(function(photoUrls) {
+  return Promise.all(wizardData.feedstocks.map(function(feedstock, index) {
+    return Promise.all([
+      uploadDocumentFilesSequential(getInputFiles('labreport-' + index)),
+      uploadDocumentFilesSequential(getInputFiles('certdocs-' + index))
+    ]).then(function(results) {
+      return { feedstock: feedstock, labReportUrls: results[0] || [], certDocUrls: results[1] || [] };
+    });
+  })).then(function(docUploads) {
   const listings = []
-  wizardData.feedstocks.forEach(function(feedstock) {
+  wizardData.feedstocks.forEach(function(feedstock, index) {
     const props = wizardData.properties[feedstock] || {}
     const avail = wizardData.availability[feedstock] || {}
+    const docData = docUploads[index] || { labReportUrls: [], certDocUrls: [] }
     listings.push({
       producerUID: window.currentUser.uid,
       producerName: wizardData.business.businessName,
@@ -969,6 +1081,8 @@ document.addEventListener('click', function(e) {
       contactEmail: wizardData.business.email,
       state: wizardData.business.state,
       zipcode: wizardData.business.zipcode,
+      producerZip: wizardData.business.zipcode,
+      optimalRadius: wizardData.business.optimalRadius || null,
       ein: wizardData.business.ein,
       businessWebsite: wizardData.business.businessWebsite,
       equipmentType: wizardData.business.equipmentType,
@@ -986,6 +1100,8 @@ document.addEventListener('click', function(e) {
         labVerified: !!props.labVerified
       },
       certifications: props.certifications || [],
+      labReportUrls: docData.labReportUrls,
+      certDocUrls: docData.certDocUrls,
       pricePerTonne: parseFloat(avail.pricePerTonne) || null,
       availableTonnes: parseFloat(avail.availableTonnes) || null,
       minOrderTonnes: parseFloat(avail.minOrderTonnes) || null,
@@ -1007,20 +1123,8 @@ document.addEventListener('click', function(e) {
 
   Promise.all(promises)
     .then(function() {
-      showStep(4)
-      const inner = document.querySelector('#step-4 .wizard-panel-inner')
-      if (inner) {
-        inner.innerHTML =
-          '<div style="text-align:center;padding:var(--space-12) 0">' +
-            '<div style="font-size:3rem">✅</div>' +
-            '<h2 style="font-size:var(--font-size-2xl);font-weight:700;margin-top:var(--space-4)">Application submitted!</h2>' +
-            '<p style="color:var(--color-text-secondary);margin-top:var(--space-2)">Your listing is under review. We\'ll notify you at ' + wizardData.business.email + ' within 2 business days.</p>' +
-            '<div style="margin-top:var(--space-6);display:flex;gap:var(--space-4);justify-content:center">' +
-              '<a href="seller.html" class="btn btn-secondary">List another product</a>' +
-              '<a href="buyer.html" class="btn btn-primary">Browse marketplace</a>' +
-            '</div>' +
-          '</div>'
-      }
+      clearDraft()
+      window.location.href = 'seller.html?submitted=true'
     })
     .catch(function(err) {
       console.error(err)
@@ -1030,4 +1134,5 @@ document.addEventListener('click', function(e) {
       btn.textContent = 'Submit application'
     })
   }) // end uploadSellerPhotos
+  })
 })

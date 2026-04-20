@@ -9,11 +9,15 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/ui-utils.js"></script>
   <script src="js/states.js"></script>
   <style>
     .settings-shell { display:grid; grid-template-columns:220px 1fr; gap:var(--space-8); padding:var(--space-10) 0; min-height:80vh; }
     .settings-nav { position:sticky; top:calc(60px + var(--space-6)); height:fit-content; }
-    .settings-avatar { width:64px; height:64px; border-radius:50%; background:var(--color-accent); color:white; font-size:var(--font-size-2xl); font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:var(--space-4); }
+    .settings-avatar { width:64px; height:64px; border-radius:50%; background:var(--color-accent); color:white; font-size:var(--font-size-2xl); font-weight:700; display:flex; align-items:center; justify-content:center; margin-bottom:var(--space-4); overflow:hidden; }
+    .settings-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+    .settings-photo-preview { width:80px; height:80px; border-radius:50%; background:var(--color-accent); color:white; font-size:var(--font-size-2xl); font-weight:700; display:flex; align-items:center; justify-content:center; overflow:hidden; margin-bottom:var(--space-3); }
+    .settings-photo-preview img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
     .settings-nav-name { font-weight:600; font-size:var(--font-size-base); margin-bottom:2px; }
     .settings-nav-email { font-size:var(--font-size-xs); color:var(--color-text-muted); margin-bottom:var(--space-5); }
     .settings-nav-item { display:flex; align-items:center; gap:var(--space-2); padding:var(--space-2) var(--space-3); border-radius:var(--radius-md); font-size:var(--font-size-sm); font-weight:500; color:var(--color-text-secondary); cursor:pointer; border:none; background:none; width:100%; text-align:left; border-left:3px solid transparent; transition:all 0.12s; margin-bottom:2px; }
@@ -65,6 +69,12 @@
           <div class="settings-card">
             <h2>Account details</h2>
             <div style="display:grid;gap:var(--space-4)">
+              <div class="form-group">
+                <div id="settings-photo-preview" class="settings-photo-preview">?</div>
+                <label>Update profile photo</label>
+                <input id="s-photo" type="file" accept="image/*" />
+                <p id="photo-status" style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px"></p>
+              </div>
               <div class="form-group"><label>Full name</label><input id="s-name" type="text" placeholder="Your name" /></div>
               <div class="form-group"><label>Business name</label><input id="s-business" type="text" placeholder="Business name" /></div>
               <div class="form-group">
@@ -191,6 +201,28 @@
   <script src="js/firebase-config.js"></script>
   <script src="js/auth-state.js"></script>
   <script>
+    var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+    var CLOUDINARY_PRESET = 'biochar_certs';
+    var notifSaveTimer = null;
+
+    function renderSettingsAvatar(el, photoUrl, initials) {
+      if (!el) return;
+      if (photoUrl) {
+        el.innerHTML = '<img src="' + photoUrl + '" alt="Profile photo" onerror="this.remove(); this.parentNode.textContent=\'' + initials + '\'">';
+      } else {
+        el.textContent = initials;
+      }
+    }
+
+    function uploadProfilePhoto(file) {
+      var fd = new FormData();
+      fd.append('file', file);
+      fd.append('upload_preset', CLOUDINARY_PRESET);
+      return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+        .then(function(r) { return r.json(); })
+        .then(function(data) { return data.secure_url || null; });
+    }
+
     document.querySelectorAll('.settings-nav-item[data-panel]').forEach(function(btn) {
       btn.addEventListener('click', function() {
         document.querySelectorAll('.settings-nav-item').forEach(function(b) { b.classList.remove('active'); });
@@ -200,13 +232,30 @@
       });
     });
 
+    function saveNotifications(user, silent) {
+      return firebase.firestore().collection('users').doc(user.uid).update({
+        notificationPrefs: {
+          newMessage: document.getElementById('notif-new-message').checked,
+          bidReceived: document.getElementById('notif-bid-received').checked,
+          deliveryConfirmed: document.getElementById('notif-delivery-confirmed').checked,
+          listingApproved: document.getElementById('notif-listing-approved').checked
+        }
+      }).then(function() {
+        if (!silent && window.UIUtils) UIUtils.toast('Settings saved', 'success', 2200);
+      }).catch(function() {
+        if (window.UIUtils) UIUtils.toast('Could not save notification preferences.', 'error', 2800);
+      });
+    }
+
+    try {
     window.AuthState.onReady(function(user, profile) {
       if (!user) return;
       document.getElementById('settings-auth-gate').style.display = 'none';
       document.getElementById('settings-content').classList.remove('hidden');
 
       var initial = (profile && (profile.businessName || profile.name) || '').charAt(0).toUpperCase() || '?';
-      document.getElementById('settings-avatar').textContent = initial;
+      renderSettingsAvatar(document.getElementById('settings-avatar'), profile && profile.profilePhotoUrl, initial);
+      renderSettingsAvatar(document.getElementById('settings-photo-preview'), profile && profile.profilePhotoUrl, initial);
       document.getElementById('settings-nav-name').textContent = (profile && (profile.businessName || profile.name)) || '';
       document.getElementById('settings-nav-email').textContent = user.email || '';
 
@@ -224,51 +273,109 @@
       }
       document.getElementById('s-email').value = user.email || '';
 
+      document.getElementById('s-photo').addEventListener('change', function() {
+        var file = this.files && this.files[0];
+        var statusEl = document.getElementById('photo-status');
+        if (!file) return;
+        statusEl.textContent = 'Uploading...';
+        uploadProfilePhoto(file).then(function(url) {
+          if (!url) throw new Error('Upload failed');
+          return firebase.firestore().collection('users').doc(user.uid).update({ profilePhotoUrl: url }).then(function() {
+            if (!window.AuthState.profile) window.AuthState.profile = {};
+            window.AuthState.profile.profilePhotoUrl = url;
+            renderSettingsAvatar(document.getElementById('settings-avatar'), url, initial);
+            renderSettingsAvatar(document.getElementById('settings-photo-preview'), url, initial);
+            statusEl.textContent = 'Photo updated';
+            setTimeout(function() { statusEl.textContent = ''; }, 2000);
+          });
+        }).catch(function() {
+          statusEl.textContent = 'Could not update photo';
+        }).finally(function() {
+          document.getElementById('s-photo').value = '';
+        });
+      });
+
       document.getElementById('save-account-btn').addEventListener('click', function() {
         var st = document.getElementById('account-status');
+        var btn = document.getElementById('save-account-btn');
+        if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Saving...');
         firebase.firestore().collection('users').doc(user.uid).update({
           name: document.getElementById('s-name').value,
           businessName: document.getElementById('s-business').value,
           zipcode: document.getElementById('s-zipcode').value,
           state: document.getElementById('s-state').value,
           businessWebsite: document.getElementById('s-website').value
-        }).then(function() { st.textContent = '✓ Saved'; st.style.color = 'var(--color-accent)'; setTimeout(function(){st.textContent='';},3000); })
-          .catch(function() { st.textContent = 'Error saving'; st.style.color = '#DC2626'; });
+        }).then(function() {
+          if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+          if (window.UIUtils) UIUtils.toast('Settings saved', 'success', 2200);
+          st.textContent = '✓ Saved'; st.style.color = 'var(--color-accent)'; setTimeout(function(){st.textContent='';},3000);
+        }).catch(function() {
+          if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+          if (window.UIUtils) UIUtils.toast('Could not save account settings.', 'error', 2800);
+          st.textContent = 'Error saving'; st.style.color = '#DC2626';
+        });
       });
 
       document.getElementById('save-password-btn').addEventListener('click', function() {
         var pw = document.getElementById('s-password').value;
         var confirm = document.getElementById('s-password-confirm').value;
         var st = document.getElementById('password-status');
+        var btn = document.getElementById('save-password-btn');
         if (pw.length < 8) { st.textContent = 'Password must be at least 8 characters'; st.style.color='#DC2626'; return; }
         if (pw !== confirm) { st.textContent = 'Passwords do not match'; st.style.color='#DC2626'; return; }
+        if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Saving...');
         user.updatePassword(pw)
-          .then(function() { st.textContent = '✓ Password updated'; st.style.color='var(--color-accent)'; document.getElementById('s-password').value=''; document.getElementById('s-password-confirm').value=''; setTimeout(function(){st.textContent='';},3000); })
-          .catch(function(e) { st.textContent = e.message; st.style.color='#DC2626'; });
+          .then(function() {
+            if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+            if (window.UIUtils) UIUtils.toast('Settings saved', 'success', 2200);
+            st.textContent = '✓ Password updated'; st.style.color='var(--color-accent)'; document.getElementById('s-password').value=''; document.getElementById('s-password-confirm').value=''; setTimeout(function(){st.textContent='';},3000);
+          })
+          .catch(function(e) {
+            if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+            if (window.UIUtils) UIUtils.toast('Could not update password.', 'error', 2800);
+            st.textContent = e.message; st.style.color='#DC2626';
+          });
       });
 
       document.getElementById('save-notif-btn').addEventListener('click', function() {
         var st = document.getElementById('notif-status');
-        firebase.firestore().collection('users').doc(user.uid).update({
-          notificationPrefs: {
-            newMessage: document.getElementById('notif-new-message').checked,
-            bidReceived: document.getElementById('notif-bid-received').checked,
-            deliveryConfirmed: document.getElementById('notif-delivery-confirmed').checked,
-            listingApproved: document.getElementById('notif-listing-approved').checked
-          }
-        }).then(function() { st.textContent = '✓ Saved'; st.style.color='var(--color-accent)'; setTimeout(function(){st.textContent='';},3000); })
-          .catch(function() { st.textContent = 'Error saving'; st.style.color='#DC2626'; });
+        var btn = document.getElementById('save-notif-btn');
+        if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Saving...');
+        saveNotifications(user, false).then(function() {
+          if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+          st.textContent = '✓ Saved'; st.style.color='var(--color-accent)'; setTimeout(function(){st.textContent='';},3000);
+        });
+      });
+
+      ['notif-new-message','notif-bid-received','notif-delivery-confirmed','notif-listing-approved'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', function() {
+          if (notifSaveTimer) window.clearTimeout(notifSaveTimer);
+          notifSaveTimer = window.setTimeout(function() {
+            saveNotifications(user, true);
+          }, 800);
+        });
       });
 
       document.getElementById('delete-account-btn').addEventListener('click', function() {
         if (!confirm('Delete your account? This cannot be undone.')) return;
         var st = document.getElementById('delete-status');
+        var btn = document.getElementById('delete-account-btn');
+        if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Deleting...');
         firebase.firestore().collection('users').doc(user.uid).delete()
           .then(function() { return user.delete(); })
           .then(function() { window.location.href = 'index.html'; })
-          .catch(function(e) { st.textContent = e.message; st.style.color='#DC2626'; });
+          .catch(function(e) {
+            if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
+            if (window.UIUtils) UIUtils.toast('Could not delete account.', 'error', 2800);
+            st.textContent = e.message; st.style.color='#DC2626';
+          });
       });
     });
+    } catch (e) {
+      if (window.UIUtils) UIUtils.toast('Settings failed to initialize.', 'warning', 3200);
+    }
   </script>
 </body>
 </html>

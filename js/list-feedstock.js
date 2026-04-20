@@ -2,6 +2,7 @@
   'use strict';
 
   var CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/image/upload';
+  var CLOUDINARY_RAW_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/dz5so5fgy/raw/upload';
   var CLOUDINARY_PRESET = 'biochar_certs';
 
   var BIOMASS_LABELS = {
@@ -54,6 +55,36 @@
 
   function val(id) { return document.getElementById(id).value.trim(); }
   function checked(id) { return document.getElementById(id).checked; }
+
+  function initHarvestPicker() {
+    var input = document.getElementById('f-harvest-date');
+    if (!input || input.dataset.pikadayBound === 'true') return;
+    input.dataset.pikadayBound = 'true';
+    if (typeof Pikaday !== 'function') return;
+    new Pikaday({
+      field: input,
+      format: 'YYYY-MM-DD',
+      minDate: new Date(),
+      onSelect: function() {
+        input.value = this.toString();
+      }
+    });
+  }
+
+  function isLikelyScreenshot(file) {
+    if (!file) return false;
+    var type = String(file.type || '').toLowerCase();
+    if (type !== 'image/png' && type !== 'image/jpeg') return false;
+    var name = String(file.name || '');
+    return /screenshot|screen shot|screen_shot/i.test(name) || /^IMG_\d+/i.test(name);
+  }
+
+  function setVerificationWarning(message) {
+    var warning = document.getElementById('verification-input-warning');
+    if (!warning) return;
+    warning.textContent = message || '';
+    warning.style.display = message ? 'block' : 'none';
+  }
 
   function goToStep(n) {
     document.querySelectorAll('.wizard-panel').forEach(function (p) { p.classList.remove('active'); });
@@ -159,7 +190,14 @@
   }
 
   function handleVerificationSelect(files) {
-    verificationFiles = Array.prototype.slice.call(files, 0, 5);
+    var incoming = Array.prototype.slice.call(files, 0, 5);
+    if (incoming.find(isLikelyScreenshot)) {
+      verificationFiles = [];
+      setVerificationWarning('This looks like a screenshot — please upload the original document file (PDF preferred).');
+      return false;
+    }
+    setVerificationWarning('');
+    verificationFiles = incoming;
     var previews = document.getElementById('verification-previews');
     previews.innerHTML = '';
     verificationFiles.forEach(function (file) {
@@ -168,19 +206,28 @@
       item.textContent = file.name;
       previews.appendChild(item);
     });
+    return true;
   }
 
   function uploadVerificationDocs() {
     if (!verificationFiles.length) return Promise.resolve([]);
-    var promises = verificationFiles.map(function (file) {
-      var fd = new FormData();
-      fd.append('file', file);
-      fd.append('upload_preset', CLOUDINARY_PRESET);
-      return fetch(CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
-        .then(function (r) { return r.json(); })
-        .then(function (d) { return d.secure_url || ''; });
+    var urls = [];
+    return verificationFiles.reduce(function (chain, file) {
+      return chain.then(function () {
+        var fd = new FormData();
+        var name = String(file.name || '').toLowerCase();
+        var isPdf = file.type === 'application/pdf' || /\.pdf$/.test(name);
+        fd.append('file', file);
+        fd.append('upload_preset', CLOUDINARY_PRESET);
+        return fetch(isPdf ? CLOUDINARY_RAW_UPLOAD_URL : CLOUDINARY_UPLOAD_URL, { method: 'POST', body: fd })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            if (d && d.secure_url) urls.push(d.secure_url);
+          });
+      });
+    }, Promise.resolve()).then(function () {
+      return urls;
     });
-    return Promise.all(promises);
   }
 
   function submitListing(user) {
@@ -224,6 +271,8 @@
         pricePerTon: Number(val('f-price')),
         negotiable: checked('f-negotiable'),
         locationZip: val('f-zip'),
+        availableFrom: val('f-harvest-date'),
+        availableUntil: '',
         harvestDate: val('f-harvest-date'),
         availabilityWindow: val('f-availability'),
         notes: val('f-notes'),
@@ -248,6 +297,7 @@
   }
 
   function init() {
+    initHarvestPicker();
     var toggleBtn = document.getElementById('f-biomass-toggle');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', function () {
@@ -280,7 +330,10 @@
     var verificationInput = document.getElementById('verification-input');
     if (verificationInput) {
       verificationInput.addEventListener('change', function (e) {
-        handleVerificationSelect(e.target.files);
+        if (handleVerificationSelect(e.target.files) === false) {
+          e.target.value = '';
+          document.getElementById('verification-previews').innerHTML = '';
+        }
       });
     }
   }

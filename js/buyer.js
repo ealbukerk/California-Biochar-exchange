@@ -1,9 +1,69 @@
 (function () {
   var compareList = [];
+  var LISTINGS_PAGE_SIZE = 20;
+  var _currentPage = 1;
+  var _allFilteredListings = [];
+  var _usingDemoFallback = false;
   var state = {
     user: null,
     profile: null
   };
+
+  function toDateOnly(value) {
+    if (!value) return null;
+    var date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    if (isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function daysBetween(start, end) {
+    return Math.round((end - start) / 86400000);
+  }
+
+  function formatMonthYear(value) {
+    var date = toDateOnly(value);
+    if (!date) return "";
+    return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  }
+
+  function formatShortDate(value) {
+    var date = toDateOnly(value);
+    if (!date) return "—";
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function isListingVisible(listing) {
+    var today = toDateOnly(new Date());
+    var oneMonthOut = new Date(today.getTime());
+    oneMonthOut.setDate(oneMonthOut.getDate() + 30);
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    if (until && until < today) return false;
+    if (from && from > oneMonthOut) return false;
+    return true;
+  }
+
+  function renderAvailabilityIndicator(listing) {
+    var today = toDateOnly(new Date());
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    if (from && from > today) {
+      var daysUntil = daysBetween(today, from);
+      if (daysUntil <= 30) {
+        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
+      }
+      return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">Available ' + formatMonthYear(from) + '</div>';
+    }
+    if (until) {
+      var daysLeft = daysBetween(today, until);
+      if (daysLeft <= 14) {
+        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
+      }
+      return '<div style="font-size:var(--font-size-xs);color:#166534;background:#DCFCE7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">✓ Available now · Until ' + formatShortDate(until) + '</div>';
+    }
+    return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">' + (from ? formatShortDate(from) : 'Availability on request') + '</div>';
+  }
 
   function updateCompareBar() {
     const bar = document.getElementById("compare-bar");
@@ -310,45 +370,46 @@
     return { text: Math.ceil(days / 7) + "-week lead time", className: "lead-time-standard" };
   }
 
-  function getStateRegionBucket(stateName) {
-    if (!stateName) return "";
-    var buckets = {
-      california: ["California"],
-      pacific_northwest: ["Washington", "Oregon", "Idaho"],
-      great_plains: ["Montana", "Wyoming", "Colorado", "New Mexico", "North Dakota", "South Dakota", "Nebraska", "Kansas", "Oklahoma", "Texas"],
-      southeast: ["Florida", "Georgia", "South Carolina", "North Carolina", "Virginia", "West Virginia", "Kentucky", "Tennessee", "Alabama", "Mississippi", "Arkansas", "Louisiana"],
-      northeast: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland"],
-      midwest: ["Ohio", "Michigan", "Indiana", "Illinois", "Wisconsin", "Minnesota", "Iowa", "Missouri"]
-    };
-
-    return (
-      Object.keys(buckets).find(function (bucketKey) {
-        return buckets[bucketKey].indexOf(stateName) !== -1;
-      }) || ""
-    );
+  function parseOptimalRadius(value) {
+    if (!value || value === "none") return null;
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
   }
 
-  function getListingRegionBucket(regionName) {
-    var regionBuckets = {
-      california: ["Sacramento Valley", "San Joaquin Valley", "North Coast", "Central Coast", "Sierra Foothills"],
-      pacific_northwest: ["Pacific Northwest"],
-      great_plains: ["Great Plains"],
-      southeast: ["Southeast"],
-      northeast: ["Northeast"],
-      midwest: ["Midwest"]
-    };
-
-    return (
-      Object.keys(regionBuckets).find(function (bucketKey) {
-        return regionBuckets[bucketKey].indexOf(regionName) !== -1;
-      }) || ""
-    );
+  function getServiceAreaText(listing) {
+    var radius = parseOptimalRadius(listing.optimalRadius);
+    var zip = listing.producerZip || listing.zipcode || "";
+    if (!radius) return "Nationwide";
+    return "Serves within ~" + radius + "mi" + (zip ? " of " + zip : "");
   }
 
-  function isBroadRegionMatch(stateName, listingRegion) {
-    var stateBucket = getStateRegionBucket(stateName);
-    var listingBucket = getListingRegionBucket(listingRegion);
-    return stateBucket && listingBucket && stateBucket === listingBucket;
+  function getVerificationBadge(listing) {
+    if (listing.verifiedLevel1 && listing.verifiedLevel2) {
+      return '<span class="verification-badge verification-badge--trusted">✓✓ Trusted Seller</span>';
+    }
+    if (listing.verifiedLevel1 || (listing.verified === true && !listing.verifiedLevel1)) {
+      return '<span class="verification-badge verification-badge--reviewed">✓ Reviewed</span>';
+    }
+    if (listing.verified === false) {
+      return '<span class="verification-badge verification-badge--unverified">Unverified</span>';
+    }
+    return "";
+  }
+
+  function getListingDistanceMiles(listing) {
+    var listingZip = listing && (listing.producerZip || listing.zipcode);
+    if (!buyerGeo.lat || !listingZip) return null;
+    var cached = buyerGeo['_zip_' + listingZip];
+    if (!cached || !cached.lat) return null;
+    return haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
+  }
+
+  function canSelfPickupListing(listing, profileLike) {
+    var profile = profileLike || {};
+    var maxRadius = Number(profile.maxPickupRadius || 50);
+    if (!profile.canSelfPickup) return false;
+    var distanceMiles = getListingDistanceMiles(listing);
+    return distanceMiles != null && distanceMiles <= maxRadius;
   }
 
   function buildExplanation(score, reasons) {
@@ -467,19 +528,26 @@
           distanceScore = 8;
           reasons.push("regional distance (" + Math.round(distMiles) + " mi away)");
         } else {
+          var reach = parseOptimalRadius(listing.optimalRadius);
           distanceScore = 2;
-          if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
-            reasons.push("regional proximity advantage");
+          if (reach && distMiles <= (reach * 1.5)) {
+            distanceScore = 4;
+            reasons.push("within producer service area");
+          } else if (!reach) {
+            reasons.push("nationwide service area");
           }
+        }
+        if (profileLike.canSelfPickup && distMiles <= Number(profileLike.maxPickupRadius || 50)) {
+          score += 10;
+          reasons.push("Self-pickup available (+10)");
         }
       } else {
         distanceScore = 5;
-        if (isBroadRegionMatch(profileLike.state || "", listing.region)) {
-          reasons.push("regional proximity advantage");
-        }
+        if (!parseOptimalRadius(listing.optimalRadius)) reasons.push("nationwide service area");
       }
     } else {
       distanceScore = 5;
+      if (!parseOptimalRadius(listing.optimalRadius)) reasons.push("nationwide service area");
     }
     score += distanceScore;
 
@@ -508,9 +576,9 @@
     var ratingText = avgRating == null ? "No rating yet" : avgRating.toFixed(1);
     var stars = renderStars(avgRating);
     var lead = getLeadTimeDisplay(listing.leadTimeDays);
-    var verifiedBadge = listing.verified === true && typeof window.renderVerifiedBadge === "function"
-      ? window.renderVerifiedBadge()
-      : "";
+    var verifiedBadge = getVerificationBadge(listing);
+    var selfPickupEligible = canSelfPickupListing(listing, state.profile);
+    var distanceMiles = getListingDistanceMiles(listing);
     var autoVolume = (function() {
       var ac = state.profile && state.profile.acreage;
       var s = document.getElementById('pref-apprate-slider');
@@ -528,23 +596,20 @@
       '</div>' +
       '<a href="listing.html?id=' + encodeURIComponent(listing.id) + '" class="listing-card' + (options.expanded ? ' listing-card--top-match' : '') + '" id="listing-' + htmlEscape(listing.id) + '" style="text-decoration:none;color:inherit;display:flex;flex-direction:column;height:100%;padding:0">' +
 
-      (listing.photos && listing.photos.length
-        ? '<img src="' + listing.photos[0] + '" alt="' + htmlEscape(listing.feedstock) + '" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0" />'
-        : '<div style="width:100%;height:160px;background:linear-gradient(135deg,var(--color-accent-light),var(--color-border));display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
-          (listing.feedstock && listing.feedstock.toLowerCase().indexOf('almond') !== -1 ? '🌰' :
-           listing.feedstock && listing.feedstock.toLowerCase().indexOf('rice') !== -1 ? '🌾' :
-           listing.feedstock && listing.feedstock.toLowerCase().indexOf('wood') !== -1 ? '🪵' :
-           listing.feedstock && listing.feedstock.toLowerCase().indexOf('forest') !== -1 ? '🌲' :
-           listing.feedstock && listing.feedstock.toLowerCase().indexOf('walnut') !== -1 ? '🌰' :
-           listing.feedstock && listing.feedstock.toLowerCase().indexOf('corn') !== -1 ? '🌽' : '⚗️') +
-          '</div>') +
+      '<div style="width:100%;height:180px;background:' + (listing.photos && listing.photos[0] ? 'url(' + listing.photos[0] + ') center/cover no-repeat' : 'var(--color-accent-light)') + ';border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0"></div>' +
 
       '<div style="padding:var(--space-5);display:flex;flex-direction:column;flex:1;gap:var(--space-3)">' +
 
       '<div>' +
       '<span class="feedstock-tag">' + htmlEscape(listing.feedstock) + '</span>' +
-      '<h3 style="margin:var(--space-2) 0 0;font-size:var(--font-size-lg)">' + htmlEscape(listing.producerName) + (verifiedBadge ? ' ' + verifiedBadge : '') + (listing.verified === false ? ' <span style="font-size:10px;padding:2px 6px;background:#FEF3C7;color:#B45309;border-radius:4px;font-weight:600;vertical-align:middle">Unverified</span>' : '') + '</h3>' +
-      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + htmlEscape(listing.county || listing.region || listing.state || '') + '</div>' +
+      '<h3 style="margin:var(--space-2) 0 0;font-size:var(--font-size-lg)">' + htmlEscape(listing.producerName) + (verifiedBadge ? ' ' + verifiedBadge : '') + '</h3>' +
+      '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:2px">' + htmlEscape(getServiceAreaText(listing)) + '</div>' +
+      (distanceMiles != null
+        ? '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">' + Math.round(distanceMiles) + ' mi from your ZIP</div>'
+        : '') +
+      (selfPickupEligible
+        ? '<div style="margin-top:6px"><span class="verification-badge verification-badge--reviewed">Self-pickup available</span></div>'
+        : '') +
       '</div>' +
 
       '<div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">' +
@@ -566,28 +631,7 @@
       '<span style="color:' + (listing.certifications && listing.certifications.length > 0 ? 'var(--color-accent)' : 'var(--color-text-muted)') + ';font-weight:500">' + (listing.certifications && listing.certifications.length > 0 ? '✓ Certified' : 'Not certified') + '</span>' +
       '</div>' +
 
-      (function() {
-        var staleHtml = '';
-        if (listing.availableUntil) {
-          var until = new Date(listing.availableUntil);
-          var now = new Date();
-          var daysLeft = Math.round((until - now) / (1000 * 60 * 60 * 24));
-          if (daysLeft < 0) {
-            staleHtml = '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:4px;padding:2px 8px;margin-top:4px;display:inline-block">⚠ Availability may have ended</div>';
-          } else if (daysLeft <= 30) {
-            staleHtml = '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:4px;padding:2px 8px;margin-top:4px;display:inline-block">⏳ Available for ' + daysLeft + ' more day' + (daysLeft !== 1 ? 's' : '') + '</div>';
-          }
-        }
-        if (listing.availableFrom) {
-          var from = new Date(listing.availableFrom);
-          var nowCheck = new Date();
-          var monthsOld = (nowCheck.getFullYear() - from.getFullYear()) * 12 + (nowCheck.getMonth() - from.getMonth());
-          if (monthsOld > 6 && !staleHtml) {
-            staleHtml = '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px;display:inline-block">Listed ' + monthsOld + ' months ago</div>';
-          }
-        }
-        return staleHtml;
-      })() +
+      '<div style="margin-top:2px">' + renderAvailabilityIndicator(listing) + '</div>' +
 
       (typeof extraScore === 'number'
         ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div></div>'
@@ -681,6 +725,7 @@
     var radiusMiles = radiusEl ? Number(radiusEl.value) : 0;
 
     var filtered = listings.filter(function (listing) {
+      if (!isListingVisible(listing)) return false;
       var matchesSearch =
         !search ||
         listing.producerName.toLowerCase().indexOf(search) !== -1 ||
@@ -697,12 +742,14 @@
         });
 
       var listingZip = listing.producerZip || listing.zipcode;
-      if (radiusMiles > 0 && buyerGeo.lat && listingZip) {
+      if (buyerGeo.lat && listingZip) {
         var cached = buyerGeo['_zip_' + listingZip];
         if (cached === undefined) return true;
         if (cached === null) return true;
         var dist = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
-        if (dist > radiusMiles) return false;
+        var sellerReach = parseOptimalRadius(listing.optimalRadius);
+        if (sellerReach && dist > sellerReach * 1.5) return false;
+        if (radiusMiles > 0 && dist > radiusMiles) return false;
       }
 
       return matchesSearch && matchesFeedstock && matchesCert;
@@ -735,8 +782,16 @@
     if (!grid) return;
 
     var filtered = getFilteredListings();
+    _allFilteredListings = filtered.slice();
+    if (_currentPage < 1) _currentPage = 1;
     if (!filtered.length) {
-      grid.innerHTML = '<p class="no-results">No listings match your current filters.</p>';
+      if (window.UIUtils) {
+        UIUtils.showEmpty("listings-grid", "No listings match your current filters.", "Try widening your filters or clearing search.");
+      } else {
+        grid.innerHTML = '<p class="no-results">No listings match your current filters.</p>';
+      }
+      var loadMoreEmpty = document.getElementById("listings-load-more-wrap");
+      if (loadMoreEmpty) loadMoreEmpty.innerHTML = "";
       updateCompareBar();
       return;
     }
@@ -747,26 +802,54 @@
     var hasProfile = state.user && state.profile && Array.isArray(state.profile.cropTypes) && state.profile.cropTypes.length > 0;
 
     if (hasProfile) {
-      var scored = filtered.map(function(listing) {
+      filtered = filtered.map(function(listing) {
         return scoreListingForInputs(listing, state.profile);
       }).sort(function(a, b) { return b.score - a.score; });
 
       if (heading) heading.textContent = "Listings ranked for you";
       if (subhead) subhead.textContent = "Sorted by compatibility with your soil profile and crop types.";
-
-      grid.innerHTML = scored.map(function(item, idx) {
+      _allFilteredListings = filtered.slice();
+      var pagedScored = filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE);
+      grid.innerHTML = pagedScored.map(function(item, idx) {
         return listingCardHtml(item.listing, item.score, item.explanation, { expanded: idx < 3, includeCompare: true });
       }).join("");
     } else {
       if (heading) heading.textContent = "All listings";
       if (subhead) subhead.textContent = "";
-
-      grid.innerHTML = filtered.map(function(listing) {
+      var paged = filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE);
+      grid.innerHTML = paged.map(function(listing) {
         return listingCardHtml(listing, null, "", { expanded: false, includeCompare: true });
       }).join("");
     }
 
+    renderLoadMore();
     updateCompareBar();
+  }
+
+  function renderLoadMore() {
+    var grid = document.getElementById("listings-grid");
+    if (!grid) return;
+    var wrap = document.getElementById("listings-load-more-wrap");
+    if (!wrap) {
+      wrap = document.createElement("div");
+      wrap.id = "listings-load-more-wrap";
+      wrap.style.textAlign = "center";
+      wrap.style.marginTop = "var(--space-6)";
+      grid.insertAdjacentElement("afterend", wrap);
+    }
+    if ((_allFilteredListings || []).length <= (_currentPage * LISTINGS_PAGE_SIZE)) {
+      wrap.innerHTML = "";
+      return;
+    }
+    var remaining = (_allFilteredListings || []).length - (_currentPage * LISTINGS_PAGE_SIZE);
+    wrap.innerHTML = '<button type="button" id="listings-load-more" class="btn btn-secondary">Load more (' + remaining + ' remaining)</button>';
+    var btn = document.getElementById("listings-load-more");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        _currentPage += 1;
+        renderBrowseListings();
+      });
+    }
   }
 
   function renderListings() {
@@ -815,7 +898,7 @@
           co2El.textContent = '$' + costPerTCO2 + '/tCO\u2082 sequestered';
         }
       }).catch(function() {
-        el.textContent = '';
+        el.textContent = 'Cost unavailable';
       });
     });
   }
@@ -850,15 +933,15 @@
 
     makeMultiSelect(document.getElementById("ms-cert"), ["OMRI Listed", "IBI Certified", "California Organic"], "Any Certification");
 
-    document.getElementById("search").addEventListener("input", renderBrowseListings);
-    document.getElementById("filter-sort").addEventListener("change", renderBrowseListings);
+    document.getElementById("search").addEventListener("input", function () { _currentPage = 1; renderBrowseListings(); });
+    document.getElementById("filter-sort").addEventListener("change", function () { _currentPage = 1; renderBrowseListings(); });
     var verifiedCheck = document.getElementById('filter-verified-only');
-    if (verifiedCheck) verifiedCheck.addEventListener('change', renderBrowseListings);
+    if (verifiedCheck) verifiedCheck.addEventListener('change', function () { _currentPage = 1; renderBrowseListings(); });
     var radiusSelect = document.getElementById('filter-radius');
-    if (radiusSelect) radiusSelect.addEventListener('change', renderBrowseListings);
+    if (radiusSelect) radiusSelect.addEventListener('change', function () { _currentPage = 1; renderBrowseListings(); });
     ["ms-feedstock", "ms-cert"].forEach(function (id) {
       var el = document.getElementById(id);
-      el.addEventListener("change", renderBrowseListings);
+      el.addEventListener("change", function () { _currentPage = 1; renderBrowseListings(); });
     });
 
     var resetBtn = document.getElementById("reset-filters");
@@ -873,6 +956,7 @@
         var certEl = document.getElementById("ms-cert");
         if (feedstockEl && typeof feedstockEl.setValue === "function") feedstockEl.setValue(["All"]);
         if (certEl && typeof certEl.setValue === "function") certEl.setValue(["All"]);
+        _currentPage = 1;
         renderListings()
       })
     }
@@ -1056,8 +1140,17 @@
         d.id = doc.id;
         window._firestoreListings.push(d);
       });
+      _usingDemoFallback = false;
       plotProducers(buyerGeo.lat, buyerGeo.lng);
-    }, function() {});
+    }, function() {
+      if ((window.LISTINGS || []).length) {
+        _usingDemoFallback = true;
+        if (window.UIUtils) UIUtils.toast('Live listings unavailable. Showing demo listings.', 'warning', 2800);
+        plotProducers(buyerGeo.lat, buyerGeo.lng);
+        return;
+      }
+      if (window.UIUtils) UIUtils.showError("buyer-map", "Could not load listing map.", function () { window.location.reload(); });
+    });
   }
 
   function initAuthState() {
@@ -1198,6 +1291,7 @@
       initMap();
       return;
     }
+    if (window.UIUtils) UIUtils.showLoading("listings-grid", "Loading listings...");
     initAuthState();
     initBrowseFilters();
     bindDistanceFilter();

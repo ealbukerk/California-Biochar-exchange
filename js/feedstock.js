@@ -81,8 +81,67 @@
     buyerLng: null,
     filters: { biomassType: '', contaminationMax: '', sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
   };
+  var LISTINGS_PAGE_SIZE = 20;
+  var _currentPage = 1;
+  var _allFilteredListings = [];
 
   window._DEMAND_ENABLED = false;
+
+  function toDateOnly(value) {
+    if (!value) return null;
+    var date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+    if (isNaN(date.getTime())) return null;
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+
+  function daysBetween(start, end) {
+    return Math.round((end - start) / 86400000);
+  }
+
+  function formatShortDate(value) {
+    var date = toDateOnly(value);
+    if (!date) return '—';
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  function formatMonthYear(value) {
+    var date = toDateOnly(value);
+    if (!date) return '';
+    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  }
+
+  function isFeedstockVisible(listing) {
+    var today = toDateOnly(new Date());
+    var oneMonthOut = new Date(today.getTime());
+    oneMonthOut.setDate(oneMonthOut.getDate() + 30);
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    if (until && until < today) return false;
+    if (from && from > oneMonthOut) return false;
+    return true;
+  }
+
+  function renderAvailabilityIndicator(listing) {
+    var today = toDateOnly(new Date());
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    if (from && from > today) {
+      var daysUntil = daysBetween(today, from);
+      if (daysUntil <= 30) {
+        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
+      }
+      return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">Available ' + formatMonthYear(from) + '</div>';
+    }
+    if (until) {
+      var daysLeft = daysBetween(today, until);
+      if (daysLeft <= 14) {
+        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
+      }
+      return '<div style="font-size:var(--font-size-xs);color:#166534;background:#DCFCE7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">✓ Available now · Until ' + formatShortDate(until) + '</div>';
+    }
+    return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">' + (listing.availabilityWindow || 'Availability on request') + '</div>';
+  }
 
   function haversine(lat1, lng1, lat2, lng2) {
     var R = 3958.8;
@@ -129,6 +188,7 @@
   function applyFilters() {
     var f = state.filters;
     state.filtered = state.listings.filter(function(l) {
+      if (!isFeedstockVisible(l)) return false;
       if (f.biomassType && l.biomassType !== f.biomassType &&
           !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
       if (f.contaminationMax) {
@@ -157,6 +217,7 @@
         return tb - ta;
       });
     }
+    _allFilteredListings = state.filtered.slice();
     renderGrid();
   }
 
@@ -197,15 +258,7 @@
 
   function cardHtml(l) {
     var typeLabel = BIOMASS_LABELS[l.biomassType] || l.biomassType;
-    var photoHtml = (l.photos && l.photos.length)
-      ? '<img src="' + l.photos[0] + '" alt="' + typeLabel + '" style="width:100%;height:160px;object-fit:cover;display:block;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0" />'
-      : '<div style="width:100%;height:160px;background:linear-gradient(135deg,#F5EFE6,#E8DDD0);display:flex;align-items:center;justify-content:center;font-size:3rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0">' +
-        (typeLabel.toLowerCase().indexOf('almond') !== -1 || typeLabel.toLowerCase().indexOf('walnut') !== -1 || typeLabel.toLowerCase().indexOf('pistachio') !== -1 ? '🌰' :
-         typeLabel.toLowerCase().indexOf('rice') !== -1 || typeLabel.toLowerCase().indexOf('corn') !== -1 ? '🌾' :
-         typeLabel.toLowerCase().indexOf('wood') !== -1 || typeLabel.toLowerCase().indexOf('construction') !== -1 ? '🪵' :
-         typeLabel.toLowerCase().indexOf('forest') !== -1 || typeLabel.toLowerCase().indexOf('logging') !== -1 || typeLabel.toLowerCase().indexOf('thinning') !== -1 ? '🌲' :
-         typeLabel.toLowerCase().indexOf('tree') !== -1 ? '🌳' : '📦') +
-        '</div>';
+    var photoHtml = '<div style="width:100%;height:180px;background:' + (l.photos && l.photos[0] ? 'url(' + l.photos[0] + ') center/cover no-repeat' : '#F5EFE6') + ';border-radius:var(--radius-lg) var(--radius-lg) 0 0;flex-shrink:0"></div>';
     var supplierLabel = SUPPLIER_LABELS[l.supplierType] || l.supplierType;
     var moistureLabel = MOISTURE_LABELS[l.moistureContent] || l.moistureContent;
     var particleLabel = PARTICLE_LABELS[l.particleSize] || l.particleSize;
@@ -239,9 +292,7 @@
         '</div>'
       : '<div style="font-size:var(--font-size-sm);font-weight:600">$' + (l.pricePerTon === 0 ? 'Free to haul' : l.pricePerTon + '/ton') + '</div>';
 
-    var availHtml = l.availabilityWindow
-      ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">📅 ' + l.availabilityWindow + '</div>'
-      : '';
+    var availHtml = '<div style="margin-top:var(--space-2)">' + renderAvailabilityIndicator(l) + '</div>';
 
     return '<div class="listing-card-wrapper" style="position:relative">' +
       '<div class="compare-corner">' +
@@ -292,7 +343,7 @@
       { label: 'Price/ton', value: l.pricePerTon === 0 ? 'Free' : ('$' + l.pricePerTon + '/ton'), score: l.pricePerTon || 999, higherBetter: false },
       { label: 'Moisture', value: (MOISTURE_LABELS && MOISTURE_LABELS[l.moistureContent]) || l.moistureContent || '—', score: 0, higherBetter: false },
       { label: 'Contamination', value: contaminationAvg(l).toFixed(1) + ' / 5', score: 0, higherBetter: false },
-      { label: 'Availability', value: l.availabilityWindow || '—', score: 0, higherBetter: false }
+      { label: 'Availability', value: l.availableFrom ? formatShortDate(l.availableFrom) + (l.availableUntil ? ' — ' + formatShortDate(l.availableUntil) : '') : (l.availabilityWindow || '—'), score: 0, higherBetter: false }
     ];
     return '<div style="flex:1;min-width:200px;max-width:320px;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-5)">' +
       '<div style="font-weight:700;font-size:var(--font-size-base);margin-bottom:var(--space-1)">' + (l.company || l.supplierName || '') + '</div>' +
@@ -345,11 +396,17 @@
     var empty = document.getElementById('fs-empty');
     if (!state.filtered.length) {
       grid.innerHTML = '';
-      empty.style.display = 'block';
+      if (window.UIUtils) {
+        empty.style.display = 'none';
+        UIUtils.showEmpty('fs-grid', 'No feedstock listings match your filters.', 'Try widening your filters or clearing search.');
+      } else {
+        empty.style.display = 'block';
+      }
+      renderLoadMore();
       return;
     }
     empty.style.display = 'none';
-    grid.innerHTML = state.filtered.map(function(l) {
+    grid.innerHTML = state.filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE).map(function(l) {
       return cardHtml(l);
     }).join('');
 
@@ -374,6 +431,30 @@
     });
 
     updateFsCompareBar();
+    renderLoadMore();
+  }
+
+  function renderLoadMore() {
+    var grid = document.getElementById('fs-grid');
+    if (!grid) return;
+    var wrap = document.getElementById('fs-load-more-wrap');
+    if (!wrap) {
+      wrap = document.createElement('div');
+      wrap.id = 'fs-load-more-wrap';
+      wrap.style.textAlign = 'center';
+      wrap.style.marginTop = 'var(--space-6)';
+      grid.insertAdjacentElement('afterend', wrap);
+    }
+    if ((_allFilteredListings || []).length <= (_currentPage * LISTINGS_PAGE_SIZE)) {
+      wrap.innerHTML = '';
+      return;
+    }
+    var remaining = (_allFilteredListings || []).length - (_currentPage * LISTINGS_PAGE_SIZE);
+    wrap.innerHTML = '<button type="button" id="fs-load-more" class="btn btn-secondary">Load more (' + remaining + ' remaining)</button>';
+    document.getElementById('fs-load-more').addEventListener('click', function () {
+      _currentPage += 1;
+      renderGrid();
+    });
   }
 
   function openModal(id) {
@@ -494,10 +575,17 @@
     var name = document.getElementById('modal-name').value.trim();
     var email = document.getElementById('modal-email').value.trim();
     var message = document.getElementById('modal-message').value.trim();
-    if (!name || !email || !message) { alert('Please fill in Name, Email, and Message.'); return; }
+    if (!name || !email || !message) {
+      if (window.UIUtils) UIUtils.toast('Please fill in Name, Email, and Message.', 'error', 2400);
+      else alert('Please fill in Name, Email, and Message.');
+      return;
+    }
     var btn = document.getElementById('modal-submit');
-    btn.disabled = true;
-    btn.textContent = 'Sending…';
+    if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Sending...');
+    else {
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+    }
     firebase.firestore().collection('feedstock_requests').add({
       listingId: id,
       biomassType: l.biomassType,
@@ -515,12 +603,21 @@
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     }).then(function () {
       document.getElementById('modal-success').style.display = 'block';
-      btn.textContent = 'Sent!';
+      if (window.UIUtils) {
+        UIUtils.setButtonLoading(btn, false);
+        btn.textContent = 'Sent!';
+        UIUtils.toast('Request sent.', 'success', 2200);
+      } else btn.textContent = 'Sent!';
     }).catch(function (err) {
       console.error(err);
-      alert('Failed to send. Please try again.');
-      btn.disabled = false;
-      btn.textContent = 'Send Request';
+      if (window.UIUtils) {
+        UIUtils.setButtonLoading(btn, false);
+        UIUtils.toast('Failed to send request. Please try again.', 'error', 3000);
+      } else {
+        alert('Failed to send. Please try again.');
+        btn.disabled = false;
+        btn.textContent = 'Send Request';
+      }
     });
   }
 
@@ -541,30 +638,31 @@
         statusEl.textContent = '✗';
         statusEl.style.color = 'red';
       }
+      if (window.UIUtils) UIUtils.toast('Could not locate that ZIP code.', 'warning', 2400);
     });
   }
 
   function bindFilters() {
     document.getElementById('filter-biomass').addEventListener('change', function () {
-      state.filters.biomassType = this.value; applyFilters();
+      state.filters.biomassType = this.value; _currentPage = 1; applyFilters();
     });
     document.getElementById('filter-sort').addEventListener('change', function () {
-      state.filters.sort = this.value; applyFilters();
+      state.filters.sort = this.value; _currentPage = 1; applyFilters();
     });
     document.getElementById('filter-contamination').addEventListener('change', function () {
-      state.filters.contaminationMax = this.value; applyFilters();
+      state.filters.contaminationMax = this.value; _currentPage = 1; applyFilters();
     });
     var radiusEl = document.getElementById('filter-radius');
     if (radiusEl) radiusEl.addEventListener('change', function() {
-      state.filters.radius = parseInt(this.value) || 0; applyFilters();
+      state.filters.radius = parseInt(this.value) || 0; _currentPage = 1; applyFilters();
     });
     var verifiedEl = document.getElementById('filter-verified-only');
     if (verifiedEl) verifiedEl.addEventListener('change', function() {
-      state.filters.verifiedOnly = this.checked; applyFilters();
+      state.filters.verifiedOnly = this.checked; _currentPage = 1; applyFilters();
     });
     var searchEl = document.getElementById('search');
     if (searchEl) searchEl.addEventListener('input', function() {
-      state.filters.search = this.value.toLowerCase(); applyFilters();
+      state.filters.search = this.value.toLowerCase(); _currentPage = 1; applyFilters();
     });
     var resetEl = document.getElementById('reset-filters');
     if (resetEl) resetEl.addEventListener('click', function() {
@@ -575,6 +673,7 @@
       var rv = document.getElementById('filter-radius'); if (rv) rv.value = 0;
       var vv = document.getElementById('filter-verified-only'); if (vv) vv.checked = false;
       var sv = document.getElementById('search'); if (sv) sv.value = '';
+      _currentPage = 1;
       applyFilters();
     });
   }
@@ -590,6 +689,7 @@
   }
 
   function loadListings() {
+    if (window.UIUtils) UIUtils.showLoading('fs-grid', 'Loading feedstock listings...');
     // Always show demo data immediately
     var demoList = window.FEEDSTOCK_LISTINGS ? window.FEEDSTOCK_LISTINGS.slice() : [];
     state.listings = demoList;
@@ -615,6 +715,11 @@
       })
       .catch(function (err) {
         console.warn('Firestore fetch failed, showing demo data only:', err);
+        if (demoList.length && window.UIUtils) {
+          UIUtils.toast('Live feedstock listings unavailable. Showing demo listings.', 'warning', 2800);
+          return;
+        }
+        if (window.UIUtils) UIUtils.showError('fs-grid', 'Could not load feedstock listings.', function () { window.location.reload(); });
       });
   }
 
@@ -750,7 +855,9 @@
         window._firestoreFeedstockListings.push(d);
       });
       plotSuppliers(feedstockGeo.lat, feedstockGeo.lng);
-    }, function() {});
+    }, function() {
+      if (window.UIUtils) UIUtils.toast('Live supplier map unavailable. Showing available cached/demo pins.', 'warning', 2600);
+    });
   }
 
   function init() {

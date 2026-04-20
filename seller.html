@@ -6,9 +6,11 @@
     <title>Biochar.market - Seller</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/ui-utils.js"></script>
     <script src="js/states.js"></script>
     <script src="js/verified.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -837,6 +839,17 @@
       </div>
     </section>
 
+    <section id="seller-submitted-banner" style="display:none">
+      <div class="container" style="padding-top:var(--space-5)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);background:var(--color-accent-light);border:1px solid var(--color-accent);border-radius:var(--radius-md);padding:var(--space-4) var(--space-5)">
+          <div style="font-size:var(--font-size-sm);color:var(--color-text-primary)">
+            <strong>Your listing is live.</strong> It will appear with an Unverified badge until reviewed by the platform.
+          </div>
+          <button id="seller-submitted-close" type="button" style="background:none;border:none;color:var(--color-accent);font-size:18px;cursor:pointer;line-height:1">×</button>
+        </div>
+      </div>
+    </section>
+
     <section class="profile-section" id="seller-scheduled-section" style="display:none">
       <h2>Incoming scheduled orders</h2>
       <p style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-bottom:var(--space-4)">Buyers who have set up repeat deliveries from your listings.</p>
@@ -1074,7 +1087,23 @@
       </div>
     </footer>
 
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('submitted') !== 'true') return;
+        var banner = document.getElementById('seller-submitted-banner');
+        var closeBtn = document.getElementById('seller-submitted-close');
+        if (banner) banner.style.display = 'block';
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function() {
+            if (banner) banner.style.display = 'none';
+          });
+        }
+        history.replaceState(null, '', 'seller.html');
+      });
+    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pikaday/pikaday.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/auth-state.js"></script>
     <script src="js/multiselect.js"></script>

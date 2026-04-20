@@ -12,6 +12,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="js/firebase-config.js"></script>
+    <script src="js/ui-utils.js"></script>
     <script src="js/states.js"></script>
     <script src="js/multiselect.js"></script>
     <link rel="stylesheet" href="css/style.css" />
@@ -325,12 +326,13 @@
                     <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">1 = very clean only, 5 = tolerant of most material.</p>
                   </div>
                   <div class="field">
-                    <label for="su-max-distance">Maximum sourcing distance (miles)</label>
-                    <select id="su-max-distance">
+                    <label for="su-optimal-radius">Optimal sourcing radius</label>
+                    <select id="su-optimal-radius">
+                      <option value="25">25 miles</option>
                       <option value="50">50 miles</option>
-                      <option value="100">100 miles</option>
-                      <option value="250">250 miles</option>
-                      <option value="any">Any distance</option>
+                      <option value="100" selected>100 miles</option>
+                      <option value="200">200 miles</option>
+                      <option value="none">No preference</option>
                     </select>
                   </div>
                 </div>
@@ -405,6 +407,15 @@
 
         var currentStep = 1;
         var selectedRole = "";
+
+        function authMessage(error) {
+          var code = error && error.code ? error.code : "";
+          if (code === "auth/email-already-in-use") return "An account with this email already exists";
+          if (code === "auth/weak-password") return "Password must be at least 8 characters";
+          if (code === "auth/invalid-email") return "Please enter a valid email address";
+          if (code === "auth/network-request-failed") return "Network error — check your connection.";
+          return error && error.message ? error.message : "Something went wrong. Please try again.";
+        }
 
         var cropEl = document.getElementById("ms-signup-crops");
         var goalEl = document.getElementById("ms-signup-goals");
@@ -596,24 +607,32 @@
             userData.maxMoistureAccepted = document.getElementById("su-max-moisture").value;
             var contamTol = parseInt(document.getElementById("su-contamination-tolerance").value, 10);
             userData.contaminationTolerance = Number.isNaN(contamTol) ? null : contamTol;
-            userData.maxSourcingDistance = document.getElementById("su-max-distance").value;
+            userData.optimalRadius = document.getElementById("su-optimal-radius").value;
           }
 
 
-          signupNext.disabled = true;
-          signupNext.textContent = "Creating...";
+          if (window.UIUtils) UIUtils.setButtonLoading(signupNext, true, "Creating...");
+          else {
+            signupNext.disabled = true;
+            signupNext.textContent = "Creating...";
+          }
 
           try {
             var userCredential = await auth.createUserWithEmailAndPassword(email, password);
             var uid = userCredential.user.uid;
-            await db.collection("users").doc(uid).set(userData);
+            db.collection("users").doc(uid).set(userData).catch(function () {
+              if (window.UIUtils) UIUtils.toast("Account created but profile could not be saved. Please refresh.", "error", 0);
+            });
             signupSuccess.textContent = "Account created. Redirecting...";
             var redirect = selectedRole === "seller" ? "seller.html" : "buyer.html";
             window.location.href = redirect;
           } catch (error) {
-            signupError.textContent = error && error.message ? error.message : "Signup failed.";
-            signupNext.disabled = false;
-            signupNext.textContent = "Create Account";
+            signupError.textContent = authMessage(error);
+            if (window.UIUtils) UIUtils.setButtonLoading(signupNext, false);
+            else {
+              signupNext.disabled = false;
+              signupNext.textContent = "Create Account";
+            }
           }
         }
 
@@ -653,9 +672,11 @@
         loginForm.addEventListener("submit", async function (event) {
           event.preventDefault();
           loginError.textContent = "";
+          var loginBtn = loginForm.querySelector('button[type="submit"]');
           var email = document.getElementById("login-email").value.trim();
           var password = document.getElementById("login-password").value;
           try {
+            if (window.UIUtils) UIUtils.setButtonLoading(loginBtn, true, "Logging in...");
             var cred = await auth.signInWithEmailAndPassword(email, password);
             var uid = cred.user.uid;
             var doc = await db.collection("users").doc(uid).get();
@@ -663,7 +684,8 @@
             var redirect = role === "seller" ? "feedstock.html" : "buyer.html";
             window.location.href = redirect;
           } catch (error) {
-            loginError.textContent = error && error.message ? error.message : "Login failed.";
+            loginError.textContent = authMessage(error);
+            if (window.UIUtils) UIUtils.setButtonLoading(loginBtn, false);
           }
         });
 
@@ -672,6 +694,5 @@
         }
       })();
     </script>
-*** End Patch
   </body>
 </html>

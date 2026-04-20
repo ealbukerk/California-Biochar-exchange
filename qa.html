@@ -40,6 +40,14 @@
     .nav-file { font-size: 11px; color: #a0aec0; }
     .nav-section { margin-top: 24px; }
     .nav-section h2 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #f6e05e; margin-bottom: 8px; }
+    .manual-wrap { margin-top: 24px; background: #111827; border: 1px solid #253047; border-radius: 10px; padding: 18px; }
+    .manual-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .manual-progress { font-size: 12px; color: #93c5fd; }
+    .manual-grid { display: grid; gap: 18px; }
+    .manual-group h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #f6e05e; margin-bottom: 8px; }
+    .manual-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid #1f2937; font-size: 12px; }
+    .manual-item:last-child { border-bottom: none; }
+    .manual-item input { margin-top: 2px; accent-color: #68d391; }
   </style>
 </head>
 <body>
@@ -56,6 +64,16 @@
       <div class="sum-item"><div class="sum-num pass-num" id="sum-pass">0</div><div class="sum-label">PASS</div></div>
       <div class="sum-item"><div class="sum-num fail-num" id="sum-fail">0</div><div class="sum-label">FAIL</div></div>
       <div class="sum-item"><div class="sum-num warn-num" id="sum-warn">0</div><div class="sum-label">WARN</div></div>
+    </div>
+    <div class="manual-wrap">
+      <div class="manual-head">
+        <div>
+          <div class="section-title" style="margin-bottom:4px;border-bottom:none;padding-bottom:0">Deal Room — Manual E2E Test Checklist</div>
+          <div id="manual-progress" class="manual-progress">0 / 30 tests passed.</div>
+        </div>
+        <button id="manual-reset" type="button">Reset all</button>
+      </div>
+      <div id="manual-checklist" class="manual-grid"></div>
     </div>
     <div id="output"></div>
   </div>
@@ -120,6 +138,16 @@
 <script>
 var BASE = window.location.origin + window.location.pathname.replace('qa.html','');
 var results = { pass: 0, fail: 0, warn: 0 };
+var MANUAL_CHECKS = [
+  { group: 'Setup', items: ['Buyer account can open a deal room from a biochar listing', 'Seller account can open the same deal room link', 'Unauthorized user sees access denied', 'Deal room with bad id shows not found'] },
+  { group: 'Deal Creation', items: ['New open deal is created from listingId flow', 'Existing open deal is reused for same buyer and listing', 'Deal header shows listed price, available tonnes, and min order', 'Delivered cost block loads for signed-in buyer'] },
+  { group: 'Bidding', items: ['Buyer can submit initial offer', 'Pending offer appears in incoming offer panel for seller', 'Seller can reject an offer', 'Seller can counter an offer'] },
+  { group: 'Fixed Price', items: ['Buy now flow moves deal to Agreed', 'Agreed panel shows volume, price, and delivery method', 'Transaction record is created after buy now'] },
+  { group: 'Payment', items: ['Commission display updates when offer volume/price changes', 'Commission amount matches current commission helper', 'Total value display hides when volume or price is blank'] },
+  { group: 'Delivery', items: ['Scale ticket upload preview appears after choosing a file', 'Buyer can confirm delivery', 'Producer can confirm delivery', 'Deal status moves to Complete after delivery confirmation', 'Rating modal opens after successful confirmation'] },
+  { group: 'Attachments', items: ['PNG scale ticket upload succeeds', 'PDF scale ticket upload succeeds', 'Uploaded scale ticket URL is written onto transaction'] },
+  { group: 'Error Handling', items: ['Submitting below min order shows validation error', 'Submitting below hard floor is blocked', 'Missing deal id without listingId shows not found', 'Failed delivery confirmation surfaces alert'] }
+];
 
 document.getElementById('base-url').textContent = 'Base URL: ' + BASE;
 document.querySelectorAll('.tab-btn').forEach(function(btn) {
@@ -232,6 +260,29 @@ function addSection(id, title) {
   sec.innerHTML = '<div class="section-title">' + title + '</div><div id="sec-' + id + '"></div>';
   out.appendChild(sec);
   return document.getElementById('sec-' + id);
+}
+
+function renderManualChecklist() {
+  var root = document.getElementById('manual-checklist');
+  if (!root) return;
+  var idx = 0;
+  root.innerHTML = MANUAL_CHECKS.map(function(group) {
+    var itemsHtml = group.items.map(function(label) {
+      idx += 1;
+      var id = 'dealroom_manual_' + idx;
+      var checked = localStorage.getItem(id) === '1' ? ' checked' : '';
+      return '<label class="manual-item"><input type="checkbox" data-manual-id="' + id + '"' + checked + ' /><span>' + idx + '. ' + label + '</span></label>';
+    }).join('');
+    return '<div class="manual-group"><h3>' + group.group + '</h3>' + itemsHtml + '</div>';
+  }).join('');
+  updateManualProgress();
+}
+
+function updateManualProgress() {
+  var checks = Array.prototype.slice.call(document.querySelectorAll('[data-manual-id]'));
+  var passed = checks.filter(function(el) { return el.checked; }).length;
+  var label = document.getElementById('manual-progress');
+  if (label) label.textContent = passed + ' / 30 tests passed.';
 }
 
 function addRow(container, label, status, detail) {
@@ -416,6 +467,22 @@ async function runAll() {
   document.getElementById('sum-warn').textContent = results.warn;
   document.getElementById('summary').style.display = 'flex';
 }
+
+document.addEventListener('change', function(e) {
+  if (!e.target.matches('[data-manual-id]')) return;
+  localStorage.setItem(e.target.getAttribute('data-manual-id'), e.target.checked ? '1' : '0');
+  updateManualProgress();
+});
+
+document.getElementById('manual-reset').addEventListener('click', function() {
+  Array.prototype.slice.call(document.querySelectorAll('[data-manual-id]')).forEach(function(el) {
+    localStorage.removeItem(el.getAttribute('data-manual-id'));
+    el.checked = false;
+  });
+  updateManualProgress();
+});
+
+renderManualChecklist();
 </script>
 </body>
 </html>

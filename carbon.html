@@ -104,12 +104,16 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <script src="js/ui-utils.js"></script>
   <script src="js/firebase-config.js"></script>
   <script src="js/auth-state.js"></script>
   <script src="js/carbon-data.js"></script>
   <script>
     (function() {
       var db = firebase.firestore();
+      var LISTINGS_PAGE_SIZE = 20;
+      var _currentPage = 1;
+      var _allFilteredListings = [];
       var state = { listings: [], filtered: [] };
 
       function normalize(text) { return (text || '').toString().toLowerCase(); }
@@ -154,12 +158,38 @@
         var grid = document.getElementById('carbon-grid');
         var empty = document.getElementById('carbon-empty');
         if (!state.filtered.length) {
-          grid.innerHTML = '';
-          empty.style.display = 'block';
+          empty.style.display = 'none';
+          if (window.UIUtils) UIUtils.showEmpty('carbon-grid', 'No carbon credit listings match your filters.', 'Try widening your filters or clearing search.');
+          else grid.innerHTML = '';
+          renderLoadMore();
           return;
         }
         empty.style.display = 'none';
-        grid.innerHTML = state.filtered.map(cardHtml).join('');
+        grid.innerHTML = state.filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE).map(cardHtml).join('');
+        renderLoadMore();
+      }
+
+      function renderLoadMore() {
+        var grid = document.getElementById('carbon-grid');
+        if (!grid) return;
+        var wrap = document.getElementById('carbon-load-more-wrap');
+        if (!wrap) {
+          wrap = document.createElement('div');
+          wrap.id = 'carbon-load-more-wrap';
+          wrap.style.textAlign = 'center';
+          wrap.style.marginTop = 'var(--space-6)';
+          grid.insertAdjacentElement('afterend', wrap);
+        }
+        if ((_allFilteredListings || []).length <= (_currentPage * LISTINGS_PAGE_SIZE)) {
+          wrap.innerHTML = '';
+          return;
+        }
+        var remaining = (_allFilteredListings || []).length - (_currentPage * LISTINGS_PAGE_SIZE);
+        wrap.innerHTML = '<button type="button" id="carbon-load-more" class="btn btn-secondary">Load more (' + remaining + ' remaining)</button>';
+        document.getElementById('carbon-load-more').addEventListener('click', function() {
+          _currentPage += 1;
+          render();
+        });
       }
 
       function applyFilters() {
@@ -183,15 +213,16 @@
           }
           return true;
         });
+        _allFilteredListings = state.filtered.slice();
         render();
       }
 
       function bindFilters() {
         ['filter-type','filter-standard','filter-vintage','filter-price','filter-cobenefit'].forEach(function(id) {
-          document.getElementById(id).addEventListener('change', applyFilters);
+          document.getElementById(id).addEventListener('change', function() { _currentPage = 1; applyFilters(); });
         });
-        document.getElementById('filter-verified').addEventListener('change', applyFilters);
-        document.getElementById('carbon-search').addEventListener('input', applyFilters);
+        document.getElementById('filter-verified').addEventListener('change', function() { _currentPage = 1; applyFilters(); });
+        document.getElementById('carbon-search').addEventListener('input', function() { _currentPage = 1; applyFilters(); });
         document.getElementById('reset-filters').addEventListener('click', function() {
           document.getElementById('filter-type').value = '';
           document.getElementById('filter-standard').value = '';
@@ -200,6 +231,7 @@
           document.getElementById('filter-cobenefit').value = '';
           document.getElementById('filter-verified').checked = false;
           document.getElementById('carbon-search').value = '';
+          _currentPage = 1;
           applyFilters();
         });
       }
@@ -218,6 +250,7 @@
 
       function loadListings() {
         var demo = window.CARBON_LISTINGS ? window.CARBON_LISTINGS.slice() : [];
+        if (window.UIUtils) UIUtils.showLoading('carbon-grid', 'Loading carbon listings...');
         state.listings = demo;
         seedVintageOptions(demo);
         applyFilters();
@@ -233,7 +266,15 @@
             state.listings = demo.concat(live);
             seedVintageOptions(state.listings);
             applyFilters();
-          }, function() {});
+          }, function() {
+            if (demo.length) {
+              if (window.UIUtils) UIUtils.toast('Live carbon listings unavailable. Showing demo listings.', 'warning', 2800);
+              state.listings = demo;
+              applyFilters();
+              return;
+            }
+            if (window.UIUtils) UIUtils.showError('carbon-grid', 'Could not load carbon listings.', function() { window.location.reload(); });
+          });
       }
 
       window.AuthState.onReady(function(user, profile) {

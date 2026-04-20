@@ -60,6 +60,13 @@
       });
   }
 
+  function setCalcText(message) {
+    var els = document.querySelectorAll('[data-delivered-cost-status]');
+    Array.prototype.forEach.call(els, function (el) {
+      el.textContent = message || '';
+    });
+  }
+
   function haversine(a, b) {
     var R = 3958.8;
     var dLat = (b.lat - a.lat) * Math.PI / 180;
@@ -108,6 +115,7 @@
       getCoords(opts.producerZip),
       getCoords(opts.buyerZip)
     ]).then(function (coords) {
+      setCalcText('Calculating...');
       var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
         coords[0].lng + ',' + coords[0].lat + ';' +
         coords[1].lng + ',' + coords[1].lat +
@@ -125,6 +133,7 @@
           return haversine(coords[0], coords[1]);
         });
     }).then(function(distance) {
+      setCalcText('');
       var ratePerMile = getTruckRate(distance);
       var truckloads = calcTruckloads(physicalTons, opts.feedstockType || 'default', isBiochar);
 
@@ -169,6 +178,9 @@
           return null;
         })()
       };
+    }).catch(function (error) {
+      setCalcText('Cost unavailable');
+      throw error;
     });
   }
 

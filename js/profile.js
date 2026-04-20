@@ -76,6 +76,7 @@
   async function loadDealRooms() {
     var wrap = document.getElementById("dealrooms-wrap");
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading deal rooms...");
 
     try {
       var snapshots = await Promise.all([
@@ -100,7 +101,8 @@
         });
 
       if (!deals.length) {
-        wrap.innerHTML = '<p class="empty-state">No deal rooms yet.</p>';
+        if (window.UIUtils) UIUtils.showEmpty(wrap, "No deal rooms yet.");
+        else wrap.innerHTML = '<p class="empty-state">No deal rooms yet.</p>';
         return;
       }
 
@@ -136,15 +138,16 @@
         })
         .join("");
     } catch (error) {
-      wrap.innerHTML = '<p class="empty-state">Unable to load deal rooms right now.</p>';
+      if (window.UIUtils) UIUtils.showError(wrap, "Unable to load deal rooms right now.", loadDealRooms);
+      else wrap.innerHTML = '<p class="empty-state">Unable to load deal rooms right now.</p>';
     }
   }
 
   function renderCarbonDashboard() {
     var wrap = document.getElementById("carbon-dashboard-wrap");
     if (!wrap || !state.user) return;
-
-    wrap.innerHTML = '<p style="color:var(--color-text-muted)">Calculating your carbon impact...</p>';
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Calculating your carbon impact...");
+    else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Calculating your carbon impact...</p>';
 
     Promise.all([
       db.collection("transactions").where("buyerUID", "==", state.user.uid).get(),
@@ -154,7 +157,8 @@
         var bioSnap = results[0];
         var carbonSnap = results[1];
         if (bioSnap.empty) {
-          wrap.innerHTML = '<p style="color:var(--color-text-muted)">No completed transactions yet. Your carbon impact will appear here once you purchase biochar.</p>';
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "No completed transactions yet.", "Your carbon impact will appear here once you purchase biochar.");
+          else wrap.innerHTML = '<p style="color:var(--color-text-muted)">No completed transactions yet. Your carbon impact will appear here once you purchase biochar.</p>';
           return;
         }
 
@@ -210,20 +214,23 @@
           '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:var(--space-2)">Estimated using biochar carbon content × 3.67 CO₂ conversion factor. Equivalent cars calculated at 4.6t CO₂/year per vehicle.</p>';
       })
       .catch(function() {
-        wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load carbon data.</p>';
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load carbon data.", renderCarbonDashboard);
+        else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load carbon data.</p>';
       });
   }
 
   function renderCarbonListings(uid) {
     var wrap = document.getElementById('carbon-listings-wrap');
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading carbon listings...");
     firebase.firestore().collection('carbon_listings')
       .where('supplierUID', '==', uid)
       .where('status', '==', 'active')
       .get()
       .then(function (snap) {
         if (snap.empty) {
-          wrap.innerHTML = '<p class="empty-state">You haven\'t listed any carbon credits yet. <a href="list-credit.html">List your credits →</a></p>';
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "You haven't listed any carbon credits yet.", "Use List your credits to publish your first carbon listing.");
+          else wrap.innerHTML = '<p class="empty-state">You haven\'t listed any carbon credits yet. <a href="list-credit.html">List your credits →</a></p>';
           return;
         }
         var rows = '';
@@ -246,18 +253,23 @@
         });
         wrap.innerHTML = rows;
       })
-      .catch(function () { wrap.innerHTML = '<p class="empty-state">Could not load carbon listings.</p>'; });
+      .catch(function () {
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load carbon listings.", function () { renderCarbonListings(uid); });
+        else wrap.innerHTML = '<p class="empty-state">Could not load carbon listings.</p>';
+      });
   }
 
   function renderCarbonPurchases(uid) {
     var wrap = document.getElementById('carbon-purchases-wrap');
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading carbon purchases...");
     firebase.firestore().collection('carbon_transactions')
       .where('buyerUID', '==', uid)
       .get()
       .then(function (snap) {
         if (snap.empty) {
-          wrap.innerHTML = '<p class="empty-state">No carbon credit purchases yet. <a href="carbon.html">Browse carbon credits →</a></p>';
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "No carbon credit purchases yet.", "Browse carbon credits to see available projects.");
+          else wrap.innerHTML = '<p class="empty-state">No carbon credit purchases yet. <a href="carbon.html">Browse carbon credits →</a></p>';
           return;
         }
         var rows = '';
@@ -281,16 +293,24 @@
         });
         wrap.innerHTML = rows;
       })
-      .catch(function () { wrap.innerHTML = '<p class="empty-state">Could not load carbon purchases.</p>'; });
+      .catch(function () {
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load carbon purchases.", function () { renderCarbonPurchases(uid); });
+        else wrap.innerHTML = '<p class="empty-state">Could not load carbon purchases.</p>';
+      });
   }
 
   function renderMyFeedstockListings(uid) {
     var wrap = document.getElementById('my-feedstock-wrap');
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading feedstock listings...");
     firebase.firestore().collection('feedstock_listings')
       .where('supplierUID', '==', uid).where('status', '==', 'active').get()
       .then(function (snap) {
-        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active feedstock listings yet.</p>'; return; }
+        if (snap.empty) {
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "No active feedstock listings yet.");
+          else wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active feedstock listings yet.</p>';
+          return;
+        }
         var rows = '';
         snap.forEach(function (doc) {
           var d = doc.data();
@@ -301,16 +321,24 @@
           '</div>';
         });
         wrap.innerHTML = rows;
-      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load listings.</p>'; });
+      }).catch(function () {
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load listings.", function () { renderMyFeedstockListings(uid); });
+        else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load listings.</p>';
+      });
   }
 
   function renderMyDemandListings(uid) {
     var wrap = document.getElementById('my-demand-wrap');
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading demand listings...");
     firebase.firestore().collection('feedstock_demand')
       .where('producerUID', '==', uid).where('status', '==', 'active').get()
       .then(function (snap) {
-        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active demand listings yet.</p>'; return; }
+        if (snap.empty) {
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "No active demand listings yet.");
+          else wrap.innerHTML = '<p style="color:var(--color-text-muted)">No active demand listings yet.</p>';
+          return;
+        }
         var rows = '';
         snap.forEach(function (doc) {
           var d = doc.data();
@@ -321,16 +349,24 @@
           '</div>';
         });
         wrap.innerHTML = rows;
-      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load demand listings.</p>'; });
+      }).catch(function () {
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load demand listings.", function () { renderMyDemandListings(uid); });
+        else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load demand listings.</p>';
+      });
   }
 
   function renderFeedstockInquiries(uid) {
     var wrap = document.getElementById('feedstock-requests-wrap');
     if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading inquiries...");
     firebase.firestore().collection('feedstock_inquiries')
       .where('producerUID', '==', uid).orderBy('createdAt', 'desc').limit(20).get()
       .then(function (snap) {
-        if (snap.empty) { wrap.innerHTML = '<p style="color:var(--color-text-muted)">No inquiries received yet.</p>'; return; }
+        if (snap.empty) {
+          if (window.UIUtils) UIUtils.showEmpty(wrap, "No inquiries received yet.");
+          else wrap.innerHTML = '<p style="color:var(--color-text-muted)">No inquiries received yet.</p>';
+          return;
+        }
         var rows = '';
         snap.forEach(function (doc) {
           var d = doc.data();
@@ -345,7 +381,10 @@
           '</div>';
         });
         wrap.innerHTML = rows;
-      }).catch(function () { wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load inquiries.</p>'; });
+      }).catch(function () {
+        if (window.UIUtils) UIUtils.showError(wrap, "Could not load inquiries.", function () { renderFeedstockInquiries(uid); });
+        else wrap.innerHTML = '<p style="color:var(--color-text-muted)">Could not load inquiries.</p>';
+      });
   }
 
   function renderProducerDetails(profile) {
@@ -360,7 +399,7 @@
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Pyrolysis tech</div><div style="margin-top:4px;font-weight:600">' + (PYRO[profile.pyroTech] || 'Not specified') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max moisture</div><div style="margin-top:4px;font-weight:600">' + (MOISTURE[profile.maxMoistureAccepted] || 'Not specified') + '</div></div>' +
         '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Contamination</div><div style="margin-top:4px;font-weight:600">' + (CONTAM[parseInt(profile.contaminationTolerance, 10)] || 'Not specified') + '</div></div>' +
-        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Max distance</div><div style="margin-top:4px;font-weight:600">' + (profile.maxSourcingDistance === 'any' ? 'Any distance' : (profile.maxSourcingDistance || '?') + ' miles') + '</div></div>' +
+        '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Optimal sourcing radius</div><div style="margin-top:4px;font-weight:600">' + (profile.optimalRadius === 'none' || !profile.optimalRadius ? 'No preference' : profile.optimalRadius + ' miles') + '</div></div>' +
         '<div style="grid-column:1/-1"><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Biomass types accepted</div><div style="margin-top:4px;text-transform:capitalize">' + types + '</div></div>' +
       '</div>';
   }
@@ -661,6 +700,7 @@
 
   async function loadTransactions() {
     var wrap = document.getElementById("order-history-wrap");
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading transactions...");
 
     try {
       var results = await Promise.all([
@@ -684,7 +724,8 @@
         });
 
       if (!transactions.length) {
-        wrap.innerHTML = '<p class="empty-state">No transactions yet.</p>';
+        if (window.UIUtils) UIUtils.showEmpty(wrap, "No transactions yet.");
+        else wrap.innerHTML = '<p class="empty-state">No transactions yet.</p>';
         return;
       }
 
@@ -758,7 +799,8 @@
         });
       });
     } catch (error) {
-      wrap.innerHTML = '<p class="empty-state">No transactions yet.</p>';
+      if (window.UIUtils) UIUtils.showError(wrap, "Could not load transactions.", loadTransactions);
+      else wrap.innerHTML = '<p class="empty-state">No transactions yet.</p>';
     }
   }
 
@@ -768,6 +810,8 @@
     }
 
     var wrap = document.getElementById("scheduled-orders-wrap");
+    if (!wrap) return;
+    if (window.UIUtils) UIUtils.showLoading(wrap, "Loading scheduled orders...");
 
     try {
       var snapshot = await db.collection("scheduled_orders").where("userUID", "==", state.user.uid).get();
@@ -778,7 +822,8 @@
       });
 
       if (!rows.length) {
-        wrap.innerHTML = '<p class="empty-state">No scheduled orders yet.</p>';
+        if (window.UIUtils) UIUtils.showEmpty(wrap, "No scheduled orders yet.");
+        else wrap.innerHTML = '<p class="empty-state">No scheduled orders yet.</p>';
         return;
       }
 
@@ -832,7 +877,8 @@
         });
       });
     } catch (error) {
-      wrap.innerHTML = '<p class="empty-state">No scheduled orders yet.</p>';
+      if (window.UIUtils) UIUtils.showError(wrap, "Could not load scheduled orders.", loadScheduledOrders);
+      else wrap.innerHTML = '<p class="empty-state">No scheduled orders yet.</p>';
     }
   }
 

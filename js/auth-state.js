@@ -94,7 +94,11 @@
           '<a href="carbon.html" class="bm-nav-link" style="color:#2D4A3E">Carbon Credits</a>' +
           (user ?
             '<div style="position:relative">' +
-              '<button class="bm-avatar" id="bm-avatar-btn" title="Account">' + initials + '</button>' +
+              '<button class="bm-avatar" id="bm-avatar-btn" title="Account">' +
+                (profile && profile.profilePhotoUrl
+                  ? '<img src="' + profile.profilePhotoUrl + '" alt="Account" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.remove(); this.nextSibling.style.display=\'flex\'"><span style="display:none;width:100%;height:100%;align-items:center;justify-content:center">' + initials + '</span>'
+                  : initials) +
+              '</button>' +
               '<div class="bm-avatar-dropdown" id="bm-avatar-dropdown">' +
                 '<a href="profile.html">Profile</a>' +
                 '<a href="settings.html">Settings</a>' +

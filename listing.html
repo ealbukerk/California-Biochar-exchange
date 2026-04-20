@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/ui-utils.js"></script>
     <script src="js/firebase-config.js"></script>
     <script src="js/commission.js"></script>
     <script src="js/multiselect.js"></script>
@@ -216,12 +217,74 @@
         color: var(--color-text-secondary);
       }
 
+      .availability-timeline {
+        margin-top: var(--space-5);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        background: var(--color-bg);
+      }
+
+      .availability-timeline-head {
+        display: flex;
+        justify-content: space-between;
+        gap: var(--space-4);
+        margin-bottom: var(--space-3);
+        font-size: var(--font-size-sm);
+      }
+
+      .availability-timeline-label {
+        display: block;
+        color: var(--color-text-muted);
+        font-size: var(--font-size-xs);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 4px;
+      }
+
+      .availability-bar {
+        height: 10px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        overflow: hidden;
+      }
+
+      .availability-bar-fill {
+        height: 100%;
+        border-radius: 999px;
+        background: linear-gradient(90deg, var(--color-accent), #7cc08a);
+      }
+
+      .availability-indicator {
+        display: inline-block;
+        margin-top: var(--space-3);
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: var(--font-size-xs);
+        font-weight: var(--font-weight-semibold);
+      }
+
       .availability-lead.ready {
         color: var(--color-accent);
       }
 
       .availability-lead.wait {
         color: var(--color-warning);
+      }
+
+      .availability-indicator.ready {
+        background: #dcfce7;
+        color: #166534;
+      }
+
+      .availability-indicator.warn {
+        background: #fef3c7;
+        color: #b45309;
+      }
+
+      .availability-indicator.muted {
+        background: var(--color-bg);
+        color: var(--color-text-muted);
       }
 
       .inquiry-section p {
