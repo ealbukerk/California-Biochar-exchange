@@ -19,8 +19,42 @@
   var CLOUDINARY_PRESET = 'biochar_certs';
   var pdPhotoFiles = [];
   var currentStep = 1;
+  var profileData = null;
 
   function val(id) { return document.getElementById(id).value.trim(); }
+
+  function getProfileField(key) {
+    return profileData && profileData[key] ? String(profileData[key]).trim() : '';
+  }
+
+  function getDemandZip() {
+    return val('pd-zip') || getProfileField('zipcode');
+  }
+
+  function syncProfileFields(profile, user) {
+    profileData = profile || profileData || {};
+    var businessName = getProfileField('businessName');
+    var name = getProfileField('name');
+    var email = getProfileField('email') || (user && user.email) || '';
+    var phone = getProfileField('phone');
+    var zipcode = getProfileField('zipcode');
+
+    if (document.getElementById('pd-company')) document.getElementById('pd-company').value = businessName;
+    if (document.getElementById('pd-name')) document.getElementById('pd-name').value = name;
+    if (document.getElementById('pd-email')) document.getElementById('pd-email').value = email;
+    if (document.getElementById('pd-phone')) document.getElementById('pd-phone').value = phone;
+    if (document.getElementById('pd-zip')) document.getElementById('pd-zip').value = zipcode;
+    if (document.getElementById('pd-profile-company')) document.getElementById('pd-profile-company').textContent = businessName || 'Add this in your profile';
+    if (document.getElementById('pd-profile-name')) document.getElementById('pd-profile-name').textContent = name || 'Add this in your profile';
+    if (document.getElementById('pd-profile-email')) document.getElementById('pd-profile-email').textContent = email || 'Add this in your profile';
+    if (document.getElementById('pd-profile-zip')) {
+      document.getElementById('pd-profile-zip').textContent = zipcode || 'Add this in your profile';
+    }
+    if (document.getElementById('pd-review-company')) document.getElementById('pd-review-company').textContent = businessName || 'Add this in your profile';
+    if (document.getElementById('pd-review-name')) document.getElementById('pd-review-name').textContent = name || 'Add this in your profile';
+    if (document.getElementById('pd-review-email')) document.getElementById('pd-review-email').textContent = email || 'Add this in your profile';
+    if (document.getElementById('pd-review-phone')) document.getElementById('pd-review-phone').textContent = phone || 'Optional';
+  }
 
   function handlePdPhotos(files) {
     pdPhotoFiles = Array.prototype.slice.call(files, 0, 5);
@@ -83,7 +117,7 @@
     if (!val('pd-volume')) { highlight('pd-volume'); return false; }
     if (!val('pd-volume-period')) { highlight('pd-volume-period'); return false; }
     if (!val('pd-min-shipment')) { highlight('pd-min-shipment'); return false; }
-    if (!val('pd-zip')) { highlight('pd-zip'); return false; }
+    if (!getDemandZip()) { alert('Please add your ZIP code in your profile before posting demand.'); return false; }
     return true;
   }
 
@@ -100,7 +134,7 @@
       ['Min shipment', val('pd-min-shipment') + ' tons'],
       ['Max distance', val('pd-max-distance') === 'any' ? 'Any distance' : val('pd-max-distance') + ' miles'],
       ['Price willing to pay', val('pd-price-max') ? '$' + val('pd-price-max') + '/ton max' : 'Negotiable'],
-      ['ZIP', val('pd-zip')],
+      ['ZIP', getDemandZip()],
       ['Max moisture', MOISTURE_LABELS[val('pd-max-moisture')] || val('pd-max-moisture')],
       ['Contamination tolerance', CONTAMINATION_LABELS[val('pd-contamination-tolerance')] || '—'],
       ['Particle size', PARTICLE_LABELS[val('pd-particle-size')] || 'Any'],
@@ -135,7 +169,7 @@
       minimumShipmentTons: Number(val('pd-min-shipment')),
       maxSourcingDistance: val('pd-max-distance'),
       pricePerTonMax: Number(val('pd-price-max')) || null,
-      locationZip: val('pd-zip'),
+      locationZip: getDemandZip(),
       maxMoistureAccepted: val('pd-max-moisture'),
       contaminationTolerance: val('pd-contamination-tolerance'),
       preferredParticleSize: val('pd-particle-size'),
@@ -196,9 +230,7 @@
       firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
         if (doc.exists) {
           var d = doc.data();
-          if (d.businessName) document.getElementById('pd-company').value = d.businessName;
-          if (d.name) document.getElementById('pd-name').value = d.name;
-          if (d.zipcode) document.getElementById('pd-zip').value = d.zipcode;
+          syncProfileFields(d, user);
           if (d.pyroTech) document.getElementById('pd-pyro-tech').value = d.pyroTech;
           if (d.maxMoistureAccepted) document.getElementById('pd-max-moisture').value = d.maxMoistureAccepted;
           if (d.contaminationTolerance) document.getElementById('pd-contamination-tolerance').value = d.contaminationTolerance;
@@ -209,7 +241,7 @@
             });
           }
         }
-        document.getElementById('pd-email').value = user.email || '';
+        if (!doc.exists) syncProfileFields({}, user);
       });
 
       var pdPhotoInput = document.getElementById('pd-photo-input');

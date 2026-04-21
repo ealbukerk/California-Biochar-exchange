@@ -524,6 +524,15 @@
     var grid = document.getElementById("account-info-grid");
     var editing = state.editingAccount;
     var isSeller = (profile.role || "").toLowerCase() === "seller";
+    var supplierTypeLabels = {
+      farmer: "Farmer / Grower",
+      sawmill: "Sawmill",
+      forestry_operator: "Forestry Operator",
+      tree_service: "Tree Service",
+      recycler: "Recycler / Waste processor",
+      aggregator: "Aggregator / Processor",
+      broker: "Broker"
+    };
     var websiteValue = profile.businessWebsite || "";
     var websiteDisplay = websiteValue
       ? '<a href="' + htmlEscape(websiteValue) + '" target="_blank" rel="noopener noreferrer">' + htmlEscape(websiteValue) + "</a>"
@@ -544,7 +553,17 @@
         : '<span>' + (profile.businessName || "-") + '</span>') +
       '</div>' +
       '<div class="info-item"><label>Email</label><span>' + (profile.email || state.user.email || "-") + '</span></div>' +
+      '<div class="info-item"><label>Phone</label>' +
+      (editing
+        ? '<input id="profile-phone" type="tel" value="' + (profile.phone || "") + '" placeholder="(555) 555-5555">'
+        : '<span>' + (profile.phone || "-") + '</span>') +
+      '</div>' +
       '<div class="info-item"><label>Role</label><span class="role-badge">' + ((profile.role || "").toLowerCase() === "seller" ? "Seller" : "Buyer") + '</span></div>' +
+      '<div class="info-item"><label>Street Address</label>' +
+      (editing
+        ? '<input id="profile-street" value="' + (profile.businessStreet || "") + '" placeholder="123 Main St">'
+        : '<span>' + (profile.businessStreet || "-") + '</span>') +
+      '</div>' +
       '<div class="info-item"><label>State</label>' +
       (editing
         ? '<input id="profile-state" value="' + (profile.state || "") + '">' 
@@ -554,6 +573,20 @@
       (editing
         ? '<input id="profile-zipcode" value="' + (profile.zipcode || "") + '">' 
         : '<span>' + (profile.zipcode || "-") + '</span>') +
+      '</div>' +
+      '<div class="info-item"><label>Supplier Type</label>' +
+      (editing
+        ? '<select id="profile-supplier-type">' +
+            '<option value="">Not set</option>' +
+            '<option value="farmer"' + (profile.supplierType === "farmer" ? " selected" : "") + '>Farmer / Grower</option>' +
+            '<option value="sawmill"' + (profile.supplierType === "sawmill" ? " selected" : "") + '>Sawmill</option>' +
+            '<option value="forestry_operator"' + (profile.supplierType === "forestry_operator" ? " selected" : "") + '>Forestry Operator</option>' +
+            '<option value="tree_service"' + (profile.supplierType === "tree_service" ? " selected" : "") + '>Tree Service</option>' +
+            '<option value="recycler"' + (profile.supplierType === "recycler" ? " selected" : "") + '>Recycler / Waste processor</option>' +
+            '<option value="aggregator"' + (profile.supplierType === "aggregator" ? " selected" : "") + '>Aggregator / Processor</option>' +
+            '<option value="broker"' + (profile.supplierType === "broker" ? " selected" : "") + '>Broker</option>' +
+          '</select>'
+        : '<span>' + (supplierTypeLabels[profile.supplierType] || "-") + '</span>') +
       '</div>' +
       '<div class="info-item"><label>Farm Acreage</label>' +
       (editing
@@ -620,8 +653,11 @@
     var updates = {
       name: document.getElementById("profile-name").value.trim(),
       businessName: document.getElementById("profile-business").value.trim(),
+      phone: document.getElementById("profile-phone").value.trim(),
+      businessStreet: document.getElementById("profile-street").value.trim(),
       state: document.getElementById("profile-state").value.trim(),
       zipcode: document.getElementById("profile-zipcode").value.trim(),
+      supplierType: document.getElementById("profile-supplier-type").value.trim() || null,
       acreage: parseFloat(document.getElementById("profile-acreage").value) || null,
       applicationRate: parseFloat(document.getElementById("profile-apprate").value) || null,
       businessWebsite: document.getElementById("profile-business-website").value.trim(),

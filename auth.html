@@ -210,6 +210,10 @@
                   <input id="su-street" type="text" name="street" placeholder="123 Main St" required />
                 </div>
                 <div class="field">
+                  <label for="su-phone">Phone (optional)</label>
+                  <input id="su-phone" type="tel" placeholder="(555) 555-5555" />
+                </div>
+                <div class="field">
                   <label for="su-ein">Business EIN</label>
                   <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">9-digit federal tax ID — used for commission invoicing only.</p>
                   <input id="su-ein" type="text" name="ein" placeholder="XX-XXXXXXX" pattern="[0-9]{2}-[0-9]{7}" required />
@@ -234,6 +238,20 @@
                   <label for="su-business-website">Business website</label>
                   <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Your company website or LinkedIn. Helps us verify your operation.</p>
                   <input id="su-business-website" type="url" name="businessWebsite" placeholder="https://yourcompany.com" />
+                </div>
+                <div class="field">
+                  <label for="su-supplier-type">Supplier type (optional)</label>
+                  <p style="margin-top: var(--space-2); color: var(--color-text-muted); font-size: var(--font-size-xs);">Used if you plan to list biomass material later.</p>
+                  <select id="su-supplier-type">
+                    <option value="">Select supplier type</option>
+                    <option value="farmer">Farmer / Grower</option>
+                    <option value="sawmill">Sawmill</option>
+                    <option value="forestry_operator">Forestry Operator</option>
+                    <option value="tree_service">Tree Service</option>
+                    <option value="recycler">Recycler / Waste processor</option>
+                    <option value="aggregator">Aggregator / Processor</option>
+                    <option value="broker">Broker</option>
+                  </select>
                 </div>
               </div>
 
@@ -569,7 +587,9 @@
           var businessName = document.getElementById("su-business").value.trim();
           var businessType = document.getElementById("su-business-type").value.trim();
           var ein = document.getElementById("su-ein").value.trim();
+          var phone = document.getElementById("su-phone").value.trim() || null;
           var businessWebsite = document.getElementById("su-business-website").value.trim() || null;
+          var supplierType = document.getElementById("su-supplier-type").value.trim() || null;
           var street = document.getElementById("su-street").value.trim();
           var state = document.getElementById("state-signup").value.trim();
           var zipcode = document.getElementById("su-zipcode").value.trim();
@@ -585,7 +605,9 @@
             zipcode: zipcode,
             country: country,
             ein: ein,
+            phone: phone,
             businessWebsite: businessWebsite,
+            supplierType: supplierType,
             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
             email: email
           };

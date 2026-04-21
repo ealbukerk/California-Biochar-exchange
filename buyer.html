@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biochar.market - Buyer</title>
+    <title>Verdure Markets - Buyer</title>
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -332,23 +332,6 @@
 
     <section class="listings-section">
       <div class="container">
-        <div id="buyer-prefs-bar" style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4) var(--space-5);margin-bottom:var(--space-6);display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap">
-          <div style="flex:1;min-width:220px">
-            <label style="display:block;font-size:var(--font-size-sm);font-weight:600;margin-bottom:4px">
-              Spreading cost: $<span id="pref-spread-val">60</span>/tonne
-            </label>
-            <input id="pref-spread-slider" type="range" min="40" max="80" value="60" style="width:100%" />
-            <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">Drag to update delivered cost estimates on all listings</p>
-          </div>
-          <div style="flex:1;min-width:220px">
-            <label style="display:block;font-size:var(--font-size-sm);font-weight:600;margin-bottom:4px">
-              Application rate: <span id="pref-apprate-val">7</span> t/acre
-            </label>
-            <input id="pref-apprate-slider" type="range" min="1" max="20" step="0.5" value="7" style="width:100%" />
-            <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">Used to estimate volume and cost per acre</p>
-          </div>
-          <div style="font-size:var(--font-size-sm);color:var(--color-text-muted)" id="pref-apprate-display"></div>
-        </div>
         <h2 id="listings-heading">All listings</h2>
         <p id="listings-subhead" style="color:var(--color-text-muted);font-size:var(--font-size-sm);margin-top:var(--space-1);margin-bottom:0"></p>
 
@@ -365,6 +348,11 @@
               <option value="carbon-desc">Carbon Content</option>
               <option value="tonnes-desc">Available Tonnes</option>
               <option value="rating-desc">Rating</option>
+            </select>
+            <select id="filter-availability">
+              <option value="all">All availability</option>
+              <option value="now">Available now</option>
+              <option value="soon">Available within 30 days</option>
             </select>
             <div style="display:flex;align-items:center;gap:var(--space-3);height:42px">
               <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-sm);cursor:pointer;height:42px">
@@ -390,6 +378,23 @@
 
     <section class="map-section">
       <div class="container">
+        <div id="buyer-prefs-bar" class="browse-econ-panel">
+          <div class="browse-econ-control">
+            <label>
+              Spreading cost: $<span id="pref-spread-val">60</span>/tonne
+            </label>
+            <input id="pref-spread-slider" type="range" min="40" max="80" value="60" style="width:100%" />
+            <p>Updates delivered cost estimates on all browse cards.</p>
+          </div>
+          <div class="browse-econ-control">
+            <label>
+              Application rate: <span id="pref-apprate-val">7</span> t/acre
+            </label>
+            <input id="pref-apprate-slider" type="range" min="1" max="20" step="0.5" value="7" style="width:100%" />
+            <p>Used to estimate volume and delivered cost per acre.</p>
+          </div>
+          <div class="browse-econ-summary" id="pref-apprate-display"></div>
+        </div>
         <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
           <div>
             <h2>Producers near you</h2>
@@ -412,7 +417,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>© 2025 Biochar.market</span>
+        <span>© 2025 Verdure Markets</span>
         <span>United States · 2025</span>
       </div>
     </footer>

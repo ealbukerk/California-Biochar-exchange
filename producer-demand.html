@@ -166,9 +166,39 @@
                   <p class="field-hint">Leave blank if open to negotiation.</p>
                 </div>
                 <div class="form-group">
-                  <label>ZIP code <span class="required-star">*</span></label>
-                  <p class="field-hint">Your facility location — used to calculate delivered cost.</p>
-                  <input type="text" id="pd-zip" maxlength="5" placeholder="e.g. 95401" />
+                  <label>From your profile</label>
+                  <div class="profile-summary-card">
+                    <div class="profile-summary-header">
+                      <div>
+                        <div class="profile-summary-title">Facility details used for supplier matching</div>
+                        <p class="profile-summary-copy">Location and contact details are owned by your profile, so this demand flow stays focused on feedstock requirements.</p>
+                      </div>
+                      <a class="profile-summary-link" href="profile.html">Edit in Profile</a>
+                    </div>
+                    <div class="profile-summary-grid">
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Operation</span>
+                        <span class="profile-summary-value" id="pd-profile-company">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Contact</span>
+                        <span class="profile-summary-value" id="pd-profile-name">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Email</span>
+                        <span class="profile-summary-value" id="pd-profile-email">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">ZIP code</span>
+                        <span class="profile-summary-value" id="pd-profile-zip">Add this in your profile</span>
+                      </div>
+                    </div>
+                  </div>
+                  <input type="hidden" id="pd-zip" />
+                  <input type="hidden" id="pd-company" />
+                  <input type="hidden" id="pd-name" />
+                  <input type="hidden" id="pd-email" />
+                  <input type="hidden" id="pd-phone" />
                 </div>
               </div>
               <div class="wizard-nav">
@@ -268,23 +298,32 @@
                 <p>Your contact info is only shared with suppliers who send an inquiry. It will not be publicly displayed.</p>
               </div>
               <div class="review-card">
-                <div class="review-card-title">Contact</div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
-                  <div class="form-group">
-                    <label>Operation name <span class="required-star">*</span></label>
-                    <input type="text" id="pd-company" placeholder="Pacific Biochar LLC" />
+                <div class="review-card-title">Profile details used for supplier replies</div>
+                <div class="profile-summary-card">
+                  <div class="profile-summary-header">
+                    <div>
+                      <div class="profile-summary-title">Reply contact</div>
+                      <p class="profile-summary-copy">Suppliers use these saved profile details when responding to your demand listing. Update them in your profile if anything has changed.</p>
+                    </div>
+                    <a class="profile-summary-link" href="profile.html">Edit in Profile</a>
                   </div>
-                  <div class="form-group">
-                    <label>Contact name <span class="required-star">*</span></label>
-                    <input type="text" id="pd-name" placeholder="Alex Johnson" />
-                  </div>
-                  <div class="form-group">
-                    <label>Contact email <span class="required-star">*</span></label>
-                    <input type="email" id="pd-email" placeholder="alex@example.com" />
-                  </div>
-                  <div class="form-group">
-                    <label>Phone (optional)</label>
-                    <input type="tel" id="pd-phone" placeholder="(555) 555-5555" />
+                  <div class="profile-summary-grid">
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Operation</span>
+                      <span class="profile-summary-value" id="pd-review-company">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Contact</span>
+                      <span class="profile-summary-value" id="pd-review-name">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Email</span>
+                      <span class="profile-summary-value" id="pd-review-email">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Phone</span>
+                      <span class="profile-summary-value" id="pd-review-phone">Optional</span>
+                    </div>
                   </div>
                 </div>
               </div>

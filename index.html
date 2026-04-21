@@ -3,384 +3,89 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biochar.market</title>
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    />
+    <title>Verdure Markets</title>
+    <meta name="description" content="Verdure Markets routing entry point." />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="css/style.css" />
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
     <style>
-      .hero {
-        background: var(--color-bg);
-        padding: var(--space-12) 0;
-      }
-
-      .hero-inner {
-        text-align: center;
-      }
-
-      .hero h1 {
-        font-size: var(--font-size-4xl);
-        font-weight: var(--font-weight-bold);
-        line-height: var(--line-height-tight);
-        color: var(--color-text-primary);
-      }
-
-      .hero-sub {
-        font-size: var(--font-size-lg);
-        color: var(--color-text-secondary);
-        margin-top: var(--space-6);
-      }
-
-      .hero-cards {
+      body {
+        min-height: 100vh;
         display: flex;
-        gap: var(--space-6);
+        align-items: center;
         justify-content: center;
-        margin-top: var(--space-8);
-        max-width: 960px;
-        margin-left: auto;
-        margin-right: auto;
       }
 
-      .hero-card-buy,
-      .hero-card-sell {
-        border-radius: var(--radius-lg);
-        padding: var(--space-8);
-        flex: 1;
-        text-align: center;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-
-      .hero-card-buy {
-        background: var(--color-accent);
-      }
-
-      .hero-card-buy:hover {
-        background: var(--color-accent-hover);
-      }
-
-      .hero-card-sell {
-        background: var(--color-text-primary);
-      }
-
-      .hero-card-sell:hover {
-        background: #2a2a2a;
-      }
-
-      .hero-card-buy h3,
-      .hero-card-sell h3 {
-        color: white;
-        font-size: var(--font-size-xl);
-        font-weight: var(--font-weight-bold);
-      }
-
-      .hero-card-buy p,
-      .hero-card-sell p {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: var(--font-size-sm);
-        margin-top: var(--space-2);
-      }
-
-      .hero-card-buy .btn {
-        background: white;
-        color: var(--color-accent);
-        margin-top: var(--space-5);
-        display: inline-block;
-        padding: var(--space-3) var(--space-6);
-        border-radius: var(--radius-md);
-        font-weight: var(--font-weight-semibold);
-        text-decoration: none;
-        font-size: var(--font-size-sm);
-      }
-
-      .hero-card-sell .btn {
-        background: var(--color-accent);
-        color: white;
-        margin-top: var(--space-5);
-        display: inline-block;
-        padding: var(--space-3) var(--space-6);
-        border-radius: var(--radius-md);
-        font-weight: var(--font-weight-semibold);
-        text-decoration: none;
-        font-size: var(--font-size-sm);
-      }
-
-      .hero-card-feedstock {
-        background: #7A5C1E;
-        border-radius: var(--radius-lg);
-        padding: var(--space-8);
-        flex: 1;
-        text-align: center;
-        cursor: pointer;
-        transition: background 0.2s;
-      }
-
-      .hero-card-feedstock:hover {
-        background: #5E4516;
-      }
-
-      .hero-card-feedstock h3 {
-        color: white;
-        font-size: var(--font-size-xl);
-        font-weight: var(--font-weight-bold);
-      }
-
-      .hero-card-feedstock p {
-        color: rgba(255, 255, 255, 0.85);
-        font-size: var(--font-size-sm);
-        margin-top: var(--space-2);
-      }
-
-      .hero-card-feedstock .btn {
-        background: white;
-        color: #7A5C1E;
-        margin-top: var(--space-5);
-        display: inline-block;
-        padding: var(--space-3) var(--space-6);
-        border-radius: var(--radius-md);
-        font-weight: var(--font-weight-semibold);
-        text-decoration: none;
-        font-size: var(--font-size-sm);
-      }
-
-      .stats-bar {
-        background: var(--color-surface);
-        border-top: 1px solid var(--color-border);
-        border-bottom: 1px solid var(--color-border);
-        padding: var(--space-8) 0;
-      }
-
-      .stats-inner {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        text-align: center;
-      }
-
-      .stat-number {
-        font-size: var(--font-size-3xl);
-        font-weight: var(--font-weight-bold);
-        color: var(--color-accent);
-      }
-
-      .stat-label {
-        font-size: var(--font-size-sm);
-        color: var(--color-text-secondary);
-        margin-top: var(--space-1);
-      }
-
-      .stat-link {
-        color: inherit;
-        text-decoration: none;
-      }
-
-      .stat-link:hover {
-        color: var(--color-accent);
-      }
-
-      .how-it-works {
-        padding: var(--space-12) 0;
-      }
-
-      .how-it-works h2 {
-        font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-        text-align: center;
-      }
-
-      .steps-grid {
-        margin-top: var(--space-8);
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: var(--space-4);
-      }
-
-      .step-card {
+      .route-loader {
+        width: min(460px, calc(100% - 48px));
         background: var(--color-surface);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-lg);
-        padding: var(--space-5);
+        box-shadow: var(--shadow-sm);
+        padding: var(--space-8);
         text-align: center;
       }
 
-      .step-number {
+      .route-loader h1 {
         font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-        color: var(--color-accent-light);
+        margin: 0 0 var(--space-3) 0;
       }
 
-      .step-card h3 {
-        margin-top: var(--space-3);
-      }
-
-      .step-card p {
-        margin-top: var(--space-3);
+      .route-loader p {
+        margin: 0;
         color: var(--color-text-secondary);
       }
 
-      .what-is-biochar {
-        background: var(--color-surface);
-        padding: var(--space-12) 0;
+      .route-spinner {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 3px solid var(--color-border);
+        border-top-color: var(--color-accent);
+        margin: 0 auto var(--space-5);
+        animation: verdure-spin 0.8s linear infinite;
       }
 
-      .what-is-biochar .container-narrow {
-        text-align: left;
-      }
-
-      .what-is-biochar h2 {
-        font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-        margin-bottom: var(--space-6);
-      }
-
-      .what-is-biochar p {
-        margin-bottom: var(--space-5);
-      }
-
-      .what-is-biochar h3 {
-        font-size: var(--font-size-xl);
-        font-weight: var(--font-weight-semibold);
-        margin-top: var(--space-8);
-        margin-bottom: var(--space-4);
-      }
-
-      .buyer-types {
-        padding: var(--space-12) 0;
-      }
-
-      .buyer-types h2 {
-        font-size: var(--font-size-2xl);
-        font-weight: var(--font-weight-bold);
-        text-align: center;
-      }
-
-      .buyer-types-grid {
-        margin-top: var(--space-8);
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: var(--space-4);
-      }
-
-      .buyer-types-grid .surface-card {
-        padding: var(--space-5);
-      }
-
-      .buyer-types-grid p {
-        margin-top: var(--space-2);
-        color: var(--color-text-secondary);
-        font-size: var(--font-size-sm);
-      }
-
-      @media (max-width: 760px) {
-        .hero-cards {
-          flex-direction: column;
-        }
-
-        .steps-grid {
-          grid-template-columns: 1fr;
-        }
-      }
-
-      .site-footer {
-        border-top: 1px solid var(--color-border);
-        padding: var(--space-8) 0;
-      }
-
-      .footer-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: var(--font-size-sm);
-        color: var(--color-text-muted);
+      @keyframes verdure-spin {
+        to { transform: rotate(360deg); }
       }
     </style>
   </head>
   <body>
-    <nav id="bm-nav-placeholder" style="background:var(--color-surface);border-bottom:1px solid var(--color-border);height:60px"></nav>
+    <main class="route-loader" aria-live="polite">
+      <div class="route-spinner"></div>
+      <h1>Verdure Markets</h1>
+      <p>Routing you to the right marketplace view…</p>
+    </main>
 
-    <section class="hero">
-      <div class="container-narrow hero-inner">
-        <h1>The US biochar supply chain, coordinated</h1>
-        <p class="hero-sub">
-          Connect with verified producers, arrange logistics, and source biomass feedstock — all in one platform. Built for industrial buyers, commercial operations, and carbon programs.
-        </p>
-        <div class="hero-cards">
-          <div class="hero-card-buy">
-            <h3>I want to buy biochar</h3>
-            <p>Find verified producers and source biochar for your operation.</p>
-            <a class="btn" href="buyer.html">Get Started</a>
-          </div>
-          <div class="hero-card-sell">
-            <h3>I want to sell biochar</h3>
-            <p>List your material and reach commercial buyers across the US.</p>
-            <a class="btn" href="seller.html">Apply to List</a>
-          </div>
-          <div class="hero-card-feedstock">
-            <h3>I have biomass feedstock</h3>
-            <p>List biomass, forestry, or wood waste material for pyrolysis producers.</p>
-            <a class="btn" href="feedstock.html">List Feedstock</a>
-          </div>
-        </div>
-      </div>
-    </section>
+    <script>
+      (function () {
+        'use strict';
 
-    <section class="buyer-types">
-      <div class="container">
-        <h2>Who buys through the platform</h2>
-        <div class="buyer-types-grid">
-          <div class="surface-card">
-            <h3>Farms &amp; Growers</h3>
-            <p>Soil health and water retention programs.</p>
-          </div>
-          <div class="surface-card">
-            <h3>Construction</h3>
-            <p>Biochar concrete and low-carbon materials.</p>
-          </div>
-          <div class="surface-card">
-            <h3>Remediation</h3>
-            <p>Contaminated site restoration and recovery.</p>
-          </div>
-          <div class="surface-card">
-            <h3>Water Treatment</h3>
-            <p>Filtration media and polishing systems.</p>
-          </div>
-          <div class="surface-card">
-            <h3>Carbon Programs</h3>
-            <p>Sequestration and credit-linked procurement.</p>
-          </div>
-        </div>
-      </div>
-    </section>
+        function routeForUser(user, profile) {
+          if (!user) return 'buyer.html';
+          return profile && profile.role === 'seller' ? 'seller.html' : 'buyer.html';
+        }
 
-    <section class="stats-bar">
-      <div class="container stats-inner">
-        <div class="stat">
-          <div class="stat-number">12</div>
-          <div class="stat-label">Verified producers</div>
-        </div>
-        <div class="stat">
-          <a class="stat-link" href="crops.html" style="border-bottom: 1px dashed var(--color-accent); padding-bottom: 2px;">
-            <div class="stat-number">9</div>
-            <div class="stat-label">Supported crop types <span style="color: var(--color-accent); font-size: var(--font-size-xs); margin-left: var(--space-1);">↗</span></div>
-          </a>
-        </div>
-        <div class="stat">
-          <div class="stat-number">$0</div>
-          <div class="stat-label">To list your biochar</div>
-        </div>
-      </div>
-    </section>
+        firebase.auth().onAuthStateChanged(function (user) {
+          if (!user) {
+            window.location.replace('buyer.html');
+            return;
+          }
 
-    <footer class="site-footer">
-      <div class="container footer-inner">
-        <span>© 2025 Biochar.market</span>
-        <span>United States · 2025</span>
-      </div>
-    </footer>
-    <script src="js/firebase-config.js"></script>
-    <script src="js/auth-state.js"></script>
+          firebase.firestore().collection('users').doc(user.uid).get()
+            .then(function (doc) {
+              var profile = doc.exists ? doc.data() : null;
+              window.location.replace(routeForUser(user, profile));
+            })
+            .catch(function () {
+              window.location.replace(routeForUser(user, null));
+            });
+        });
+      })();
+    </script>
   </body>
 </html>

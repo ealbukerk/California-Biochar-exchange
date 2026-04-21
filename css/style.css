@@ -1,19 +1,4 @@
-/*
-  Shared nav block:
-  <nav>
-    <div class="container nav-inner">
-      <a class="nav-logo" href="index.html">BM</a>
-      <ul class="nav-links">
-        <li><a href="listings.html">Listings</a></li>
-        <li><a href="match.html">Soil Match</a></li>
-        <li><a href="producers.html">For Producers</a></li>
-        <li><a href="buyers.html">For Buyers</a></li>
-        <li><a href="admin.html">Dashboard</a></li>
-      </ul>
-      <a class="nav-cta" href="seller.html">List Your Biochar</a>
-    </div>
-  </nav>
-*/
+/* Verdure Markets shared navigation styles. */
 
 :root {
   --color-bg: #F7F5F0;
@@ -210,18 +195,37 @@ nav {
   flex-shrink: 0;
 }
 
+.bm-nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+}
+
+.bm-nav-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
 .bm-mode-bar {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 999px;
   padding: 3px;
 }
 
+.bm-mode-bar--market {
+  min-width: 0;
+}
+
 .bm-mode-btn {
-  padding: 6px 16px;
+  padding: 6px 14px;
   border-radius: 999px;
   border: none;
   background: none;
@@ -242,6 +246,9 @@ nav {
 
 .bm-mode-btn.active.buy { color: var(--color-accent); }
 .bm-mode-btn.active.sell { color: #7A5C1E; }
+.bm-mode-btn.active.biochar { color: var(--color-accent); }
+.bm-mode-btn.active.biomass { color: #7A5C1E; }
+.bm-mode-btn.active.carbon { color: #2D4A3E; }
 
 .bm-nav-links {
   display: flex;
@@ -263,7 +270,6 @@ nav {
 .bm-nav-link:hover { background: var(--color-bg); color: var(--color-text-primary); }
 .bm-nav-link.active { color: var(--color-accent); font-weight: var(--font-weight-semibold); border-bottom: 2px solid var(--color-accent); border-radius: 0; }
 .bm-nav-link.active.sell-link { color: #7A5C1E; border-bottom-color: #7A5C1E; }
-
 .bm-nav-right {
   display: flex;
   align-items: center;
@@ -333,6 +339,81 @@ nav {
   margin-top: var(--space-2);
 }
 
+.intake-card {
+  background: linear-gradient(135deg, rgba(122, 92, 30, 0.10), rgba(122, 92, 30, 0.05));
+  border: 1px solid rgba(122, 92, 30, 0.18);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+}
+
+.intake-state {
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: 1px solid rgba(122, 92, 30, 0.16);
+}
+
+.intake-state-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.intake-state-copy {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.intake-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: var(--space-4);
+}
+
+.intake-link-btn {
+  height: 38px;
+  line-height: 38px;
+  padding: 0 var(--space-5);
+  border: 1px solid #7A5C1E;
+  color: #7A5C1E;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-decoration: none;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.biomass-match-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-top: var(--space-2);
+}
+
+.biomass-match-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.biomass-match-text {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -365,6 +446,137 @@ nav {
 .btn-secondary:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
+}
+
+.browse-econ-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  flex-wrap: wrap;
+}
+
+.browse-econ-control {
+  flex: 1;
+  min-width: 220px;
+}
+
+.browse-econ-control label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.browse-econ-control p,
+.browse-econ-summary {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+.delivered-cost-inline {
+  background: var(--color-accent-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.delivered-cost-inline.muted {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.availability-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+}
+
+.availability-pill--ready {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.availability-pill--warn {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.availability-pill--muted {
+  background: var(--color-bg);
+  color: var(--color-text-muted);
+}
+
+.profile-summary-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.profile-summary-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.profile-summary-title {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.profile-summary-copy {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+}
+
+.profile-summary-link {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.profile-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.profile-summary-item {
+  display: grid;
+  gap: 4px;
+}
+
+.profile-summary-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: var(--font-weight-semibold);
+}
+
+.profile-summary-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-medium);
+  word-break: break-word;
 }
 
 .ms-wrapper {
@@ -588,6 +800,7 @@ select:focus {
 
 input[type="text"],
 input[type="email"],
+input[type="tel"],
 input[type="number"],
 input[type="url"],
 input[type="password"],
@@ -606,6 +819,7 @@ input[type="date"] {
 
 input[type="text"]:focus,
 input[type="email"]:focus,
+input[type="tel"]:focus,
 input[type="number"]:focus,
 input[type="url"]:focus,
 input[type="password"]:focus,

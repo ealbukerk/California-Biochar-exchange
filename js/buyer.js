@@ -9,6 +9,21 @@
     profile: null
   };
 
+  function getAllListings() {
+    var demoListings = Array.isArray(window.LISTINGS) ? window.LISTINGS.slice() : [];
+    var firestoreListings = Array.isArray(window._firestoreListings) ? window._firestoreListings.slice() : [];
+    var byId = {};
+    demoListings.forEach(function (listing) {
+      if (!listing || !listing.id) return;
+      byId[String(listing.id)] = listing;
+    });
+    firestoreListings.forEach(function (listing) {
+      if (!listing || !listing.id) return;
+      byId[String(listing.id)] = listing;
+    });
+    return Object.keys(byId).map(function (id) { return byId[id]; });
+  }
+
   function toDateOnly(value) {
     if (!value) return null;
     var date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
@@ -51,18 +66,18 @@
     if (from && from > today) {
       var daysUntil = daysBetween(today, from);
       if (daysUntil <= 30) {
-        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
+        return '<div class="availability-pill availability-pill--warn">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
       }
-      return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">Available ' + formatMonthYear(from) + '</div>';
+      return '<div class="availability-pill availability-pill--muted">Available ' + formatMonthYear(from) + '</div>';
     }
     if (until) {
       var daysLeft = daysBetween(today, until);
       if (daysLeft <= 14) {
-        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
+        return '<div class="availability-pill availability-pill--warn">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
       }
-      return '<div style="font-size:var(--font-size-xs);color:#166534;background:#DCFCE7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">✓ Available now · Until ' + formatShortDate(until) + '</div>';
+      return '<div class="availability-pill availability-pill--ready">✓ Available now · Until ' + formatShortDate(until) + '</div>';
     }
-    return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">' + (from ? formatShortDate(from) : 'Availability on request') + '</div>';
+    return '<div class="availability-pill availability-pill--muted">' + (from ? formatShortDate(from) : 'Availability on request') + '</div>';
   }
 
   function updateCompareBar() {
@@ -81,7 +96,7 @@
     if (compareList.length < 2) return;
     var selected = compareList
       .map(function (id) {
-        return (window.LISTINGS || []).find(function (listing) {
+        return getAllListings().find(function (listing) {
           return String(listing.id) === String(id);
         });
       })
@@ -614,7 +629,7 @@
 
       '<div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:var(--space-2)">' +
       '<div><span style="font-size:var(--font-size-2xl);font-weight:700;color:var(--color-text-primary)">$' + htmlEscape(listing.pricePerTonne) + '</span><span style="font-size:var(--font-size-sm);color:var(--color-text-muted)">/tonne</span></div>' +
-      '<div class="delivered-cost-inline" id="dc-' + htmlEscape(listing.id) + '" style="font-size:var(--font-size-sm);color:var(--color-accent);font-weight:600;text-align:right"></div>' +
+      '<div class="delivered-cost-inline muted" id="dc-' + htmlEscape(listing.id) + '">Delivered cost shown after profile loads</div>' +
       (state.profile && state.profile.goals && state.profile.goals.indexOf('carbon_sequestration') !== -1 && listing.scorecard && listing.scorecard.carbonContent
         ? '<div id="co2cost-' + htmlEscape(listing.id) + '" style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:right"></div>'
         : '') +
@@ -644,7 +659,7 @@
   }
 
   async function handleCardBuyNow(listingId) {
-    var listing = (window.LISTINGS || []).find(function (item) {
+    var listing = getAllListings().find(function (item) {
       return item.id === listingId;
     });
     if (!listing) return;
@@ -715,17 +730,29 @@
   }
 
   function getFilteredListings() {
-    var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS.slice() : [];
+    var listings = getAllListings();
     var search = (document.getElementById("search").value || "").trim().toLowerCase();
     var feedstock = getMultiSelectValues("ms-feedstock");
     var cert = getMultiSelectValues("ms-cert");
     var sort = document.getElementById("filter-sort").value;
+    var availability = document.getElementById("filter-availability");
+    var availabilityMode = availability ? availability.value : "all";
 
     var radiusEl = document.getElementById('filter-radius');
     var radiusMiles = radiusEl ? Number(radiusEl.value) : 0;
 
     var filtered = listings.filter(function (listing) {
       if (!isListingVisible(listing)) return false;
+      var from = toDateOnly(listing.availableFrom);
+      var until = toDateOnly(listing.availableUntil);
+      var today = toDateOnly(new Date());
+      if (availabilityMode === "now") {
+        if (from && from > today) return false;
+        if (until && until < today) return false;
+      }
+      if (availabilityMode === "soon") {
+        if (!from || from <= today) return false;
+      }
       var matchesSearch =
         !search ||
         listing.producerName.toLowerCase().indexOf(search) !== -1 ||
@@ -824,6 +851,7 @@
 
     renderLoadMore();
     updateCompareBar();
+    injectDeliveredCosts();
   }
 
   function renderLoadMore() {
@@ -863,9 +891,15 @@
     var appRate = appRateSlider ? (parseFloat(appRateSlider.value) || 7) : (state.profile.applicationRate || 7);
     var slider = document.getElementById('pref-spread-slider');
     var spreadCost = slider ? (parseFloat(slider.value) || 60) : (state.profile.spreadCostPerTonne || 60);
-    (window.LISTINGS || []).forEach(function(listing) {
+    getAllListings().forEach(function(listing) {
       var el = document.getElementById('dc-' + listing.id);
       if (!el || !listing.producerZip) return;
+      var targetTonnes = Math.max(
+        Number(listing.minOrderTonnes) || 1,
+        Math.min(Number(listing.availableTonnes) || Number(listing.minOrderTonnes) || 1,
+          Math.round((Number(state.profile.acreage || 0) * Number(appRate || 0)) || 0))
+      );
+      el.classList.remove('muted');
       el.textContent = 'Calculating...';
       window.DeliveredCost.calc({
         producerZip: listing.producerZip,
@@ -875,9 +909,11 @@
         hasBiomassBackhaul: state.profile && state.profile.role === 'buyer' && state.profile.hasBiomassAvailable,
         buyerZip: buyerZip,
         pricePerTonne: listing.pricePerTonne,
-        tonnes: listing.minOrderTonnes,
+        tonnes: targetTonnes,
         applicationRate: appRate,
-        spreadCostPerTonne: spreadCost
+        spreadCostPerTonne: spreadCost,
+        availableTonnes: listing.availableTonnes,
+        dryTonnes: targetTonnes
       }).then(function(result) {
         var backhaulSaving = '';
         if (result.backhaulNote && state.profile && state.profile.hasBiomassAvailable) {
@@ -889,7 +925,7 @@
           Math.round(result.deliveredPerTonne) +
           '/t delivered</strong>' +
           (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
-          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi)</span>' +
+          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi · ' + targetTonnes + 't est.)</span>' +
           backhaulSaving;
         var co2El = document.getElementById('co2cost-' + listing.id);
         if (co2El && result && result.deliveredPerTonne && listing.scorecard && listing.scorecard.carbonContent) {
@@ -898,6 +934,7 @@
           co2El.textContent = '$' + costPerTCO2 + '/tCO\u2082 sequestered';
         }
       }).catch(function() {
+        el.classList.add('muted');
         el.textContent = 'Cost unavailable';
       });
     });
@@ -935,6 +972,7 @@
 
     document.getElementById("search").addEventListener("input", function () { _currentPage = 1; renderBrowseListings(); });
     document.getElementById("filter-sort").addEventListener("change", function () { _currentPage = 1; renderBrowseListings(); });
+    document.getElementById("filter-availability").addEventListener("change", function () { _currentPage = 1; renderBrowseListings(); });
     var verifiedCheck = document.getElementById('filter-verified-only');
     if (verifiedCheck) verifiedCheck.addEventListener('change', function () { _currentPage = 1; renderBrowseListings(); });
     var radiusSelect = document.getElementById('filter-radius');
@@ -949,6 +987,7 @@
       resetBtn.addEventListener("click", function() {
         document.getElementById('search').value = ''
         document.getElementById('filter-sort').value = document.getElementById('filter-sort').options[0].value
+        document.getElementById('filter-availability').value = 'all'
         document.querySelectorAll('.filter-pill-group input[type=checkbox]').forEach(function (cb) { cb.checked = false })
         const allBoxes = document.querySelectorAll('.filter-pill-group input[value="All"]')
         allBoxes.forEach(function (cb) { cb.checked = true })
@@ -1046,9 +1085,7 @@
 
     function plotProducers(centerLat, centerLng) {
       producerLayer.clearLayers();
-      var allListings = (window.LISTINGS || []);
-      var firestoreListings = window._firestoreListings || [];
-      var combined = allListings.concat(firestoreListings);
+      var combined = getAllListings();
       var geocodePromises = combined.map(function(listing) {
         var listingZip = listing.producerZip || listing.zipcode;
         if (!listingZip) return Promise.resolve(null);
@@ -1141,9 +1178,10 @@
         window._firestoreListings.push(d);
       });
       _usingDemoFallback = false;
+      renderBrowseListings();
       plotProducers(buyerGeo.lat, buyerGeo.lng);
     }, function() {
-      if ((window.LISTINGS || []).length) {
+      if (getAllListings().length) {
         _usingDemoFallback = true;
         if (window.UIUtils) UIUtils.toast('Live listings unavailable. Showing demo listings.', 'warning', 2800);
         plotProducers(buyerGeo.lat, buyerGeo.lng);
@@ -1295,7 +1333,7 @@
     initAuthState();
     initBrowseFilters();
     bindDistanceFilter();
-    (window.LISTINGS || []).forEach(function(l) {
+    getAllListings().forEach(function(l) {
       if (l.producerZip && buyerGeo['_zip_' + l.producerZip] === undefined) {
         buyerGeo['_zip_' + l.producerZip] = null;
         geocodeBuyerZip(l.producerZip).then(function(c) {

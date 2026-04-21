@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Biochar.market — List Feedstock</title>
+  <title>Verdure Markets — List Feedstock</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
@@ -81,6 +81,14 @@
     .success-state h2 { font-size: var(--font-size-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-top: var(--space-4); }
     .success-state p { color: var(--color-text-secondary); margin-top: var(--space-2); }
     .success-icon { font-size: 3rem; }
+    .biomass-category-grid { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+    .biomass-category-panel { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-bg); }
+    .biomass-category-title { font-size: var(--font-size-xs); color: var(--color-text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: var(--space-2); }
+    .biomass-category-options { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+    .availability-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); padding: var(--space-4); }
+    .availability-note { font-size: var(--font-size-xs); color: var(--color-text-muted); margin: var(--space-2) 0 var(--space-4); }
+    .readonly-date.is-disabled { opacity: 0.65; }
+    .wizard-action-group { display: flex; gap: var(--space-3); align-items: center; }
   </style>
 </head>
 <body>
@@ -102,11 +110,13 @@
 
       <div id="success-state" class="success-state">
         <div class="success-icon">✅</div>
-        <h2>Your listing is live!</h2>
-        <p>Biochar producers can now find and contact you.</p>
+        <h2 id="success-title">Your listing is live!</h2>
+        <p id="success-copy">Biochar producers can now find and contact you.</p>
         <div style="margin-top:var(--space-6);display:flex;gap:var(--space-4);justify-content:center">
-          <a href="feedstock.html" class="btn btn-primary">Browse all feedstock</a>
-          <a href="list-feedstock.html" class="btn btn-secondary">List another material</a>
+          <a id="success-view-listing" href="#" class="btn btn-primary" style="display:none">View listing</a>
+          <a id="success-next-action" href="#" class="btn btn-secondary" style="display:none">Next step</a>
+          <a id="success-browse-link" href="feedstock.html" class="btn btn-primary">Browse all feedstock</a>
+          <a id="success-reset-link" href="list-feedstock.html" class="btn btn-secondary">List another material</a>
         </div>
       </div>
 
@@ -122,12 +132,12 @@
               <div class="wizard-step-line"></div>
               <div class="wizard-step-dot" data-step="2">
                 <span class="dot-number">2</span>
-                <span class="dot-label">Quality &amp; Logistics</span>
+                <span class="dot-label">Quality &amp; Availability</span>
               </div>
               <div class="wizard-step-line"></div>
               <div class="wizard-step-dot" data-step="3">
                 <span class="dot-number">3</span>
-                <span class="dot-label">Review &amp; Submit</span>
+                <span class="dot-label">Docs &amp; Review</span>
               </div>
             </div>
           </div>
@@ -140,11 +150,12 @@
               <div class="wizard-form-grid">
                 <div class="form-group full-width">
                   <label>Biomass type <span class="required-star">*</span></label>
-                  <p class="field-hint">Select all that apply — you can list multiple material types in one submission.</p>
-                  <button type="button" id="f-biomass-toggle" class="btn btn-secondary" style="font-size:var(--font-size-xs);margin-top:var(--space-2)">Select all</button>
-                  <div style="margin-top:var(--space-3)">
-                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Agricultural</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-4)">
+                  <p class="field-hint">Select any material categories that apply. You only need at least one total selection.</p>
+                  <div id="f-biomass-summary" class="field-hint" style="margin-top:var(--space-2)">No material types selected yet.</div>
+                  <div class="biomass-category-grid">
+                    <div class="biomass-category-panel">
+                    <div class="biomass-category-title">Agricultural</div>
+                    <div class="biomass-category-options">
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="orchard_prunings" /><label>Orchard prunings</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="almond_shells" /><label>Almond shells</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="pistachio_shells" /><label>Pistachio shells</label></div>
@@ -152,41 +163,68 @@
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="corn_stover" /><label>Corn stover</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="rice_husks" /><label>Rice husks</label></div>
                     </div>
-                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Forestry</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);margin-bottom:var(--space-4)">
+                    </div>
+                    <div class="biomass-category-panel">
+                    <div class="biomass-category-title">Forestry</div>
+                    <div class="biomass-category-options">
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="forestry_slash" /><label>Forestry slash</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="logging_residue" /><label>Logging residue</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="thinning_material" /><label>Thinning material</label></div>
                     </div>
-                    <div style="font-size:var(--font-size-xs);color:var(--color-text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:var(--space-2)">Urban / Industrial</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
+                    </div>
+                    <div class="biomass-category-panel">
+                    <div class="biomass-category-title">Urban / Industrial</div>
+                    <div class="biomass-category-options">
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="clean_wood_waste" /><label>Clean wood waste</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="construction_wood" /><label>Construction wood (untreated only)</label></div>
                       <div class="checkbox-row"><input type="checkbox" name="f-biomass-types" value="tree_service_chips" /><label>Tree service chips</label></div>
                     </div>
+                    </div>
                   </div>
                 </div>
                 <div class="form-group">
-                  <label>Supplier type <span class="required-star">*</span></label>
-                  <select id="f-supplier-type">
-                    <option value="">Select type…</option>
-                    <optgroup label="Primary suppliers">
-                      <option value="farmer">Farmer / Grower</option>
-                      <option value="sawmill">Sawmill</option>
-                      <option value="forestry_operator">Forestry Operator</option>
-                      <option value="tree_service">Tree Service</option>
-                      <option value="recycler">Recycler / Waste processor</option>
-                    </optgroup>
-                    <optgroup label="Aggregators">
-                      <option value="aggregator">Aggregator / Processor — collects from multiple farms</option>
-                      <option value="broker">Broker — arranges supply, does not hold inventory</option>
-                    </optgroup>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>ZIP code <span class="required-star">*</span></label>
-                  <p class="field-hint">Used to calculate delivered cost for producers.</p>
-                  <input type="text" id="f-zip" maxlength="5" placeholder="93274" />
+                  <label>From your profile</label>
+                  <div class="profile-summary-card">
+                    <div class="profile-summary-header">
+                      <div>
+                        <div class="profile-summary-title">Business details used for this listing</div>
+                        <p class="profile-summary-copy">Supplier type, location, and contact details stay profile-owned so you do not need to re-enter them in each biomass listing.</p>
+                      </div>
+                      <a class="profile-summary-link" href="profile.html">Edit in Profile</a>
+                    </div>
+                    <div class="profile-summary-grid">
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Business</span>
+                        <span class="profile-summary-value" id="f-profile-company">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Contact</span>
+                        <span class="profile-summary-value" id="f-profile-name">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Supplier type</span>
+                        <span class="profile-summary-value" id="f-profile-supplier-type">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">ZIP code</span>
+                        <span class="profile-summary-value" id="f-profile-zip">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Email</span>
+                        <span class="profile-summary-value" id="f-profile-email">Add this in your profile</span>
+                      </div>
+                      <div class="profile-summary-item">
+                        <span class="profile-summary-label">Phone</span>
+                        <span class="profile-summary-value" id="f-profile-phone">Optional</span>
+                      </div>
+                    </div>
+                  </div>
+                  <input type="hidden" id="f-supplier-type" />
+                  <input type="hidden" id="f-zip" />
+                  <input type="hidden" id="f-name" />
+                  <input type="hidden" id="f-company" />
+                  <input type="hidden" id="f-email" />
+                  <input type="hidden" id="f-phone" />
                 </div>
                 <div class="form-group">
                   <label>Estimated quantity (tons) <span class="required-star">*</span></label>
@@ -203,36 +241,9 @@
                 </div>
               </div>
 
-              <div style="margin-top:var(--space-6)">
-                <div class="form-group full-width">
-                  <label>Photos of your material <span style="color:var(--color-text-muted);font-weight:400">(strongly recommended)</span></label>
-                  <p class="field-hint">Producers are far more likely to contact you if they can see the pile. Up to 5 photos.</p>
-                </div>
-                <div class="photo-upload-area" style="margin-top:var(--space-3)" onclick="document.getElementById('photo-input').click()">
-                  <div class="upload-icon">📷</div>
-                  <p>Click to upload photos<br><span style="font-size:0.75rem">JPG or PNG</span></p>
-                </div>
-                <input type="file" id="photo-input" accept="image/*" multiple style="display:none" />
-                <div id="photo-previews"></div>
-              </div>
-
-              <div style="margin-top:var(--space-6)">
-                <div class="form-group full-width">
-                  <label>Verify your listing <span style="color:var(--color-text-muted);font-weight:400">(optional but recommended)</span></label>
-                  <p class="field-hint">Upload a waste transfer manifest, lab report, or weight ticket. These documents help producers trust your listing.</p>
-                </div>
-                <div class="photo-upload-area" style="margin-top:var(--space-3)" onclick="document.getElementById('verification-input').click()">
-                  <div class="upload-icon">📄</div>
-                  <p>Click to upload documents<br><span style="font-size:0.75rem">PDF, JPG, or PNG</span></p>
-                </div>
-                <input type="file" id="verification-input" accept="image/*,.pdf" multiple style="display:none" />
-                <div id="verification-input-warning" class="upload-inline-warning" style="display:none"></div>
-                <div id="verification-previews"></div>
-              </div>
-
               <div class="wizard-nav">
                 <span></span>
-                <button class="btn-next" id="next-1">Next: Quality &amp; Logistics →</button>
+                <button class="btn-next" id="next-1">Next: Quality &amp; Availability →</button>
               </div>
             </div>
           </div>
@@ -240,13 +251,23 @@
           <!-- Step 2: Quality & Logistics -->
           <div class="wizard-panel" id="fs-step-2">
             <div class="wizard-panel-inner">
-              <h2 class="wizard-step-title">Quality &amp; logistics</h2>
-              <p class="wizard-step-sub">These fields help producers assess pyrolysis compatibility before contacting you.</p>
+              <h2 class="wizard-step-title">Quality &amp; availability</h2>
+              <p class="wizard-step-sub">These details help producers judge compatibility and timing before they reach out.</p>
               <div class="wizard-form-grid">
                 <div class="form-group">
                   <label>Particle size <span class="required-star">*</span></label>
-                  <input type="text" id="f-particle-size" placeholder="e.g. 25–75mm chipped, under 5mm powder" />
-                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Describe size in mm where possible. Producers use this to assess kiln compatibility.</div>
+                  <select id="f-particle-size">
+                    <option value="">Select…</option>
+                    <option value="fine_dust">Fine dust / powder (&lt;5mm)</option>
+                    <option value="fine_chips">Fine chips (5–25mm)</option>
+                    <option value="chipped">Chipped (25–75mm)</option>
+                    <option value="shredded">Shredded / mulched</option>
+                    <option value="coarse_chunks">Coarse chunks (75–150mm)</option>
+                    <option value="whole_limbs">Whole limbs (150mm+)</option>
+                    <option value="baled">Baled</option>
+                    <option value="mixed">Mixed / unsorted</option>
+                  </select>
+                  <div style="font-size:11px;color:var(--color-text-muted);margin-top:4px">Choose the closest match so producers can quickly judge equipment fit.</div>
                 </div>
                 <div class="form-group full-width" style="grid-column:1/-1">
                   <div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-2)">
@@ -361,13 +382,25 @@
                     <option value="stacked">Stacked</option>
                   </select>
                 </div>
-                <div class="form-group">
-                  <label>Availability window</label>
-                  <input type="text" id="f-availability" placeholder="e.g. March–June 2026" />
-                </div>
-                <div class="form-group">
-                  <label>Harvest / available date</label>
-                  <input type="text" id="f-harvest-date" class="date-picker-input" placeholder="YYYY-MM-DD" readonly />
+                <div class="form-group full-width">
+                  <label>Availability</label>
+                  <div class="availability-card">
+                    <label class="checkbox-row" style="margin-top:0">
+                      <input type="checkbox" id="f-available-now" checked />
+                      <span>Available now</span>
+                    </label>
+                    <p id="f-availability-note" class="availability-note">We will set Available from to today so your listing can be shown immediately when it qualifies for browse.</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
+                      <div class="form-group" style="margin:0">
+                        <label>Available from <span class="required-star">*</span></label>
+                        <input type="text" id="f-available-from" class="date-picker-input readonly-date" placeholder="YYYY-MM-DD" readonly />
+                      </div>
+                      <div class="form-group" style="margin:0">
+                        <label>Available until</label>
+                        <input type="text" id="f-available-until" class="date-picker-input" placeholder="YYYY-MM-DD" readonly />
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-group full-width">
                   <label>Additional notes</label>
@@ -376,16 +409,16 @@
               </div>
               <div class="wizard-nav">
                 <button class="btn-back" id="back-2">← Back</button>
-                <button class="btn-next" id="next-2">Next: Review &amp; Submit →</button>
+                <button class="btn-next" id="next-2">Next: Docs &amp; Review →</button>
               </div>
             </div>
           </div>
 
-          <!-- Step 3: Review & Submit -->
+          <!-- Step 3: Docs & Review -->
           <div class="wizard-panel" id="fs-step-3">
             <div class="wizard-panel-inner">
-              <h2 class="wizard-step-title">Review your listing</h2>
-              <p class="wizard-step-sub">Confirm your details before publishing.</p>
+              <h2 class="wizard-step-title">Photos, documents &amp; review</h2>
+              <p class="wizard-step-sub">Add optional proof, confirm your details, then publish live or save a private draft.</p>
 
               <div class="wizard-notice">
                 <span>ℹ️</span>
@@ -393,23 +426,58 @@
               </div>
 
               <div class="review-card">
-                <div class="review-card-title">Contact</div>
-                <div class="form-group" style="margin-bottom:var(--space-4)">
-                  <label>Your name <span class="required-star">*</span></label>
-                  <input type="text" id="f-name" placeholder="Jane Smith" />
+                <div class="review-card-title">Photos &amp; verification</div>
+                <div class="form-group full-width">
+                  <label>Photos of your material <span style="color:var(--color-text-muted);font-weight:400">(strongly recommended)</span></label>
+                  <p class="field-hint">Producers are far more likely to contact you if they can see the pile. Up to 5 photos.</p>
                 </div>
-                <div class="form-group" style="margin-bottom:var(--space-4)">
-                  <label>Company / Operation <span class="required-star">*</span></label>
-                  <input type="text" id="f-company" placeholder="Smith Family Farm" />
+                <div class="photo-upload-area" style="margin-top:var(--space-3)" onclick="document.getElementById('photo-input').click()">
+                  <div class="upload-icon">📷</div>
+                  <p>Click to upload photos<br><span style="font-size:0.75rem">JPG or PNG</span></p>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-4)">
-                  <div class="form-group">
-                    <label>Contact email <span class="required-star">*</span></label>
-                    <input type="email" id="f-email" placeholder="jane@example.com" />
+                <input type="file" id="photo-input" accept="image/*" multiple style="display:none" />
+                <div id="photo-previews"></div>
+
+                <div class="form-group full-width" style="margin-top:var(--space-6)">
+                  <label>Verify your listing <span style="color:var(--color-text-muted);font-weight:400">(optional but recommended)</span></label>
+                  <p class="field-hint">Upload a waste transfer manifest, lab report, or weight ticket. These documents help producers trust your listing.</p>
+                </div>
+                <div class="photo-upload-area" style="margin-top:var(--space-3)" onclick="document.getElementById('verification-input').click()">
+                  <div class="upload-icon">📄</div>
+                  <p>Click to upload documents<br><span style="font-size:0.75rem">PDF, JPG, or PNG</span></p>
+                </div>
+                <input type="file" id="verification-input" accept="image/*,.pdf" multiple style="display:none" />
+                <div id="verification-input-warning" class="upload-inline-warning" style="display:none"></div>
+                <div id="verification-previews"></div>
+              </div>
+
+              <div class="review-card">
+                <div class="review-card-title">Profile details used for inquiries</div>
+                <div class="profile-summary-card">
+                  <div class="profile-summary-header">
+                    <div>
+                      <div class="profile-summary-title">Inquiry contact</div>
+                      <p class="profile-summary-copy">These saved profile details are used when a producer reaches out. They are no longer edited in the listing wizard.</p>
+                    </div>
+                    <a class="profile-summary-link" href="profile.html">Edit in Profile</a>
                   </div>
-                  <div class="form-group">
-                    <label>Phone (optional)</label>
-                    <input type="tel" id="f-phone" placeholder="(555) 555-5555" />
+                  <div class="profile-summary-grid">
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Business</span>
+                      <span class="profile-summary-value" id="f-review-company">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Contact</span>
+                      <span class="profile-summary-value" id="f-review-name">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Email</span>
+                      <span class="profile-summary-value" id="f-review-email">Add this in your profile</span>
+                    </div>
+                    <div class="profile-summary-item">
+                      <span class="profile-summary-label">Phone</span>
+                      <span class="profile-summary-value" id="f-review-phone">Optional</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -426,7 +494,10 @@
               </div>
               <div class="wizard-nav">
                 <button class="btn-back" id="back-3">← Back</button>
-                <button class="btn-next" id="submit-btn">Publish Listing</button>
+                <div class="wizard-action-group">
+                  <button class="btn-back" id="save-draft-btn" type="button">Save Draft</button>
+                  <button class="btn-next" id="submit-btn" type="button">Publish Listing</button>
+                </div>
               </div>
             </div>
           </div>

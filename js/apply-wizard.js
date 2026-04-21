@@ -156,6 +156,20 @@ function clearDraft() {
   try { localStorage.removeItem('biochar_wizard_draft'); } catch(e) {}
 }
 
+function listingIsImmediatelyBrowsable(listing) {
+  var today = new Date();
+  today.setHours(0, 0, 0, 0);
+  var oneMonthOut = new Date(today.getTime());
+  oneMonthOut.setDate(oneMonthOut.getDate() + 30);
+  var from = listing && listing.availableFrom ? new Date(listing.availableFrom) : null;
+  var until = listing && listing.availableUntil ? new Date(listing.availableUntil) : null;
+  if (from && !Number.isNaN(from.getTime())) from.setHours(0, 0, 0, 0);
+  if (until && !Number.isNaN(until.getTime())) until.setHours(0, 0, 0, 0);
+  if (until && !Number.isNaN(until.getTime()) && until < today) return false;
+  if (from && !Number.isNaN(from.getTime()) && from > oneMonthOut) return false;
+  return String(listing.status || '').toLowerCase() === 'active';
+}
+
 function isLikelyScreenshot(file) {
   if (!file) return false;
   var type = String(file.type || '').toLowerCase();
@@ -622,23 +636,39 @@ function validateStep4() {
 function buildReviewStep() {
   const summaryEl = document.getElementById('review-summary')
   const previewEl = document.getElementById('review-preview-cards')
+  var profileRows = []
+
+  if (wizardData.business.businessName) profileRows.push(['Business', wizardData.business.businessName])
+  if (wizardData.business.contactName) profileRows.push(['Contact', wizardData.business.contactName])
+  if (wizardData.business.email) profileRows.push(['Email', wizardData.business.email])
+  if (wizardData.business.state || wizardData.business.zipcode) {
+    profileRows.push(['Location', [wizardData.business.state || '', wizardData.business.zipcode || ''].filter(Boolean).join(' · ')])
+  }
+  if (wizardData.business.pyroTech || wizardData.business.equipmentType) {
+    profileRows.push(['Equipment', wizardData.business.pyroTech || wizardData.business.equipmentType])
+  }
+  if (wizardData.business.optimalRadius) {
+    profileRows.push(['Optimal sourcing radius', wizardData.business.optimalRadius === 'none' ? 'No preference' : wizardData.business.optimalRadius + ' miles'])
+  }
+  if (wizardData.business.businessWebsite) profileRows.push(['Website', wizardData.business.businessWebsite])
 
   let summaryHTML =
     '<div class="review-section">' +
-    '<h3>Business profile</h3>' +
-    Object.entries({
-      'Business': wizardData.business.businessName,
-      'Email': wizardData.business.email,
-      'State': wizardData.business.state,
-      'ZIP': wizardData.business.zipcode,
-      'EIN': wizardData.business.ein,
-      'Website': wizardData.business.businessWebsite || 'Not provided',
-      'Equipment': wizardData.business.equipmentType,
-      'Capacity': wizardData.business.annualCapacity ? wizardData.business.annualCapacity + ' tonnes/year' : '—',
-      'Optimal sourcing radius': wizardData.business.optimalRadius === 'none' || !wizardData.business.optimalRadius ? 'No preference' : wizardData.business.optimalRadius + ' miles'
-    }).map(function(entry) {
-      return '<div class="review-row"><span class="review-row-label">' + entry[0] + '</span><span class="review-row-value">' + entry[1] + '</span></div>'
-    }).join('') +
+    '<h3>From your profile</h3>' +
+    '<div class="profile-summary-card">' +
+      '<div class="profile-summary-header">' +
+        '<div>' +
+          '<div class="profile-summary-title">Business details used on your listings</div>' +
+          '<p class="profile-summary-copy">Persistent business and contact fields come from your profile. The listing wizard only handles feedstock-specific data.</p>' +
+        '</div>' +
+        '<a class="profile-summary-link" href="profile.html">Edit in Profile</a>' +
+      '</div>' +
+      '<div class="profile-summary-grid">' +
+        profileRows.map(function(entry) {
+          return '<div class="profile-summary-item"><span class="profile-summary-label">' + entry[0] + '</span><span class="profile-summary-value">' + entry[1] + '</span></div>';
+        }).join('') +
+      '</div>' +
+    '</div>' +
     '</div>' +
 
     '<div class="review-section">' +
@@ -1118,13 +1148,24 @@ document.addEventListener('click', function(e) {
   })
 
   const promises = listings.map(function(listing) {
-    return db.collection('listings').add(listing)
+    return db.collection('listings').add(listing).then(function(docRef) {
+      return { id: docRef.id, listing: listing };
+    })
   })
 
   Promise.all(promises)
-    .then(function() {
+    .then(function(results) {
       clearDraft()
-      window.location.href = 'seller.html?submitted=true'
+      var first = results[0] || null;
+      var allBrowsable = results.length > 0 && results.every(function(result) {
+        return listingIsImmediatelyBrowsable(result.listing);
+      });
+      var params = new URLSearchParams();
+      params.set('submitted', 'true');
+      if (first && first.id) params.set('listingId', first.id);
+      if (results.length) params.set('count', String(results.length));
+      params.set('visibility', allBrowsable ? 'live' : 'scheduled');
+      window.location.href = 'seller.html?' + params.toString();
     })
     .catch(function(err) {
       console.error(err)

@@ -148,6 +148,22 @@
     container.innerHTML = '<p class="not-found">Listing not found.</p>';
   }
 
+  function getDemoListingById(id) {
+    var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS : [];
+    return listings.find(function (item) {
+      return String(item.id) === String(id);
+    }) || null;
+  }
+
+  function loadFirestoreListing(id) {
+    return firebase.firestore().collection("listings").doc(id).get().then(function (doc) {
+      if (!doc.exists) return null;
+      var listing = doc.data() || {};
+      listing.id = doc.id;
+      return listing;
+    });
+  }
+
   function renderListing(container, listing) {
     var suitableList = Array.isArray(listing.suitableFor) ? listing.suitableFor : [];
     var suitableTags = suitableList
@@ -272,30 +288,6 @@
       "</p></article>" +
       "</div>" +
       "</section>" +
-      '<section class="scorecard-section" style="margin-top:var(--space-6)">' +
-      '<h2 class="section-title">Delivered Cost Estimate</h2>' +
-      '<div id="dc-setup">' +
-      '<div style="display:flex;flex-wrap:wrap;gap:var(--space-4);margin-bottom:var(--space-4);align-items:flex-end">' +
-      '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Your ZIP Code</label>' +
-      '<input id="dc-buyer-zip" type="text" maxlength="5" placeholder="e.g. 94103" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
-      '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Volume (tonnes)</label>' +
-      '<input id="dc-tonnes" type="number" min="1" value="' + listing.minOrderTonnes + '" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
-      '<div><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Application Rate (tons/acre)</label>' +
-      '<input id="dc-apprate" type="number" min="0" step="0.1" value="1" style="width:120px;padding:8px;border:1px solid var(--color-border);border-radius:6px"></div>' +
-      '<div style="flex:1;min-width:220px"><label style="display:block;font-size:var(--font-size-sm);font-weight:500;margin-bottom:4px">Spreading Cost: $<span id="dc-spread-val">60</span>/tonne</label>' +
-      '<input id="dc-spread" type="range" min="40" max="80" value="60" style="width:100%"></div>' +
-      '<button id="dc-calc-btn" class="btn btn-primary" type="button">Calculate</button>' +
-      '</div>' +
-      '<div id="dc-result" style="display:none;background:var(--color-accent-light);border-radius:var(--radius-lg);padding:var(--space-5)">' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--space-4);margin-bottom:var(--space-4)">' +
-      '<div><p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">Material Cost</p><p id="dc-material" style="font-size:var(--font-size-xl);font-weight:700;margin:0"></p></div>' +
-      '<div><p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">Transport Cost</p><p id="dc-transport" style="font-size:var(--font-size-xl);font-weight:700;margin:0"></p><p id="dc-distance" style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0"></p></div>' +
-      '<div><p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">Application Cost</p><p id="dc-application" style="font-size:var(--font-size-xl);font-weight:700;margin:0"></p></div>' +
-      '<div style="border-left:2px solid var(--color-accent);padding-left:var(--space-4)"><p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">Total Delivered</p>' +
-      '<p id="dc-total" style="font-size:var(--font-size-xl);font-weight:700;color:var(--color-accent);margin:0"></p>' +
-      '<p id="dc-per-acre" style="font-size:var(--font-size-sm);font-weight:600;color:var(--color-accent);margin:4px 0 0"></p></div>' +
-      '</div></div></div>' +
-      '</section>' +
       '<section class="description-section">' +
       '<h2>About this material</h2>' +
       '<div style="display:flex;flex-wrap:wrap;gap:var(--space-2);margin-bottom:var(--space-4)">' +
@@ -346,116 +338,26 @@
     var params = new URLSearchParams(window.location.search);
     var id = params.get("id") || "";
     var listingId = id;
-    var listings = Array.isArray(window.LISTINGS) ? window.LISTINGS : [];
-    var listing = listings.find(function (item) {
-      return item.id === id;
-    });
-
-    if (!listing) {
-      renderNotFound(container);
-      return;
-    }
-
-    renderListing(container, listing);
-    document.addEventListener('click', function (event) {
-      var thumb = event.target.closest('.listing-photo-thumb');
-      if (!thumb) return;
-      var photo = thumb.getAttribute('data-photo');
-      var hero = document.querySelector('.listing-header');
-      if (!photo || !hero) return;
-      hero.classList.add('has-hero');
-      hero.style.backgroundImage = 'url(' + photo + ')';
-    });
-    (function() {
-      document.addEventListener('DOMContentLoaded', function() {
-      var spreadSlider = document.getElementById('dc-spread');
-      var spreadVal = document.getElementById('dc-spread-val');
-      if (spreadSlider && spreadVal) {
-        spreadSlider.addEventListener('input', function() {
-          spreadVal.textContent = spreadSlider.value;
-        });
-      }
-
-      // Autofill from Firebase profile if available
-      firebase.auth().onAuthStateChanged(function(user) {
-        if (!user) return;
-        firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
-          if (!doc.exists) return;
-          var profile = doc.data();
-          if (profile.zipcode) document.getElementById('dc-buyer-zip').value = profile.zipcode;
-          if (profile.applicationRate) document.getElementById('dc-apprate').value = profile.applicationRate;
-        });
+    function bindListingInteractions(activeListing) {
+      document.addEventListener('click', function (event) {
+        var thumb = event.target.closest('.listing-photo-thumb');
+        if (!thumb) return;
+        var photo = thumb.getAttribute('data-photo');
+        var hero = document.querySelector('.listing-header');
+        if (!photo || !hero) return;
+        hero.classList.add('has-hero');
+        hero.style.backgroundImage = 'url(' + photo + ')';
       });
-
-      var calcBtn = document.getElementById('dc-calc-btn');
-      if (calcBtn) {
-        calcBtn.addEventListener('click', function() {
-          var buyerZip = document.getElementById('dc-buyer-zip').value.trim();
-          var tonnes = parseFloat(document.getElementById('dc-tonnes').value) || listing.minOrderTonnes;
-          var appRate = parseFloat(document.getElementById('dc-apprate').value) || 0;
-          var spreadCost = parseFloat(document.getElementById('dc-spread').value) || 60;
-
-          if (!buyerZip || buyerZip.length !== 5) {
-            alert('Please enter a valid 5-digit ZIP code.');
-            return;
-          }
-          if (!listing.producerZip) {
-            alert('Producer ZIP not available for this listing.');
-            return;
-          }
-
-          if (window.UIUtils) UIUtils.setButtonLoading(calcBtn, true, 'Calculating...');
-          else {
-            calcBtn.textContent = 'Calculating...';
-            calcBtn.disabled = true;
-          }
-
-          window.DeliveredCost.calc({
-            producerZip: listing.producerZip,
-            buyerZip: buyerZip,
-            pricePerTonne: listing.pricePerTonne,
-            tonnes: tonnes,
-            applicationRate: appRate,
-            spreadCostPerTonne: spreadCost
-          }).then(function(r) {
-            document.getElementById('dc-material').textContent = '$' + Math.round(r.materialCost).toLocaleString();
-            document.getElementById('dc-transport').textContent = '$' + Math.round(r.transportCost).toLocaleString();
-            document.getElementById('dc-distance').textContent = r.distance + ' mi · ' + r.truckloads + ' truckload' + (r.truckloads > 1 ? 's' : '');
-            document.getElementById('dc-application').textContent = '$' + Math.round(r.applicationCost).toLocaleString();
-            document.getElementById('dc-total').textContent = '$' + Math.round(r.totalCost).toLocaleString();
-            var perAcreEl = document.getElementById('dc-per-acre');
-            perAcreEl.textContent = r.costPerAcre ? '$' + Math.round(r.costPerAcre).toLocaleString() + ' / acre' : '';
-            document.getElementById('dc-result').style.display = 'block';
-            if (window.UIUtils) {
-              UIUtils.setButtonLoading(calcBtn, false);
-              calcBtn.textContent = 'Recalculate';
-            } else {
-              calcBtn.textContent = 'Recalculate';
-              calcBtn.disabled = false;
-            }
-          }).catch(function() {
-            if (window.UIUtils) UIUtils.toast('Could not calculate delivered cost.', 'error', 2800);
-            else alert('Could not calculate — check ZIP codes and try again.');
-            if (window.UIUtils) UIUtils.setButtonLoading(calcBtn, false);
-            else {
-              calcBtn.textContent = 'Calculate';
-              calcBtn.disabled = false;
-            }
-          });
-        });
+      var dealEntry = document.getElementById("deal-entry");
+      if (dealEntry) {
+        dealEntry.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">Loading...</p>';
       }
-      }); // end DOMContentLoaded
-    })();
-    var dealEntry = document.getElementById("deal-entry");
-    if (dealEntry) {
-      dealEntry.innerHTML = '<p style="color:var(--color-text-muted);font-size:var(--font-size-sm)">Loading...</p>';
-    }
 
-    auth.onAuthStateChanged(function (user) {
+      auth.onAuthStateChanged(function (user) {
       var dealEntryEl = document.getElementById("deal-entry");
       if (!dealEntryEl) return;
 
-      var currentListing = (window.LISTINGS || []).find(function (l) { return l.id === listingId; });
+      var currentListing = activeListing;
       if (!currentListing) return;
 
       var topCardActions = document.getElementById("top-card-actions");
@@ -463,7 +365,7 @@
         if (user) {
           topCardActions.innerHTML =
             '<div style="display:flex;gap:var(--space-3);margin-top:var(--space-5)">' +
-              '<a href="dealroom.html?listingId=' + listing.id + '" class="btn btn-primary">Make an offer</a>' +
+              '<a href="dealroom.html?listingId=' + currentListing.id + '" class="btn btn-primary">Make an offer</a>' +
             '</div>';
         } else {
           topCardActions.innerHTML =
@@ -507,6 +409,25 @@
             '</div>';
         }
       }
+      });
+    }
+
+    var listing = getDemoListingById(id);
+    if (listing) {
+      renderListing(container, listing);
+      bindListingInteractions(listing);
+      return;
+    }
+
+    loadFirestoreListing(id).then(function (liveListing) {
+      if (!liveListing) {
+        renderNotFound(container);
+        return;
+      }
+      renderListing(container, liveListing);
+      bindListingInteractions(liveListing);
+    }).catch(function () {
+      renderNotFound(container);
     });
   });
 })();

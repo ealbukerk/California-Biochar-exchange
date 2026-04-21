@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Biochar.market — Find Feedstock</title>
+  <title>Verdure Markets — Find Feedstock</title>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/listings.css" />
@@ -99,11 +99,6 @@
 
   <section class="listings-section">
     <div class="container">
-      <div style="display:flex;gap:0;border-bottom:1px solid var(--color-border);margin-bottom:var(--space-6)">
-        <button id="tab-supply" onclick="switchTab('supply')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid #7A5C1E;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:#7A5C1E;cursor:pointer">🌾 Available feedstock</button>
-        <!-- <button id="tab-demand" onclick="switchTab('demand')" style="padding:var(--space-3) var(--space-6);background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:var(--font-size-sm);font-weight:600;color:var(--color-text-muted);cursor:pointer">🔥 Producers seeking feedstock</button> -->
-      </div>
-
       <div id="panel-supply">
       <div id="filter-bar" class="filter-bar">
         <div class="filter-search-row">
@@ -133,9 +128,15 @@
           </select>
           <select id="filter-sort">
             <option value="newest">Sort by: Newest</option>
+            <option value="best_match">Best match</option>
             <option value="closest">Closest</option>
             <option value="cheapest">Cheapest</option>
             <option value="largest">Largest volume</option>
+          </select>
+          <select id="filter-availability">
+            <option value="all">All availability</option>
+            <option value="now">Available now</option>
+            <option value="soon">Available within 30 days</option>
           </select>
           <select id="filter-contamination">
             <option value="">Any contamination score</option>
@@ -172,13 +173,15 @@
         <div id="aggregator-empty" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators listed in this area yet.</div>
       </div>
 
-      <div style="background:linear-gradient(135deg,#7A5C1E12,#7A5C1E06);border:1px solid #7A5C1E30;border-radius:var(--radius-lg);padding:var(--space-5);margin-bottom:var(--space-8)">
-        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Do you have biomass to sell?</div>
-        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Smaller operation volumes are often too small for direct producer sales. Find aggregators near you who collect, chip, and test material — then sell bulk loads to pyrolysis producers.</div>
+      <div class="intake-card" style="margin-bottom:var(--space-8)">
+        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Need to move biomass into the marketplace?</div>
+        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Use your saved profile to either find the right aggregator nearby or jump straight into listing biomass supply. We only ask for listing-specific details here — not your business profile again.</div>
         <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
-          <div class="filter-group">
-            <span class="filter-group-label">Your ZIP</span>
-            <input type="text" id="farmer-zip" maxlength="5" placeholder="" style="width:90px;height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />
+          <div class="filter-group" style="min-width:190px">
+            <span class="filter-group-label">Profile ZIP</span>
+            <div style="height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-bg);display:flex;align-items:center;color:var(--color-text-secondary)">
+              <span id="farmer-zip-display">Use your saved ZIP</span>
+            </div>
           </div>
           <div class="filter-group">
             <span class="filter-group-label">Material type</span>
@@ -196,8 +199,14 @@
               <option value="tree_service_chips">Tree service chips</option>
             </select>
           </div>
+        </div>
+        <div id="intake-state" class="intake-state">
+          <div id="intake-state-title" class="intake-state-title">Use your profile to choose the right next step.</div>
+          <p id="intake-state-copy" class="intake-state-copy">We’ll look at your saved supplier type and ZIP to route you into the most useful biomass intake path.</p>
+        </div>
+        <div class="intake-actions">
           <button id="farmer-find-btn" style="height:38px;padding:0 var(--space-5);background:#7A5C1E;color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer;white-space:nowrap">Find aggregators →</button>
-          <a href="list-feedstock.html" style="height:38px;line-height:38px;padding:0 var(--space-5);border:1px solid #7A5C1E;color:#7A5C1E;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;text-decoration:none;white-space:nowrap">List my material</a>
+          <a id="intake-secondary-link" href="list-feedstock.html" class="intake-link-btn">List biomass supply</a>
         </div>
         <div id="farmer-results" style="display:none;margin-top:var(--space-4)"></div>
       </div>
@@ -221,39 +230,6 @@
       </div>
       -->
     </div>
-    <script>
-      function switchTab(tab) {
-        var supply = document.getElementById('panel-supply');
-        var demand = document.getElementById('panel-demand');
-        var tabS = document.getElementById('tab-supply');
-        var tabD = document.getElementById('tab-demand');
-        if (!tabS || !tabD) {
-          if (supply) supply.style.display = 'block';
-          if (demand) demand.style.display = 'none';
-          return;
-        }
-        if (tab === 'supply') {
-          supply.style.display = 'block';
-          demand.style.display = 'none';
-          tabS.style.borderBottomWidth = '2px';
-          tabS.style.borderBottomColor = '#7A5C1E';
-          tabS.style.color = '#7A5C1E';
-          tabD.style.borderBottomWidth = '2px';
-          tabD.style.borderBottomColor = 'transparent';
-          tabD.style.color = 'var(--color-text-muted)';
-        } else {
-          supply.style.display = 'none';
-          demand.style.display = 'block';
-          tabS.style.borderBottomWidth = '2px';
-          tabS.style.borderBottomColor = 'transparent';
-          tabS.style.color = 'var(--color-text-muted)';
-          tabD.style.borderBottomWidth = '2px';
-          tabD.style.borderBottomColor = '#7A5C1E';
-          tabD.style.color = '#7A5C1E';
-        }
-      }
-      if (window.location.search.indexOf('tab=demand') !== -1) switchTab('demand');
-    </script>
     <script>
       var aggBtn = document.getElementById('agg-find-btn');
       if (aggBtn) aggBtn.addEventListener('click', function() {
@@ -324,14 +300,7 @@
       });
     </script>
     <script>
-      document.getElementById('farmer-find-btn').addEventListener('click', function() {
-        var zip = document.getElementById('farmer-zip').value.trim();
-        var type = document.getElementById('farmer-type').value;
-        var resultsEl = document.getElementById('farmer-results');
-      if (!zip || zip.length < 5) { resultsEl.style.display = 'none'; return; }
-        resultsEl.style.display = 'block';
-        resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
-
+      (function() {
         var PRICE_RANGES = {
           almond_shells: '$30–55/ton', walnut_shells: '$28–50/ton',
           pistachio_shells: '$25–45/ton', orchard_prunings: '$15–35/ton',
@@ -346,82 +315,163 @@
           forestry_slash:'Forestry slash', logging_residue:'Logging residue',
           clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips'
         };
-      function geoZip(z) {
-        var cache = window._zipGeoCache || (window._zipGeoCache = {});
-        if (cache[z]) return cache[z];
-        var p = fetch('https://api.zippopotam.us/us/' + z)
-          .then(function(r) { return r.json(); })
-          .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
-        cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
-        return cache[z];
-      }
+
+        function isAggregatorType(type) {
+          return type === 'aggregator' || type === 'broker';
+        }
+
+        function geoZip(z) {
+          var cache = window._zipGeoCache || (window._zipGeoCache = {});
+          if (cache[z]) return cache[z];
+          var p = fetch('https://api.zippopotam.us/us/' + z)
+            .then(function(r) { return r.json(); })
+            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
+          cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
+          return cache[z];
+        }
+
         function hav(a, b) {
           var R = 3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
           var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
           return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
         }
-        geoZip(zip).then(function(myCoords) {
-          firebase.firestore().collection('feedstock_listings')
-            .where('status', '==', 'active')
-            .where('supplierType', 'in', ['aggregator', 'broker'])
-            .get().then(function(snap) {
-              var checks = [];
-              var all = [];
-              snap.forEach(function(doc) { var d = doc.data(); d._id = doc.id; all.push(d); });
-              all.forEach(function(d) {
-                if (!d.locationZip) return;
-                checks.push(geoZip(d.locationZip).then(function(c) {
-                  d._dist = hav(myCoords, c);
-                }).catch(function() {}));
-              });
-              Promise.all(checks).then(function() {
-                var sorted = all.filter(function(d) { return typeof d._dist === 'number'; });
-                sorted.sort(function(a, b) { return a._dist - b._dist; });
-                var top = sorted.slice(0, 3);
-                if (!top.length) {
-                  resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
-                  return;
-                }
-                resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)">' +
-                  top.map(function(d) {
-                    var accepts = d.biomassTypes || (d.biomassType ? [d.biomassType] : []);
-                    var typeMatch = !type || accepts.indexOf(type) !== -1;
-                    var typeNote = typeMatch
-                      ? (type ? '<span style="font-size:11px;color:#3D6B45;font-weight:600">✓ Accepts ' + (BIOMASS_LABELS[type]||type) + '</span>' : '')
-                      : '<span style="font-size:11px;color:#B87333">Accepts: ' + accepts.slice(0,3).map(function(t){ return BIOMASS_LABELS[t]||t; }).join(', ') + ' only</span>';
-                    var priceEst = type && PRICE_RANGES[type] ? '<div style="font-size:var(--font-size-xs);color:#3D6B45;font-weight:600;margin-top:4px">Est. price: ' + PRICE_RANGES[type] + '</div>' : '';
-                    var contactStyle = typeMatch
-                      ? 'display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)'
-                      : 'display:block;text-align:center;padding:var(--space-2);background:var(--color-border);color:var(--color-text-muted);border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)';
-                    var subject = type
-                      ? 'Biomass inquiry — ' + (BIOMASS_LABELS[type]||type) + ' from ZIP ' + zip
-                      : 'Biomass inquiry from ZIP ' + zip;
-                    return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
-                      '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (d.company||d.supplierName||'Aggregator') + '</div>' +
-                      '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + d._dist + ' mi away · ZIP ' + (d.locationZip||'') + '</div>' +
-                      '<div style="margin-bottom:4px">' + typeNote + '</div>' +
-                      priceEst +
-                      '<a href="mailto:' + (d.contactEmail||'') + '?subject=' + encodeURIComponent(subject) + '" style="' + contactStyle + '">' + (typeMatch ? 'Contact →' : 'Request exception →') + '</a>' +
-                    '</div>';
-                  }).join('') +
-                '</div>';
-              });
-            }).catch(function() {
-              resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Search failed. Please try again.</p>';
-            });
-        }).catch(function() {
-          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Invalid ZIP code.</p>';
-        });
-      });
 
-      firebase.auth().onAuthStateChanged(function(user) {
-        if (!user) return;
-        firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
-          if (doc.exists && doc.data().zipcode) {
-            document.getElementById('farmer-zip').value = doc.data().zipcode;
+        function runAggregatorSearch(zip, type) {
+          var resultsEl = document.getElementById('farmer-results');
+          resultsEl.style.display = 'block';
+          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
+
+          return geoZip(zip).then(function(myCoords) {
+            return firebase.firestore().collection('feedstock_listings')
+              .where('status', '==', 'active')
+              .where('supplierType', 'in', ['aggregator', 'broker'])
+              .get()
+              .then(function(snap) {
+                var checks = [];
+                var all = [];
+                snap.forEach(function(doc) { var d = doc.data(); d._id = doc.id; all.push(d); });
+                all.forEach(function(d) {
+                  if (!d.locationZip) return;
+                  checks.push(geoZip(d.locationZip).then(function(c) {
+                    d._dist = hav(myCoords, c);
+                  }).catch(function() {}));
+                });
+                return Promise.all(checks).then(function() {
+                  var sorted = all.filter(function(d) { return typeof d._dist === 'number'; });
+                  sorted.sort(function(a, b) { return a._dist - b._dist; });
+                  var top = sorted.slice(0, 3);
+                  if (!top.length) {
+                    resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
+                    return;
+                  }
+                  resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)">' +
+                    top.map(function(d) {
+                      var accepts = d.biomassTypes || (d.biomassType ? [d.biomassType] : []);
+                      var typeMatch = !type || accepts.indexOf(type) !== -1;
+                      var typeNote = typeMatch
+                        ? (type ? '<span style="font-size:11px;color:#3D6B45;font-weight:600">✓ Accepts ' + (BIOMASS_LABELS[type]||type) + '</span>' : '')
+                        : '<span style="font-size:11px;color:#B87333">Accepts: ' + accepts.slice(0,3).map(function(t){ return BIOMASS_LABELS[t]||t; }).join(', ') + ' only</span>';
+                      var priceEst = type && PRICE_RANGES[type] ? '<div style="font-size:var(--font-size-xs);color:#3D6B45;font-weight:600;margin-top:4px">Est. price: ' + PRICE_RANGES[type] + '</div>' : '';
+                      var contactStyle = typeMatch
+                        ? 'display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)'
+                        : 'display:block;text-align:center;padding:var(--space-2);background:var(--color-border);color:var(--color-text-muted);border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)';
+                      var subject = type
+                        ? 'Biomass inquiry — ' + (BIOMASS_LABELS[type]||type) + ' from ZIP ' + zip
+                        : 'Biomass inquiry from ZIP ' + zip;
+                      return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
+                        '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (d.company||d.supplierName||'Aggregator') + '</div>' +
+                        '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + d._dist + ' mi away · ZIP ' + (d.locationZip||'') + '</div>' +
+                        '<div style="margin-bottom:4px">' + typeNote + '</div>' +
+                        priceEst +
+                        '<a href="mailto:' + (d.contactEmail||'') + '?subject=' + encodeURIComponent(subject) + '" style="' + contactStyle + '">' + (typeMatch ? 'Contact →' : 'Request exception →') + '</a>' +
+                      '</div>';
+                    }).join('') +
+                  '</div>';
+                });
+              });
+          }).catch(function() {
+            resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Could not load aggregators from your profile ZIP. Please verify your ZIP in profile settings.</p>';
+          });
+        }
+
+        function configureIntake(profile, user) {
+          var zipDisplay = document.getElementById('farmer-zip-display');
+          var stateTitle = document.getElementById('intake-state-title');
+          var stateCopy = document.getElementById('intake-state-copy');
+          var primary = document.getElementById('farmer-find-btn');
+          var secondary = document.getElementById('intake-secondary-link');
+          var resultsEl = document.getElementById('farmer-results');
+          var zipcode = profile && profile.zipcode ? String(profile.zipcode).trim() : '';
+          var supplierType = profile && profile.supplierType ? String(profile.supplierType).trim() : '';
+
+          if (zipDisplay) zipDisplay.textContent = zipcode || (user ? 'Add your ZIP in profile' : 'Sign in to use your profile ZIP');
+          if (resultsEl) {
+            resultsEl.style.display = 'none';
+            resultsEl.innerHTML = '';
           }
+
+          if (!user) {
+            stateTitle.textContent = 'Sign in to use the biomass seller intake.';
+            stateCopy.textContent = 'We’ll use your saved ZIP and supplier profile to route you to the right next step without asking for duplicate business details.';
+            primary.textContent = 'Sign in →';
+            primary.onclick = function() { window.location.href = 'auth.html'; };
+            secondary.textContent = 'Browse aggregators';
+            secondary.href = '#aggregator-section';
+            return;
+          }
+
+          if (!zipcode) {
+            stateTitle.textContent = 'Add your ZIP to unlock nearby aggregator search.';
+            stateCopy.textContent = 'ZIP is profile-owned in this flow, so once you save it in profile we can route you straight into nearby aggregator matches.';
+            primary.textContent = 'Update profile →';
+            primary.onclick = function() { window.location.href = 'settings.html'; };
+            secondary.textContent = 'List biomass supply';
+            secondary.href = 'list-feedstock.html';
+            return;
+          }
+
+          if (isAggregatorType(supplierType)) {
+            stateTitle.textContent = 'Your profile is set up as an aggregator.';
+            stateCopy.textContent = 'Best next step: publish a bulk biomass listing. You can also review current aggregator supply nearby to compare pricing and accepted material types.';
+            primary.textContent = 'List bulk supply →';
+            primary.onclick = function() { window.location.href = 'list-feedstock.html'; };
+            secondary.textContent = 'See aggregator listings';
+            secondary.href = '#aggregator-section';
+            return;
+          }
+
+          if (!supplierType) {
+            stateTitle.textContent = 'Add your supplier type to tailor this intake.';
+            stateCopy.textContent = 'Supplier type is profile-owned. Once it is saved, we can tell whether the best next step is nearby aggregator matching or going straight to a biomass supply listing.';
+            primary.textContent = 'Update profile →';
+            primary.onclick = function() { window.location.href = 'settings.html'; };
+            secondary.textContent = 'List biomass supply';
+            secondary.href = 'list-feedstock.html';
+            return;
+          }
+
+          stateTitle.textContent = 'Find the best aggregator or list supply directly.';
+          stateCopy.textContent = 'We’ll use your saved supplier type and ZIP to find nearby aggregators. If you already have enough volume, you can jump straight into a biomass listing instead.';
+          primary.textContent = 'Find aggregators →';
+          primary.onclick = function() {
+            runAggregatorSearch(zipcode, document.getElementById('farmer-type').value);
+          };
+          secondary.textContent = 'List biomass supply';
+          secondary.href = 'list-feedstock.html';
+        }
+
+        firebase.auth().onAuthStateChanged(function(user) {
+          if (!user) {
+            configureIntake(null, null);
+            return;
+          }
+          firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
+            configureIntake(doc.exists ? doc.data() : {}, user);
+          }).catch(function() {
+            configureIntake({}, user);
+          });
         });
-      });
+      })();
     </script>
   </section>
 

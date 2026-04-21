@@ -74,12 +74,257 @@
     return Math.round((c1 + c2 + c3 + c4) / 4 * 10) / 10;
   }
 
+  var MATCH_WEIGHTS = {
+    type: 24,
+    distance: 18,
+    moisture: 14,
+    contamination: 14,
+    particle: 8,
+    quantity: 10,
+    loading: 6,
+    verification: 6,
+    availability: 8
+  };
+
+  var MOISTURE_LEVEL = {
+    under_20: 1,
+    '20_30': 2,
+    '30_40': 3,
+    over_40: 4
+  };
+
+  var PARTICLE_GROUP = {
+    fine_dust: 'fine',
+    fine_chips: 'fine',
+    chipped: 'medium',
+    shredded: 'medium',
+    coarse_chunks: 'coarse',
+    whole_limbs: 'coarse',
+    baled: 'baled',
+    mixed: 'mixed'
+  };
+
+  function parseMiles(value) {
+    if (!value || value === 'none' || value === 'any') return null;
+    var parsed = parseInt(value, 10);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  function getMatchingProfile() {
+    var profile = window.AuthState && window.AuthState.profile ? window.AuthState.profile : null;
+    if (!profile || profile.role !== 'seller') return null;
+    return profile;
+  }
+
+  function inferPreferredParticleGroups(profile) {
+    var explicit = profile && (profile.preferredParticleSize || profile.particleSizePreference || profile.particleSize);
+    if (explicit && PARTICLE_GROUP[explicit]) return [PARTICLE_GROUP[explicit]];
+    if (!profile || !profile.pyroTech) return null;
+    if (profile.pyroTech === 'continuous_reactor' || profile.pyroTech === 'gasifier') return ['fine', 'medium'];
+    if (profile.pyroTech === 'retort' || profile.pyroTech === 'kiln') return ['medium', 'coarse'];
+    return null;
+  }
+
+  function scoreAvailabilityFactor(listing) {
+    var today = toDateOnly(new Date());
+    var from = toDateOnly(listing.availableFrom);
+    var until = toDateOnly(listing.availableUntil);
+    if (from && from > today) {
+      var daysUntil = daysBetween(today, from);
+      if (daysUntil <= 7) return { score: MATCH_WEIGHTS.availability * 0.75, summary: 'Available soon' };
+      if (daysUntil <= 30) return { score: MATCH_WEIGHTS.availability * 0.45, summary: 'Future availability' };
+      return { score: MATCH_WEIGHTS.availability * 0.15, summary: 'Longer lead time' };
+    }
+    if (until) {
+      var daysLeft = daysBetween(today, until);
+      if (daysLeft <= 14) return { score: MATCH_WEIGHTS.availability * 0.75, summary: 'Available now, limited window' };
+    }
+    if (listing.availableNow || (from && from <= today) || until) {
+      return { score: MATCH_WEIGHTS.availability, summary: 'Available now' };
+    }
+    return { score: MATCH_WEIGHTS.availability * 0.3, summary: 'Availability not specified' };
+  }
+
+  // Hard filters remove fundamental incompatibilities; weighted factors rank the rest.
+  function evaluateListingMatch(listing, profile) {
+    if (!profile) return null;
+
+    var score = 0;
+    var possible = 0;
+    var breakdown = [];
+    var hardReasons = [];
+    var acceptedTypes = Array.isArray(profile.acceptedBiomassTypes) ? profile.acceptedBiomassTypes : [];
+    var listingTypes = listing.biomassTypes && listing.biomassTypes.length ? listing.biomassTypes : [listing.biomassType];
+    var overlap = listingTypes.filter(function (type) { return acceptedTypes.indexOf(type) !== -1; });
+
+    if (acceptedTypes.length) {
+      if (!overlap.length) {
+        hardReasons.push('Biomass type incompatible');
+      } else {
+        possible += MATCH_WEIGHTS.type;
+        if (acceptedTypes.indexOf(listing.biomassType) !== -1) {
+          score += MATCH_WEIGHTS.type;
+          breakdown.push('Direct biomass type match');
+        } else {
+          score += MATCH_WEIGHTS.type * 0.75;
+          breakdown.push('Accepted biomass category');
+        }
+      }
+    }
+
+    var dist = typeof listing._dist === 'number' ? listing._dist : null;
+    var optimalRadius = parseMiles(profile.optimalRadius);
+    if (optimalRadius && dist != null) {
+      var hardLimit = Math.round(optimalRadius * 1.5);
+      if (dist > hardLimit) {
+        hardReasons.push('Outside sourcing radius');
+      } else {
+        possible += MATCH_WEIGHTS.distance;
+        if (dist <= optimalRadius * 0.5) {
+          score += MATCH_WEIGHTS.distance;
+          breakdown.push('Well within sourcing radius');
+        } else if (dist <= optimalRadius) {
+          score += MATCH_WEIGHTS.distance * 0.82;
+          breakdown.push('Within sourcing radius');
+        } else {
+          score += MATCH_WEIGHTS.distance * 0.45;
+          breakdown.push('Stretch distance but still workable');
+        }
+      }
+    } else if (dist != null) {
+      possible += MATCH_WEIGHTS.distance;
+      if (dist <= 50) {
+        score += MATCH_WEIGHTS.distance;
+        breakdown.push('Nearby supplier');
+      } else if (dist <= 150) {
+        score += MATCH_WEIGHTS.distance * 0.7;
+      } else if (dist <= 300) {
+        score += MATCH_WEIGHTS.distance * 0.4;
+      }
+    }
+
+    var moistureConstraint = profile.maxMoistureAccepted || '';
+    var listingMoisture = listing.moistureContent || '';
+    if (moistureConstraint && moistureConstraint !== 'any') {
+      possible += MATCH_WEIGHTS.moisture;
+      if (!listingMoisture || !MOISTURE_LEVEL[listingMoisture]) {
+        score += MATCH_WEIGHTS.moisture * 0.2;
+      } else {
+        var listingLevel = MOISTURE_LEVEL[listingMoisture];
+        if (moistureConstraint === 'under_15') {
+          if (listingLevel >= 3) hardReasons.push('Too wet for process');
+          else if (listingLevel === 1) {
+            score += MATCH_WEIGHTS.moisture;
+            breakdown.push('Dry enough for tighter moisture spec');
+          } else {
+            score += MATCH_WEIGHTS.moisture * 0.55;
+          }
+        } else if (moistureConstraint === 'under_25') {
+          if (listingLevel >= 3) hardReasons.push('Too wet for process');
+          else if (listingLevel === 1) {
+            score += MATCH_WEIGHTS.moisture;
+            breakdown.push('Low moisture material');
+          } else {
+            score += MATCH_WEIGHTS.moisture * 0.8;
+          }
+        } else if (moistureConstraint === 'under_40') {
+          if (listingLevel === 4) hardReasons.push('Too wet for process');
+          else {
+            score += listingLevel === 1 ? MATCH_WEIGHTS.moisture : MATCH_WEIGHTS.moisture * 0.8;
+            breakdown.push('Moisture within tolerance');
+          }
+        }
+      }
+    }
+
+    var contamTolerance = parseInt(profile.contaminationTolerance, 10);
+    var contamScore = contaminationAvg(listing);
+    if (!Number.isNaN(contamTolerance) && contamTolerance > 0) {
+      possible += MATCH_WEIGHTS.contamination;
+      if (contamScore > contamTolerance) {
+        hardReasons.push('Contamination above tolerance');
+      } else if (contamScore <= 1.5) {
+        score += MATCH_WEIGHTS.contamination;
+        breakdown.push('Clean contamination profile');
+      } else {
+        score += MATCH_WEIGHTS.contamination * Math.max(0.35, 1 - ((contamScore - 1) / 5));
+      }
+    }
+
+    var preferredParticleGroups = inferPreferredParticleGroups(profile);
+    if (preferredParticleGroups && preferredParticleGroups.length) {
+      possible += MATCH_WEIGHTS.particle;
+      if (!listing.particleSize || !PARTICLE_GROUP[listing.particleSize]) {
+        score += MATCH_WEIGHTS.particle * 0.2;
+      } else if (preferredParticleGroups.indexOf(PARTICLE_GROUP[listing.particleSize]) !== -1 || listing.particleSize === 'mixed') {
+        score += MATCH_WEIGHTS.particle;
+        breakdown.push('Particle size aligns');
+      } else {
+        score += MATCH_WEIGHTS.particle * 0.25;
+      }
+    }
+
+    if (profile.annualCapacity && listing.minimumPickupTons) {
+      possible += MATCH_WEIGHTS.quantity;
+      if (listing.minimumPickupTons > profile.annualCapacity) {
+        hardReasons.push('Minimum pickup exceeds capacity');
+      } else {
+        var capacityRatio = listing.minimumPickupTons / Math.max(profile.annualCapacity, 1);
+        if (capacityRatio <= 0.15) {
+          score += MATCH_WEIGHTS.quantity;
+          breakdown.push('Pickup size fits capacity');
+        } else if (capacityRatio <= 0.35) {
+          score += MATCH_WEIGHTS.quantity * 0.72;
+        } else {
+          score += MATCH_WEIGHTS.quantity * 0.45;
+        }
+      }
+    } else if (listing.minimumPickupTons) {
+      possible += MATCH_WEIGHTS.quantity;
+      score += listing.minimumPickupTons <= 50 ? MATCH_WEIGHTS.quantity * 0.8 : MATCH_WEIGHTS.quantity * 0.45;
+    }
+
+    if (Array.isArray(profile.loadingEquipment) && profile.loadingEquipment.length) {
+      possible += MATCH_WEIGHTS.loading;
+      if (!listing.loadingType) {
+        score += MATCH_WEIGHTS.loading * 0.2;
+      } else if (listing.loadingType === 'pile' || listing.loadingType === 'stacked') {
+        score += MATCH_WEIGHTS.loading;
+      } else {
+        score += MATCH_WEIGHTS.loading * 0.55;
+      }
+    }
+
+    possible += MATCH_WEIGHTS.verification;
+    if (listing.verifiedLevel2) {
+      score += MATCH_WEIGHTS.verification;
+      breakdown.push('Trusted supplier');
+    } else if (listing.verifiedLevel1 || listing.supplierVerified || listing.verified) {
+      score += MATCH_WEIGHTS.verification * 0.75;
+      breakdown.push('Verified supplier');
+    } else {
+      score += MATCH_WEIGHTS.verification * 0.15;
+    }
+
+    possible += MATCH_WEIGHTS.availability;
+    var availabilityFactor = scoreAvailabilityFactor(listing);
+    score += availabilityFactor.score;
+    if (availabilityFactor.summary) breakdown.push(availabilityFactor.summary);
+
+    return {
+      hardRejected: hardReasons.length > 0,
+      hardReasons: hardReasons,
+      score: possible > 0 ? Math.round((score / possible) * 100) : 0,
+      breakdown: breakdown.slice(0, 3)
+    };
+  }
+
   var state = {
     listings: [],
     filtered: [],
     buyerLat: null,
     buyerLng: null,
-    filters: { biomassType: '', contaminationMax: '', sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
+    filters: { biomassType: '', contaminationMax: '', availability: 'all', sort: 'newest', radius: 0, verifiedOnly: false, search: '' }
   };
   var LISTINGS_PAGE_SIZE = 20;
   var _currentPage = 1;
@@ -129,18 +374,21 @@
     if (from && from > today) {
       var daysUntil = daysBetween(today, from);
       if (daysUntil <= 30) {
-        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
+        return '<div class="availability-pill availability-pill--warn">🕐 Available in ' + daysUntil + ' day' + (daysUntil !== 1 ? 's' : '') + ' · ' + formatMonthYear(from) + '</div>';
       }
-      return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">Available ' + formatMonthYear(from) + '</div>';
+      return '<div class="availability-pill availability-pill--muted">Available ' + formatMonthYear(from) + '</div>';
     }
-    if (until) {
+    if (until || listing.availableNow || (from && from <= today)) {
+      if (!until) {
+        return '<div class="availability-pill availability-pill--ready">✓ Available now</div>';
+      }
       var daysLeft = daysBetween(today, until);
       if (daysLeft <= 14) {
-        return '<div style="font-size:var(--font-size-xs);color:#B45309;background:#FEF3C7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
+        return '<div class="availability-pill availability-pill--warn">⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '') + '</div>';
       }
-      return '<div style="font-size:var(--font-size-xs);color:#166534;background:#DCFCE7;border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">✓ Available now · Until ' + formatShortDate(until) + '</div>';
+      return '<div class="availability-pill availability-pill--ready">✓ Available now · Until ' + formatShortDate(until) + '</div>';
     }
-    return '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);background:var(--color-bg);border-radius:999px;padding:4px 10px;display:inline-block;font-weight:600">' + (listing.availabilityWindow || 'Availability on request') + '</div>';
+    return '<div class="availability-pill availability-pill--muted">' + (listing.availabilityWindow || 'Availability on request') + '</div>';
   }
 
   function haversine(lat1, lng1, lat2, lng2) {
@@ -187,18 +435,40 @@
 
   function applyFilters() {
     var f = state.filters;
+    var matchingProfile = getMatchingProfile();
     state.filtered = state.listings.filter(function(l) {
       if (!isFeedstockVisible(l)) return false;
+      var today = toDateOnly(new Date());
+      var from = toDateOnly(l.availableFrom);
+      var until = toDateOnly(l.availableUntil);
+      l._match = evaluateListingMatch(l, matchingProfile);
+      l._matchScore = l._match ? l._match.score : null;
+      l._matchSummary = l._match && l._match.breakdown.length ? l._match.breakdown.join(' · ') : '';
+      if (l._match && l._match.hardRejected) return false;
       if (f.biomassType && l.biomassType !== f.biomassType &&
           !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
       if (f.contaminationMax) {
         var avg = contaminationAvg(l);
         if (avg > parseFloat(f.contaminationMax)) return false;
       }
+      if (f.availability === 'now') {
+        if (from && from > today) return false;
+        if (until && until < today) return false;
+      }
+      if (f.availability === 'soon') {
+        if (!(from && from > today)) return false;
+      }
       if (f.verifiedOnly && !l.verified) return false;
       if (f.radius > 0 && (!l._dist || l._dist > f.radius)) return false;
       if (f.search) {
-        var hay = ((l.company||'') + ' ' + (l.supplierName||'') + ' ' + (l.biomassType||'')).toLowerCase();
+        var hay = [
+          l.company || '',
+          l.supplierName || '',
+          l.biomassType || '',
+          Array.isArray(l.biomassTypes) ? l.biomassTypes.join(' ') : '',
+          l.supplierType || '',
+          l.locationZip || ''
+        ].join(' ').toLowerCase();
         if (hay.indexOf(f.search) === -1) return false;
       }
       return true;
@@ -206,6 +476,8 @@
 
     if (f.sort === 'closest' && state.buyerLat) {
       state.filtered.sort(function (a, b) { return (a._dist || 9999) - (b._dist || 9999); });
+    } else if (f.sort === 'best_match' && matchingProfile) {
+      state.filtered.sort(function (a, b) { return (b._matchScore || 0) - (a._matchScore || 0); });
     } else if (f.sort === 'cheapest') {
       state.filtered.sort(function (a, b) { return a.pricePerTon - b.pricePerTon; });
     } else if (f.sort === 'largest') {
@@ -218,6 +490,7 @@
       });
     }
     _allFilteredListings = state.filtered.slice();
+    renderAggregatorSection();
     renderGrid();
   }
 
@@ -279,20 +552,16 @@
       ? '<div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-top:var(--space-1)">' + l._dist + ' mi away</div>'
       : '';
 
-    var deliveredHtml = l._delivered !== undefined
-      ? '<div class="fs-delivered" style="background:var(--color-accent-light);border-radius:var(--radius-md);padding:var(--space-2) var(--space-3);font-size:var(--font-size-sm)">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center">' +
-            '<span style="color:var(--color-text-muted)">Listed</span>' +
-            '<strong>$' + l.pricePerTon + '/ton</strong>' +
-          '</div>' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">' +
-            '<span style="color:var(--color-text-muted)">Est. delivered</span>' +
-            '<strong style="color:var(--color-accent)">~$' + l._delivered + '/ton</strong>' +
-          '</div>' +
-        '</div>'
-      : '<div style="font-size:var(--font-size-sm);font-weight:600">$' + (l.pricePerTon === 0 ? 'Free to haul' : l.pricePerTon + '/ton') + '</div>';
+    var deliveredHtml = '<div class="delivered-cost-inline muted" id="fs-dc-' + String(l._id || l.id || '').replace(/[^a-zA-Z0-9_-]/g, '') + '">' +
+      'Delivered cost shown after profile loads' +
+    '</div>';
 
     var availHtml = '<div style="margin-top:var(--space-2)">' + renderAvailabilityIndicator(l) + '</div>';
+    var matchHtml = l._match && !l._match.hardRejected
+      ? '<div class="biomass-match-row"><span class="biomass-match-pill">' + l._matchScore + '% match</span>' +
+          (l._matchSummary ? '<span class="biomass-match-text">' + l._matchSummary + '</span>' : '') +
+        '</div>'
+      : '';
 
     return '<div class="listing-card-wrapper" style="position:relative">' +
       '<div class="compare-corner">' +
@@ -312,6 +581,7 @@
           '</div>' +
           '<h3 style="margin-top:var(--space-3)">' + (l.company || l.supplierName || '') + '</h3>' +
           distLine +
+          matchHtml +
           availHtml +
         '</div>' +
 
@@ -327,6 +597,44 @@
         '</div>' +
       '</a>' +
     '</div>';
+  }
+
+  function renderAggregatorSection() {
+    var grid = document.getElementById('aggregator-grid');
+    var empty = document.getElementById('aggregator-empty');
+    if (!grid || !empty) return;
+    var aggregators = state.listings.filter(function (listing) {
+      return listing.supplierType === 'aggregator' || listing.supplierType === 'broker';
+    }).sort(function (a, b) {
+      if (typeof a._dist === 'number' && typeof b._dist === 'number') return a._dist - b._dist;
+      var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
+      var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
+      return tb - ta;
+    }).slice(0, 3);
+
+    if (!aggregators.length) {
+      grid.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+
+    empty.style.display = 'none';
+    grid.innerHTML = aggregators.map(function (listing) {
+      var types = (listing.biomassTypes || [listing.biomassType]).slice(0, 3).map(function (type) {
+        return '<span style="font-size:10px;padding:1px 6px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:10px">' + (BIOMASS_LABELS[type] || type) + '</span>';
+      }).join(' ');
+      var distanceLabel = typeof listing._dist === 'number'
+        ? listing._dist + ' mi away'
+        : 'Location available';
+      return '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">' +
+        '<div>' +
+          '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (listing.company || listing.supplierName || 'Aggregator') + '</div>' +
+          '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">' + distanceLabel + ' · ZIP ' + (listing.locationZip || '') + '</div>' +
+        '</div>' +
+        '<div style="display:flex;flex-wrap:wrap;gap:4px">' + types + '</div>' +
+        '<a href="feedstock-listing.html?id=' + encodeURIComponent(listing._id || listing.id || '') + '" class="btn btn-secondary" style="justify-content:center">View listing</a>' +
+      '</div>';
+    }).join('');
   }
 
   var fsCompareList = [];
@@ -432,6 +740,7 @@
 
     updateFsCompareBar();
     renderLoadMore();
+    injectDeliveredCosts();
   }
 
   function renderLoadMore() {
@@ -454,6 +763,32 @@
     document.getElementById('fs-load-more').addEventListener('click', function () {
       _currentPage += 1;
       renderGrid();
+    });
+  }
+
+  function injectDeliveredCosts() {
+    var profile = window.AuthState && window.AuthState.profile ? window.AuthState.profile : null;
+    if (!profile || !profile.zipcode || !window.DeliveredCost) return;
+    state.filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE).forEach(function (listing) {
+      var target = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
+      if (!target || !listing.locationZip) return;
+      target.classList.add('muted');
+      target.textContent = 'Calculating delivered cost...';
+      window.DeliveredCost.calc({
+        producerZip: listing.locationZip,
+        buyerZip: profile.zipcode,
+        pricePerTonne: listing.pricePerTon || 0,
+        tonnes: Math.max(1, listing.minimumPickupTons || listing.estimatedQuantityTons || 1),
+        isBiochar: false,
+        feedstockType: listing.biomassType
+      }).then(function (result) {
+        target.classList.remove('muted');
+        target.innerHTML = '<strong>~$' + Math.round(result.deliveredPerTonne) + '/ton delivered</strong>' +
+          '<span>' + result.distance + ' mi · ' + result.truckloads + ' truckload' + (result.truckloads !== 1 ? 's' : '') + '</span>';
+      }).catch(function () {
+        target.classList.add('muted');
+        target.textContent = 'Cost unavailable';
+      });
     });
   }
 
@@ -652,6 +987,10 @@
     document.getElementById('filter-contamination').addEventListener('change', function () {
       state.filters.contaminationMax = this.value; _currentPage = 1; applyFilters();
     });
+    var availabilityEl = document.getElementById('filter-availability');
+    if (availabilityEl) availabilityEl.addEventListener('change', function () {
+      state.filters.availability = this.value; _currentPage = 1; applyFilters();
+    });
     var radiusEl = document.getElementById('filter-radius');
     if (radiusEl) radiusEl.addEventListener('change', function() {
       state.filters.radius = parseInt(this.value) || 0; _currentPage = 1; applyFilters();
@@ -666,10 +1005,11 @@
     });
     var resetEl = document.getElementById('reset-filters');
     if (resetEl) resetEl.addEventListener('click', function() {
-      state.filters = { biomassType: '', contaminationMax: '', sort: 'newest', radius: 0, verifiedOnly: false, search: '' };
+      state.filters = { biomassType: '', contaminationMax: '', availability: 'all', sort: 'newest', radius: 0, verifiedOnly: false, search: '' };
       document.getElementById('filter-biomass').value = '';
       document.getElementById('filter-sort').value = 'newest';
       document.getElementById('filter-contamination').value = '';
+      var av = document.getElementById('filter-availability'); if (av) av.value = 'all';
       var rv = document.getElementById('filter-radius'); if (rv) rv.value = 0;
       var vv = document.getElementById('filter-verified-only'); if (vv) vv.checked = false;
       var sv = document.getElementById('search'); if (sv) sv.value = '';

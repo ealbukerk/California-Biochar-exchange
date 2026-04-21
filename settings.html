@@ -87,14 +87,30 @@
               </div>
               <div class="form-group"><label>Full name</label><input id="s-name" type="text" placeholder="Your name" /></div>
               <div class="form-group"><label>Business name</label><input id="s-business" type="text" placeholder="Business name" /></div>
+              <div class="form-group"><label>Phone</label><input id="s-phone" type="tel" placeholder="(555) 555-5555" /></div>
               <div class="form-group">
                 <label>Email</label>
                 <input id="s-email" type="email" disabled style="background:var(--color-bg);color:var(--color-text-muted)" />
                 <p style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:4px">Email cannot be changed here.</p>
               </div>
+              <div class="form-group"><label>Street address</label><input id="s-street" type="text" placeholder="123 Main St" /></div>
               <div class="form-group"><label>ZIP code</label><input id="s-zipcode" type="text" maxlength="5" placeholder="e.g. 94103" /></div>
               <div class="form-group"><label>State</label><select id="s-state"></select></div>
               <div class="form-group"><label>Business website</label><input id="s-website" type="url" placeholder="https://..." /></div>
+              <div class="form-group">
+                <label>Supplier type</label>
+                <select id="s-supplier-type">
+                  <option value="">Not set</option>
+                  <option value="farmer">Farmer / Grower</option>
+                  <option value="sawmill">Sawmill</option>
+                  <option value="forestry_operator">Forestry Operator</option>
+                  <option value="tree_service">Tree Service</option>
+                  <option value="recycler">Recycler / Waste processor</option>
+                  <option value="aggregator">Aggregator / Processor</option>
+                  <option value="broker">Broker</option>
+                </select>
+                <p>Used to prefill biomass listing flows.</p>
+              </div>
             </div>
             <div style="margin-top:var(--space-5);display:flex;align-items:center;gap:var(--space-3)">
               <button id="save-account-btn" class="btn btn-primary" style="width:100%">Save changes</button>
@@ -279,9 +295,16 @@
       if (profile) {
         document.getElementById('s-name').value = profile.name || '';
         document.getElementById('s-business').value = profile.businessName || '';
+        document.getElementById('s-phone').value = profile.phone || '';
+        document.getElementById('s-street').value = profile.businessStreet || '';
         document.getElementById('s-zipcode').value = profile.zipcode || '';
         document.getElementById('s-website').value = profile.businessWebsite || '';
-        if (window.buildStateSelect) window.buildStateSelect('s-state', profile.state);
+        document.getElementById('s-supplier-type').value = profile.supplierType || '';
+        if (window.buildStateSelect) {
+          var stateSelect = document.getElementById('s-state');
+          if (stateSelect && !stateSelect.options.length) window.buildStateSelect(stateSelect, true);
+          if (stateSelect) stateSelect.value = profile.state || '';
+        }
         var notif = profile.notificationPrefs || {};
         document.getElementById('notif-new-message').checked = notif.newMessage !== false;
         document.getElementById('notif-bid-received').checked = notif.bidReceived !== false;
@@ -319,9 +342,12 @@
         firebase.firestore().collection('users').doc(user.uid).update({
           name: document.getElementById('s-name').value,
           businessName: document.getElementById('s-business').value,
+          phone: document.getElementById('s-phone').value,
+          businessStreet: document.getElementById('s-street').value,
           zipcode: document.getElementById('s-zipcode').value,
           state: document.getElementById('s-state').value,
-          businessWebsite: document.getElementById('s-website').value
+          businessWebsite: document.getElementById('s-website').value,
+          supplierType: document.getElementById('s-supplier-type').value || null
         }).then(function() {
           if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
           if (window.UIUtils) UIUtils.toast('Settings saved', 'success', 2200);

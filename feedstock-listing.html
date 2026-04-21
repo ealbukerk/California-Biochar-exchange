@@ -175,7 +175,11 @@
         } else {
           indicatorText = 'Available ' + formatMonthYear(from);
         }
-      } else if (until) {
+      } else if (until || l.availableNow || (from && from <= today)) {
+        if (!until) {
+          indicatorText = '✓ Available now';
+          indicatorClass = 'ready';
+        } else {
         var daysLeft = daysBetween(today, until);
         if (daysLeft <= 14) {
           indicatorText = '⚠ Available now · Expires in ' + Math.max(daysLeft, 0) + ' day' + (Math.max(daysLeft, 0) !== 1 ? 's' : '');
@@ -183,6 +187,7 @@
         } else {
           indicatorText = '✓ Available now · Until ' + formatShortDate(until);
           indicatorClass = 'ready';
+        }
         }
       }
       var fillPercent = 100;
@@ -296,14 +301,7 @@
           '</div>' +
         '</div>' : '') +
 
-        '<div class="fs-detail-section" id="fs-cost-section">' +
-          '<h2>Delivered cost estimate</h2>' +
-          '<div style="display:flex;align-items:center;gap:var(--space-3);margin-bottom:var(--space-3)">' +
-            '<input id="fs-buyer-zip" type="text" maxlength="5" placeholder="Your ZIP code" style="width:120px;height:40px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm)" />' +
-            '<button id="fs-calc-btn" class="btn btn-primary" style="height:40px">Calculate</button>' +
-          '</div>' +
-          '<div id="fs-cost-result" style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Enter your ZIP to estimate transport cost.</div>' +
-        '</div>';
+        '';
 
       // Sidebar
       document.getElementById('fs-sidebar').innerHTML =
@@ -321,7 +319,7 @@
             '<div><div style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-transform:uppercase;font-weight:600">Loading</div><div style="font-weight:600;margin-top:2px">' + (LOADING_LABELS[l.loadingType] || l.loadingType || '—') + '</div></div>' +
           '</div>' +
           '<a id="fs-contact-btn" href="mailto:' + (l.contactEmail || '') + '" class="btn btn-primary" style="width:100%;text-align:center;display:block;margin-bottom:var(--space-3)">Contact supplier</a>' +
-          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:center">Listing price excludes transport. Use cost calculator to estimate delivered price.</p>' +
+          '<p style="font-size:var(--font-size-xs);color:var(--color-text-muted);text-align:center">Listing price excludes transport. Delivered pricing is shown on browse cards after your profile loads.</p>' +
         '</div>' +
 
         '<div class="fs-sidebar-card" style="background:linear-gradient(135deg,#7A5C1E15,#7A5C1E08)">' +
@@ -335,31 +333,6 @@
           '<button id="find-aggregator-btn" class="btn btn-secondary" style="width:100%;font-size:var(--font-size-sm)">Find a processor near me</button>' +
         '</div>';
 
-      // Cost calculator
-      document.getElementById('fs-calc-btn').addEventListener('click', function() {
-        var zip = document.getElementById('fs-buyer-zip').value.trim();
-        var resultEl = document.getElementById('fs-cost-result');
-        if (!zip || zip.length !== 5) { resultEl.textContent = 'Please enter a valid 5-digit ZIP.'; return; }
-        if (!l.locationZip) { resultEl.textContent = 'Supplier ZIP not available for this listing.'; return; }
-        resultEl.setAttribute('data-delivered-cost-status', 'true');
-        resultEl.textContent = 'Calculating…';
-        window.DeliveredCost.calc({
-          producerZip: l.locationZip,
-          buyerZip: zip,
-          pricePerTonne: l.pricePerTon,
-          tonnes: l.minimumPickupTons,
-          isBiochar: false,
-          feedstockType: l.biomassType
-        }).then(function(r) {
-          resultEl.innerHTML =
-            '<strong style="font-size:var(--font-size-lg);color:#7A5C1E">~$' + Math.round(r.deliveredPerTonne) + '/ton delivered</strong>' +
-            '<div style="margin-top:var(--space-2);color:var(--color-text-muted)">' +
-              'Material $' + Math.round(r.materialCost).toLocaleString() +
-              ' &nbsp;+&nbsp; Transport $' + Math.round(r.transportCost).toLocaleString() +
-              ' &nbsp;(' + r.distance + ' mi · ' + r.truckloads + ' truckload' + (r.truckloads > 1 ? 's' : '') + ')' +
-            '</div>';
-        }).catch(function() { resultEl.textContent = 'Could not calculate — check ZIP codes.'; });
-      });
     }
 
     var _currentListing = null;

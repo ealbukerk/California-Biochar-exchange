@@ -1,6 +1,8 @@
 (function () {
   'use strict';
 
+  var BRAND_NAME = 'Verdure Markets';
+
   var PAGE_CONTEXT = {
     'buyer.html':                { role: 'buyer',  market: 'biochar' },
     'listing.html':              { role: 'buyer',  market: 'biochar' },
@@ -23,20 +25,37 @@
     seller: { biochar: 'seller.html',        biomass: 'list-feedstock.html' }
   };
 
-  function getContext(currentPage, profileRole) {
-    if (PAGE_CONTEXT[currentPage]) return PAGE_CONTEXT[currentPage];
-    var savedRole   = localStorage.getItem('bm_nav_role')   || profileRole || 'buyer';
+  function getCurrentPage() {
+    return window.location.pathname.split('/').pop() || 'index.html';
+  }
+
+  function getDefaultRoute(profileRole) {
+    return profileRole === 'seller' ? 'seller.html' : 'buyer.html';
+  }
+
+  function getContext(currentPage, profileRole, isSignedIn) {
+    if (PAGE_CONTEXT[currentPage]) {
+      var pageCtx = PAGE_CONTEXT[currentPage];
+      if (pageCtx.market === 'carbon') {
+        return { role: isSignedIn ? (profileRole || 'buyer') : 'buyer', market: 'carbon' };
+      }
+      return { role: pageCtx.role, market: pageCtx.market };
+    }
+    var savedRole = isSignedIn ? (localStorage.getItem('bm_nav_role') || profileRole || 'buyer') : 'buyer';
     var savedMarket = localStorage.getItem('bm_nav_market') || 'biochar';
     return { role: savedRole, market: savedMarket };
   }
 
-  function navigate(role, market) {
+  function navigate(role, market, isSignedIn) {
+    var effectiveRole = isSignedIn ? role : 'buyer';
     if (market !== 'carbon') {
-      localStorage.setItem('bm_nav_role',   role);
+      localStorage.setItem('bm_nav_role',   effectiveRole);
       localStorage.setItem('bm_nav_market', market);
     }
-    var dest = DEST[role] && DEST[role][market] ? DEST[role][market] : 'buyer.html';
-    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    var dest = market === 'carbon'
+      ? 'carbon.html'
+      : (DEST[effectiveRole] && DEST[effectiveRole][market] ? DEST[effectiveRole][market] : 'buyer.html');
+    var currentPage = getCurrentPage();
     if (currentPage !== dest) window.location.href = dest;
   }
 
@@ -45,10 +64,12 @@
     var rSeller = document.getElementById('bm-role-seller');
     var mBio    = document.getElementById('bm-mkt-biochar');
     var mBio2   = document.getElementById('bm-mkt-biomass');
+    var mCarbon = document.getElementById('bm-mkt-carbon');
     if (rBuyer)  rBuyer.classList.toggle('active',  role   === 'buyer');
     if (rSeller) rSeller.classList.toggle('active', role   === 'seller');
     if (mBio)    mBio.classList.toggle('active',    market === 'biochar');
     if (mBio2)   mBio2.classList.toggle('active',   market === 'biomass');
+    if (mCarbon) mCarbon.classList.toggle('active', market === 'carbon');
   }
 
   function buildNav(user, profile) {
@@ -59,39 +80,35 @@
     nav.className = 'bm-nav';
     nav.id = 'bm-nav';
 
-    var currentPage = window.location.pathname.split('/').pop() || 'index.html';
+    var currentPage = getCurrentPage();
     var profileRole = profile ? profile.role : 'buyer';
-    var ctx = getContext(currentPage, profileRole);
+    var ctx = getContext(currentPage, profileRole, !!user);
     var role   = ctx.role;
     var market = ctx.market;
-    var isCarbon = market === 'carbon';
 
     var initial  = profile ? (profile.businessName || profile.name || '') : '';
     var initials = initial ? initial.charAt(0).toUpperCase() : '?';
 
     nav.innerHTML =
       '<div class="container bm-nav-inner">' +
-        '<a class="bm-nav-logo" href="index.html">Biochar.market</a>' +
-
-        (isCarbon
-          ? '<div style="flex:1;display:flex;justify-content:center">' +
-              '<div style="font-weight:600;color:#2D4A3E">Carbon Credits</div>' +
-            '</div>'
-          : (user
-            ? '<div style="display:flex;align-items:center;gap:var(--space-3);flex:1;justify-content:center">' +
-                '<div class="bm-mode-bar" style="gap:0">' +
-                  '<button id="bm-role-buyer"  class="bm-mode-btn' + (role==='buyer'  ? ' active buy'  : '') + '">Buyer</button>' +
+        '<a class="bm-nav-logo" href="index.html">' + BRAND_NAME + '</a>' +
+        '<div class="bm-nav-center">' +
+          '<div class="bm-nav-controls">' +
+            (user
+              ? '<div class="bm-mode-bar bm-mode-bar--role">' +
+                  '<button id="bm-role-buyer" class="bm-mode-btn' + (role==='buyer' ? ' active buy' : '') + '">Buyer</button>' +
                   '<button id="bm-role-seller" class="bm-mode-btn' + (role==='seller' ? ' active sell' : '') + '">Seller</button>' +
-                '</div>' +
-                '<div class="bm-mode-bar" style="gap:0">' +
-                  '<button id="bm-mkt-biochar" class="bm-mode-btn' + (market==='biochar' ? ' active buy'  : '') + '">Biochar</button>' +
-                  '<button id="bm-mkt-biomass" class="bm-mode-btn' + (market==='biomass' ? ' active sell' : '') + '">Biomass</button>' +
-                '</div>' +
-              '</div>'
-            : '<div style="flex:1"></div>')) +
+                '</div>'
+              : '') +
+            '<div class="bm-mode-bar bm-mode-bar--market">' +
+              '<button id="bm-mkt-biochar" class="bm-mode-btn' + (market==='biochar' ? ' active biochar' : '') + '">Biochar</button>' +
+              '<button id="bm-mkt-biomass" class="bm-mode-btn' + (market==='biomass' ? ' active biomass' : '') + '">Biomass</button>' +
+              '<button id="bm-mkt-carbon" class="bm-mode-btn' + (market==='carbon' ? ' active carbon' : '') + '">Carbon</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
 
         '<div class="bm-nav-right">' +
-          '<a href="carbon.html" class="bm-nav-link" style="color:#2D4A3E">Carbon Credits</a>' +
           (user ?
             '<div style="position:relative">' +
               '<button class="bm-avatar" id="bm-avatar-btn" title="Account">' +
@@ -118,12 +135,15 @@
       document.body.insertBefore(nav, document.body.firstChild);
     }
 
-    if (user && !isCarbon) {
-      document.getElementById('bm-role-buyer').addEventListener('click',  function() { navigate('buyer',  market); });
-      document.getElementById('bm-role-seller').addEventListener('click', function() { navigate('seller', market); });
-      document.getElementById('bm-mkt-biochar').addEventListener('click', function() { navigate(role, 'biochar'); });
-      document.getElementById('bm-mkt-biomass').addEventListener('click', function() { navigate(role, 'biomass'); });
+    if (user) {
+      document.getElementById('bm-role-buyer').addEventListener('click',  function() { navigate('buyer',  market, true); });
+      document.getElementById('bm-role-seller').addEventListener('click', function() { navigate('seller', market, true); });
+    }
+    document.getElementById('bm-mkt-biochar').addEventListener('click', function() { navigate(role, 'biochar', !!user); });
+    document.getElementById('bm-mkt-biomass').addEventListener('click', function() { navigate(role, 'biomass', !!user); });
+    document.getElementById('bm-mkt-carbon').addEventListener('click', function() { navigate(role, 'carbon', !!user); });
 
+    if (user) {
       var avatarBtn  = document.getElementById('bm-avatar-btn');
       var dropdown   = document.getElementById('bm-avatar-dropdown');
       avatarBtn.addEventListener('click', function(e) {
@@ -157,6 +177,7 @@
   window.AuthState = {
     user: null,
     profile: null,
+    getDefaultRoute: getDefaultRoute,
     onReady: function(cb) {
       firebase.auth().onAuthStateChanged(function(user) {
         window.AuthState.user = user;

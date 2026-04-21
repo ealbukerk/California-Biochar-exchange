@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Biochar.market - Seller</title>
+    <title>Verdure Markets - Seller</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css" />
@@ -843,7 +843,11 @@
       <div class="container" style="padding-top:var(--space-5)">
         <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-4);background:var(--color-accent-light);border:1px solid var(--color-accent);border-radius:var(--radius-md);padding:var(--space-4) var(--space-5)">
           <div style="font-size:var(--font-size-sm);color:var(--color-text-primary)">
-            <strong>Your listing is live.</strong> It will appear with an Unverified badge until reviewed by the platform.
+            <strong id="seller-submitted-title">Your listing is live.</strong>
+            <span id="seller-submitted-body">It will appear with an Unverified badge until reviewed by the platform.</span>
+            <div id="seller-submitted-actions" style="margin-top:var(--space-3);display:none;gap:var(--space-3);flex-wrap:wrap">
+              <a id="seller-submitted-view" href="#" class="btn btn-primary" style="font-size:var(--font-size-sm)">View listing</a>
+            </div>
           </div>
           <button id="seller-submitted-close" type="button" style="background:none;border:none;color:var(--color-accent);font-size:18px;cursor:pointer;line-height:1">×</button>
         </div>
@@ -1045,8 +1049,8 @@
           <!-- Step 4: Review -->
           <div class="wizard-panel" id="step-4">
             <div class="wizard-panel-inner">
-              <h2 class="wizard-step-title">Review your application</h2>
-              <p class="wizard-step-sub">Check everything below before submitting. Your listing will go live after our team reviews your application — typically within 2 business days.</p>
+              <h2 class="wizard-step-title">Review your listing</h2>
+              <p class="wizard-step-sub">Check everything below before publishing. Your listing will publish immediately and appear with an Unverified badge until the platform reviews it.</p>
               <div class="review-layout">
                 <div class="review-summary" id="review-summary"></div>
                 <div class="review-preview-col">
@@ -1071,7 +1075,7 @@
 
               <div class="wizard-nav">
                 <button class="btn btn-secondary wizard-back" data-to="3">← Back</button>
-                <button class="btn btn-primary" id="wizard-submit-btn">Submit application</button>
+                <button class="btn btn-primary" id="wizard-submit-btn">Publish listing</button>
               </div>
             </div>
           </div>
@@ -1082,7 +1086,7 @@
 
     <footer class="site-footer">
       <div class="container footer-inner">
-        <span>© 2025 Biochar.market</span>
+        <span>© 2025 Verdure Markets</span>
         <span>United States · 2025</span>
       </div>
     </footer>
@@ -1093,7 +1097,28 @@
         if (params.get('submitted') !== 'true') return;
         var banner = document.getElementById('seller-submitted-banner');
         var closeBtn = document.getElementById('seller-submitted-close');
+        var titleEl = document.getElementById('seller-submitted-title');
+        var bodyEl = document.getElementById('seller-submitted-body');
+        var actionsEl = document.getElementById('seller-submitted-actions');
+        var viewEl = document.getElementById('seller-submitted-view');
+        var visibility = params.get('visibility') || 'live';
+        var listingId = params.get('listingId') || '';
+        var count = parseInt(params.get('count') || '1', 10);
         if (banner) banner.style.display = 'block';
+        if (titleEl && bodyEl) {
+          if (visibility === 'live') {
+            titleEl.textContent = count > 1 ? 'Your listings are live.' : 'Your listing is live.';
+            bodyEl.textContent = ' They will appear with an Unverified badge until reviewed by the platform.';
+          } else {
+            titleEl.textContent = count > 1 ? 'Your listings were created.' : 'Your listing was created.';
+            bodyEl.textContent = ' It is saved successfully and will appear in browse once its availability window is close enough to be shown.';
+          }
+        }
+        if (actionsEl && viewEl && listingId) {
+          actionsEl.style.display = 'flex';
+          viewEl.href = 'listing.html?id=' + encodeURIComponent(listingId);
+          viewEl.textContent = count > 1 ? 'View first new listing' : 'View listing';
+        }
         if (closeBtn) {
           closeBtn.addEventListener('click', function() {
             if (banner) banner.style.display = 'none';
