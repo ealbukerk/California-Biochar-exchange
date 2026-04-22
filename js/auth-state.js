@@ -10,6 +10,8 @@
     'feedstock.html':            { role: 'buyer',  market: 'biomass' },
     'feedstock-listing.html':    { role: 'buyer',  market: 'biomass' },
     'producer-demand-browse.html':{ role: 'buyer', market: 'biomass' },
+    'what-is-an-aggregator.html': { role: 'buyer', market: 'biomass' },
+    'partner-assistance.html':    { role: 'buyer', market: 'biomass' },
     'seller.html':               { role: 'seller', market: 'biochar' },
     'apply-wizard.html':         { role: 'seller', market: 'biochar' },
     'list-feedstock.html':       { role: 'seller', market: 'biomass' },
@@ -24,6 +26,25 @@
     buyer:  { biochar: 'buyer.html',         biomass: 'feedstock.html' },
     seller: { biochar: 'seller.html',        biomass: 'list-feedstock.html' }
   };
+
+  function normalizeZip(value) {
+    var digits = String(value == null ? '' : value).replace(/\D/g, '').slice(0, 5);
+    return digits.length === 5 ? digits : '';
+  }
+
+  function normalizeProfile(profile, user) {
+    var normalized = Object.assign({}, profile || {});
+    normalized.email = String(normalized.email || (user && user.email) || '').trim();
+    normalized.name = String(normalized.name || '').trim();
+    normalized.businessName = String(normalized.businessName || '').trim();
+    normalized.businessStreet = String(normalized.businessStreet || '').trim();
+    normalized.state = String(normalized.state || '').trim();
+    normalized.zipcode = normalizeZip(normalized.zipcode);
+    normalized.phone = String(normalized.phone || '').trim();
+    normalized.businessWebsite = String(normalized.businessWebsite || '').trim();
+    normalized.supplierType = normalized.supplierType ? String(normalized.supplierType).trim() : null;
+    return normalized;
+  }
 
   function getCurrentPage() {
     return window.location.pathname.split('/').pop() || 'index.html';
@@ -164,10 +185,10 @@
       if (user) {
         firebase.firestore().collection('users').doc(user.uid).get()
           .then(function(doc) {
-            var profile = doc.exists ? doc.data() : null;
+            var profile = doc.exists ? normalizeProfile(doc.data(), user) : normalizeProfile(null, user);
             buildNav(user, profile);
           })
-          .catch(function() { buildNav(user, null); });
+          .catch(function() { buildNav(user, normalizeProfile(null, user)); });
       } else {
         buildNav(null, null);
       }
@@ -184,7 +205,7 @@
         if (user) {
           firebase.firestore().collection('users').doc(user.uid).get()
             .then(function(doc) {
-              window.AuthState.profile = doc.exists ? doc.data() : null;
+              window.AuthState.profile = doc.exists ? normalizeProfile(doc.data(), user) : normalizeProfile(null, user);
               var role = window.AuthState.profile ? window.AuthState.profile.role : 'buyer';
               buildNav(user, window.AuthState.profile);
               if (window.AuthState.profile && window.AuthState.profile.role === 'buyer') {
@@ -207,8 +228,10 @@
               }
             })
             .catch(function() {
-              buildNav(user, null);
-              if (cb) cb(user, null);
+              var fallbackProfile = normalizeProfile(null, user);
+              window.AuthState.profile = fallbackProfile;
+              buildNav(user, fallbackProfile);
+              if (cb) cb(user, fallbackProfile);
             });
         } else {
           window.AuthState.profile = null;
@@ -216,6 +239,11 @@
           if (cb) cb(null, null);
         }
       });
+    },
+    normalizeZip: normalizeZip,
+    normalizeProfile: normalizeProfile,
+    getProfileZip: function(profile) {
+      return normalizeZip(profile && profile.zipcode);
     }
   };
 

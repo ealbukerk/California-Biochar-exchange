@@ -21,6 +21,14 @@
   var currentStep = 1;
   var profileData = null;
 
+  function normalizeZip(value) {
+    if (window.AuthState && typeof window.AuthState.normalizeZip === 'function') {
+      return window.AuthState.normalizeZip(value);
+    }
+    var digits = String(value == null ? '' : value).replace(/\D/g, '').slice(0, 5);
+    return digits.length === 5 ? digits : '';
+  }
+
   function val(id) { return document.getElementById(id).value.trim(); }
 
   function getProfileField(key) {
@@ -28,7 +36,7 @@
   }
 
   function getDemandZip() {
-    return val('pd-zip') || getProfileField('zipcode');
+    return normalizeZip(val('pd-zip') || getProfileField('zipcode'));
   }
 
   function syncProfileFields(profile, user) {
@@ -37,7 +45,7 @@
     var name = getProfileField('name');
     var email = getProfileField('email') || (user && user.email) || '';
     var phone = getProfileField('phone');
-    var zipcode = getProfileField('zipcode');
+    var zipcode = normalizeZip(getProfileField('zipcode'));
 
     if (document.getElementById('pd-company')) document.getElementById('pd-company').value = businessName;
     if (document.getElementById('pd-name')) document.getElementById('pd-name').value = name;

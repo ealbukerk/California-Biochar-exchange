@@ -426,6 +426,11 @@
         var currentStep = 1;
         var selectedRole = "";
 
+        function normalizeZip(value) {
+          var digits = String(value == null ? "" : value).replace(/\D/g, "").slice(0, 5);
+          return digits.length === 5 ? digits : "";
+        }
+
         function authMessage(error) {
           var code = error && error.code ? error.code : "";
           if (code === "auth/email-already-in-use") return "An account with this email already exists";
@@ -568,9 +573,10 @@
           }
           if (step === 4) {
             var selectedState = document.getElementById("state-signup").value.trim();
-            var zipcode = document.getElementById("su-zipcode").value.trim();
+            var zipcode = normalizeZip(document.getElementById("su-zipcode").value);
             if (!selectedState) { signupError.textContent = "Please select a state."; return false; }
-            if (!/^[0-9]{5}$/.test(zipcode)) { signupError.textContent = "Please enter a valid 5-digit ZIP code."; return false; }
+            if (!zipcode) { signupError.textContent = "Please enter a valid 5-digit ZIP code."; return false; }
+            document.getElementById("su-zipcode").value = zipcode;
           }
           signupError.textContent = "";
           return true;
@@ -592,7 +598,7 @@
           var supplierType = document.getElementById("su-supplier-type").value.trim() || null;
           var street = document.getElementById("su-street").value.trim();
           var state = document.getElementById("state-signup").value.trim();
-          var zipcode = document.getElementById("su-zipcode").value.trim();
+          var zipcode = normalizeZip(document.getElementById("su-zipcode").value);
           var country = document.getElementById("su-country").value;
 
           var userData = {
@@ -642,7 +648,7 @@
           try {
             var userCredential = await auth.createUserWithEmailAndPassword(email, password);
             var uid = userCredential.user.uid;
-            db.collection("users").doc(uid).set(userData).catch(function () {
+            await db.collection("users").doc(uid).set(userData, { merge: true }).catch(function () {
               if (window.UIUtils) UIUtils.toast("Account created but profile could not be saved. Please refresh.", "error", 0);
             });
             signupSuccess.textContent = "Account created. Redirecting...";

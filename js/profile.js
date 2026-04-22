@@ -29,6 +29,14 @@
     repeatTarget: null
   };
 
+  function normalizeZip(value) {
+    if (window.AuthState && typeof window.AuthState.normalizeZip === "function") {
+      return window.AuthState.normalizeZip(value);
+    }
+    var digits = String(value == null ? "" : value).replace(/\D/g, "").slice(0, 5);
+    return digits.length === 5 ? digits : "";
+  }
+
   function htmlEscape(value) {
     return String(value == null ? "" : value)
       .replace(/&/g, "&amp;")
@@ -656,7 +664,7 @@
       phone: document.getElementById("profile-phone").value.trim(),
       businessStreet: document.getElementById("profile-street").value.trim(),
       state: document.getElementById("profile-state").value.trim(),
-      zipcode: document.getElementById("profile-zipcode").value.trim(),
+      zipcode: normalizeZip(document.getElementById("profile-zipcode").value),
       supplierType: document.getElementById("profile-supplier-type").value.trim() || null,
       acreage: parseFloat(document.getElementById("profile-acreage").value) || null,
       applicationRate: parseFloat(document.getElementById("profile-apprate").value) || null,
@@ -664,9 +672,15 @@
       ein: document.getElementById("profile-ein").value.trim()
     };
 
+    if (!updates.zipcode) {
+      setStatus("account-status", "Please enter a valid 5-digit ZIP code.", true);
+      return;
+    }
+
     try {
       await db.collection("users").doc(state.user.uid).update(updates);
       Object.assign(state.profile, updates);
+      if (window.AuthState && window.AuthState.profile) Object.assign(window.AuthState.profile, updates);
       state.editingAccount = false;
       renderAccountInfo();
       setStatus("account-status", "Profile updated.", false);
@@ -1016,6 +1030,10 @@
 
     var doc = await db.collection("users").doc(user.uid).get();
     state.profile = doc.exists ? doc.data() : { role: "buyer", email: user.email };
+    if (window.AuthState && typeof window.AuthState.normalizeProfile === "function") {
+      state.profile = window.AuthState.normalizeProfile(state.profile, user);
+      window.AuthState.profile = state.profile;
+    }
 
     if (!state.profile.email) {
       state.profile.email = user.email;

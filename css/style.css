@@ -446,6 +446,13 @@ nav {
   background: transparent;
 }
 
+.surface-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
 .partner-questions-section {
   background: var(--color-surface);
   border-bottom: 1px solid var(--color-border);
@@ -570,6 +577,55 @@ nav {
 .supported-partner-panel-text {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+}
+
+.supported-doc-card {
+  padding: var(--space-8);
+}
+
+.supported-doc-eyebrow {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-warning);
+}
+
+.supported-doc-lead {
+  margin-top: var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.supported-doc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.supported-doc-panel {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.supported-doc-panel h3 {
+  margin: 0 0 var(--space-2);
+}
+
+.supported-doc-panel p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.supported-doc-actions {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-6);
 }
 
 .biomass-match-row {

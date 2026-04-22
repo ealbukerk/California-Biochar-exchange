@@ -237,6 +237,14 @@
     var CLOUDINARY_PRESET = 'biochar_certs';
     var notifSaveTimer = null;
 
+    function normalizeZip(value) {
+      if (window.AuthState && typeof window.AuthState.normalizeZip === 'function') {
+        return window.AuthState.normalizeZip(value);
+      }
+      var digits = String(value == null ? '' : value).replace(/\D/g, '').slice(0, 5);
+      return digits.length === 5 ? digits : '';
+    }
+
     function renderSettingsAvatar(el, photoUrl, initials) {
       if (!el) return;
       if (photoUrl) {
@@ -338,17 +346,35 @@
       document.getElementById('save-account-btn').addEventListener('click', function() {
         var st = document.getElementById('account-status');
         var btn = document.getElementById('save-account-btn');
+        var normalizedZip = normalizeZip(document.getElementById('s-zipcode').value);
+        if (!normalizedZip) {
+          st.textContent = 'Please enter a valid 5-digit ZIP code';
+          st.style.color = '#DC2626';
+          return;
+        }
+        document.getElementById('s-zipcode').value = normalizedZip;
         if (window.UIUtils) UIUtils.setButtonLoading(btn, true, 'Saving...');
         firebase.firestore().collection('users').doc(user.uid).update({
-          name: document.getElementById('s-name').value,
-          businessName: document.getElementById('s-business').value,
-          phone: document.getElementById('s-phone').value,
-          businessStreet: document.getElementById('s-street').value,
-          zipcode: document.getElementById('s-zipcode').value,
-          state: document.getElementById('s-state').value,
-          businessWebsite: document.getElementById('s-website').value,
+          name: document.getElementById('s-name').value.trim(),
+          businessName: document.getElementById('s-business').value.trim(),
+          phone: document.getElementById('s-phone').value.trim(),
+          businessStreet: document.getElementById('s-street').value.trim(),
+          zipcode: normalizedZip,
+          state: document.getElementById('s-state').value.trim(),
+          businessWebsite: document.getElementById('s-website').value.trim(),
           supplierType: document.getElementById('s-supplier-type').value || null
         }).then(function() {
+          if (!window.AuthState.profile) window.AuthState.profile = {};
+          Object.assign(window.AuthState.profile, {
+            name: document.getElementById('s-name').value.trim(),
+            businessName: document.getElementById('s-business').value.trim(),
+            phone: document.getElementById('s-phone').value.trim(),
+            businessStreet: document.getElementById('s-street').value.trim(),
+            zipcode: normalizedZip,
+            state: document.getElementById('s-state').value.trim(),
+            businessWebsite: document.getElementById('s-website').value.trim(),
+            supplierType: document.getElementById('s-supplier-type').value || null
+          });
           if (window.UIUtils) UIUtils.setButtonLoading(btn, false);
           if (window.UIUtils) UIUtils.toast('Settings saved', 'success', 2200);
           st.textContent = '✓ Saved'; st.style.color = 'var(--color-accent)'; setTimeout(function(){st.textContent='';},3000);

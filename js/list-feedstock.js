@@ -44,6 +44,14 @@
   var verificationFiles = [];
   var profileData = null;
 
+  function normalizeZip(value) {
+    if (window.AuthState && typeof window.AuthState.normalizeZip === 'function') {
+      return window.AuthState.normalizeZip(value);
+    }
+    var digits = String(value == null ? '' : value).replace(/\D/g, '').slice(0, 5);
+    return digits.length === 5 ? digits : '';
+  }
+
   function val(id) {
     var el = document.getElementById(id);
     return el ? String(el.value || '').trim() : '';
@@ -77,7 +85,7 @@
   }
 
   function getListingZip() {
-    return val('f-zip') || getProfileField('zipcode');
+    return normalizeZip(val('f-zip') || getProfileField('zipcode'));
   }
 
   function getSelectedBiomassTypes() {
@@ -159,7 +167,7 @@
   function syncProfileFields(profile, user) {
     profileData = profile || profileData || {};
     var supplierType = getProfileField('supplierType');
-    var zipcode = getProfileField('zipcode');
+    var zipcode = normalizeZip(getProfileField('zipcode'));
     var name = getProfileField('name');
     var businessName = getProfileField('businessName');
     var email = getProfileField('email') || (user && user.email) || '';

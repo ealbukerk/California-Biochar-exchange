@@ -55,6 +55,14 @@
     unknown: 7
   };
 
+  function getCanonicalZip(profile) {
+    if (window.AuthState && typeof window.AuthState.getProfileZip === 'function') {
+      return window.AuthState.getProfileZip(profile);
+    }
+    var digits = String(profile && profile.zipcode || '').replace(/\D/g, '').slice(0, 5);
+    return digits.length === 5 ? digits : '';
+  }
+
   function scoreDots(score, max, lowerBetter) {
     var filled = Math.round((lowerBetter ? (max + 1 - score) : score) / max * 5);
     filled = Math.max(1, Math.min(5, filled));
@@ -792,6 +800,7 @@
 
   function injectDeliveredCosts() {
     var profile = window.AuthState && window.AuthState.profile ? window.AuthState.profile : null;
+    var buyerZip = getCanonicalZip(profile);
     var visibleListings = (_allFilteredListings || []).slice(0, _currentPage * LISTINGS_PAGE_SIZE);
     if (!window.DeliveredCost) {
       visibleListings.forEach(function (listing) {
@@ -813,7 +822,7 @@
       });
       return;
     }
-    if (!profile || !profile.zipcode) {
+    if (!profile || !buyerZip) {
       visibleListings.forEach(function (listing) {
         var targetEl = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
         if (targetEl) {
@@ -830,7 +839,7 @@
       target.textContent = 'Calculating delivered cost...';
       window.DeliveredCost.calc({
         producerZip: listing.locationZip,
-        buyerZip: profile.zipcode,
+        buyerZip: buyerZip,
         pricePerTonne: listing.pricePerTon || 0,
         tonnes: Math.max(1, listing.minimumPickupTons || listing.estimatedQuantityTons || 1),
         isBiochar: false,
@@ -844,71 +853,6 @@
         target.textContent = 'Cost unavailable';
       });
     });
-  }
-
-  function configureSupportedPartnerIntake(user, profile) {
-    var zipDisplay = document.getElementById('farmer-zip-display');
-    var stateTitle = document.getElementById('intake-state-title');
-    var stateCopy = document.getElementById('intake-state-copy');
-    var primary = document.getElementById('farmer-find-btn');
-    var secondary = document.getElementById('intake-secondary-link');
-    if (!zipDisplay || !stateTitle || !stateCopy || !primary || !secondary) return;
-
-    var zipcode = profile && profile.zipcode ? String(profile.zipcode).trim() : '';
-    var supplierType = profile && profile.supplierType ? String(profile.supplierType).trim() : '';
-    var isAggregator = supplierType === 'aggregator' || supplierType === 'broker';
-
-    zipDisplay.textContent = zipcode || (user ? 'Add your ZIP in profile' : 'Sign in to use your profile ZIP');
-
-    if (!user) {
-      stateTitle.textContent = 'Sign in to use the biomass intake.';
-      stateCopy.textContent = 'We use your saved ZIP and supplier profile to route you to the right next step without asking for duplicate business details.';
-      primary.textContent = 'Sign in →';
-      primary.onclick = function () { window.location.href = 'auth.html'; };
-      secondary.textContent = 'What is an aggregator?';
-      secondary.href = '#supported-partners';
-      return;
-    }
-
-    if (!zipcode) {
-      stateTitle.textContent = 'Add your ZIP to unlock partner guidance.';
-      stateCopy.textContent = 'ZIP is profile-owned in this flow. Once it is saved, we can route you toward the right supported partner path or direct listing path.';
-      primary.textContent = 'Update profile →';
-      primary.onclick = function () { window.location.href = 'settings.html'; };
-      secondary.textContent = 'What is an aggregator?';
-      secondary.href = '#supported-partners';
-      return;
-    }
-
-    if (isAggregator) {
-      stateTitle.textContent = 'Your profile is set up as an aggregator.';
-      stateCopy.textContent = 'Best next step: publish a bulk biomass listing. Supported partners still explain how consolidated supply moves through the platform.';
-      primary.textContent = 'List bulk supply →';
-      primary.onclick = function () { window.location.href = 'list-feedstock.html'; };
-      secondary.textContent = 'See supported partners';
-      secondary.href = '#supported-partners';
-      return;
-    }
-
-    if (!supplierType) {
-      stateTitle.textContent = 'Add your supplier type to tailor this intake.';
-      stateCopy.textContent = 'Supplier type is profile-owned. Once it is saved, we can tell whether the best next step is direct listing or working through a supported partner.';
-      primary.textContent = 'Update profile →';
-      primary.onclick = function () { window.location.href = 'settings.html'; };
-      secondary.textContent = 'See supported partners';
-      secondary.href = '#supported-partners';
-      return;
-    }
-
-    stateTitle.textContent = 'Choose the best biomass path for your operation.';
-    stateCopy.textContent = 'Use supported partners if you need consolidation help, or jump straight into a biomass listing if you already have enough consistent volume.';
-    primary.textContent = 'See supported partners →';
-    primary.onclick = function () {
-      var section = document.getElementById('supported-partners');
-      if (section && section.scrollIntoView) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-    secondary.textContent = 'List biomass supply';
-    secondary.href = 'list-feedstock.html';
   }
 
   function openModal(id) {
@@ -1291,7 +1235,7 @@
 
     function centerMapOnUser() {
       var zip = window.AuthState && window.AuthState.profile && window.AuthState.profile.zipcode
-        ? window.AuthState.profile.zipcode
+        ? getCanonicalZip(window.AuthState.profile)
         : null;
       if (!zip) return;
       geocodeZip(zip).then(function(c) {
@@ -1323,51 +1267,23 @@
     bindFilters();
     bindModal();
     initMap();
+    loadListings();
     if (window.AuthState && typeof window.AuthState.onReady === 'function') {
       window.AuthState.onReady(function(user, profile) {
-        configureSupportedPartnerIntake(user, profile);
-        if (profile && profile.zipcode) {
+        var canonicalZip = getCanonicalZip(profile);
+        if (profile && canonicalZip) {
           var radiusEl = document.getElementById('filter-radius');
           if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
-          setZip(profile.zipcode);
+          setZip(canonicalZip);
+        }
+        if (user) {
+          if (profile && profile.name) document.getElementById('modal-name').value = profile.name;
+          if (profile && profile.businessName) document.getElementById('modal-company').value = profile.businessName;
+          document.getElementById('modal-email').value = (profile && profile.email) || user.email || '';
         }
         if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
       });
     }
-    firebase.auth().onAuthStateChanged(function (user) {
-      var login = document.getElementById('nav-login');
-      var profile = document.getElementById('nav-profile');
-      var logout = document.getElementById('nav-logout');
-      if (user) {
-        if (login) login.classList.add('hidden');
-        if (profile) profile.classList.remove('hidden');
-        if (logout) {
-          logout.classList.remove('hidden');
-          logout.addEventListener('click', function () {
-            firebase.auth().signOut().then(function () { window.location.href = 'index.html'; });
-          });
-        }
-        firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
-          configureSupportedPartnerIntake(user, doc.exists ? doc.data() : {});
-          if (doc.exists && doc.data().zipcode) {
-            var z = doc.data().zipcode;
-            var radiusEl = document.getElementById('filter-radius');
-            if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
-            setZip(z);
-          }
-          if (doc.exists) {
-            var d = doc.data();
-            if (d.name) document.getElementById('modal-name').value = d.name;
-            if (d.businessName) document.getElementById('modal-company').value = d.businessName;
-            document.getElementById('modal-email').value = d.email || user.email || '';
-          }
-          if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
-        });
-      } else {
-        configureSupportedPartnerIntake(null, null);
-      }
-      loadListings();
-    });
     if (window._DEMAND_ENABLED !== false) renderDemandTab();
   }
 

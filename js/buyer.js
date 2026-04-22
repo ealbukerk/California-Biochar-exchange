@@ -9,6 +9,14 @@
     profile: null
   };
 
+  function getCanonicalZip(profileLike) {
+    if (window.AuthState && typeof window.AuthState.getProfileZip === 'function') {
+      return window.AuthState.getProfileZip(profileLike || state.profile);
+    }
+    var digits = String(profileLike && profileLike.zipcode || '').replace(/\D/g, '').slice(0, 5);
+    return digits.length === 5 ? digits : '';
+  }
+
   function getAllListings() {
     var demoListings = Array.isArray(window.LISTINGS) ? window.LISTINGS.slice() : [];
     var firestoreListings = Array.isArray(window._firestoreListings) ? window._firestoreListings.slice() : [];
@@ -1027,11 +1035,11 @@
       setBrowseDeliveredPlaceholder('Sign in to see delivered cost');
       return;
     }
-    if (!state.profile || !state.profile.zipcode) {
+    var buyerZip = getCanonicalZip(state.profile);
+    if (!state.profile || !buyerZip) {
       setBrowseDeliveredPlaceholder('Add your ZIP in profile to see delivered cost');
       return;
     }
-    var buyerZip = state.profile.zipcode;
     var appRateSlider = document.getElementById('pref-apprate-slider');
     var appRate = appRateSlider ? (parseFloat(appRateSlider.value) || 0) : (Number(state.profile.applicationRate) || 0);
     var slider = document.getElementById('pref-spread-slider');
@@ -1387,6 +1395,10 @@
         .get()
         .then(function (doc) {
           state.profile = doc.exists ? doc.data() : null;
+          if (window.AuthState && typeof window.AuthState.normalizeProfile === 'function') {
+            state.profile = window.AuthState.normalizeProfile(state.profile, user);
+            window.AuthState.profile = state.profile;
+          }
           if (state.profile && state.profile.role === 'seller') showProducerBanner();
           updateTopNav();
           renderHeroSlot();
@@ -1411,10 +1423,11 @@
             }
             if (appRateDisplay) appRateDisplay.textContent = '';
           }
-          if (state.profile && state.profile.zipcode) {
+          var canonicalZip = getCanonicalZip(state.profile);
+          if (state.profile && canonicalZip) {
             var radiusSelect = document.getElementById('filter-radius');
             if (radiusSelect && radiusSelect.value === '0') radiusSelect.value = '100';
-            geocodeBuyerZip(state.profile.zipcode).then(function(c) {
+            geocodeBuyerZip(canonicalZip).then(function(c) {
               buyerGeo.lat = c.lat;
               buyerGeo.lng = c.lng;
               renderBrowseListings();
