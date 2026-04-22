@@ -414,6 +414,13 @@ nav {
   color: var(--color-text-muted);
 }
 
+.match-reason-text {
+  margin-top: 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;

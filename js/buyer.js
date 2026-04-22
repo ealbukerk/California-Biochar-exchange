@@ -443,131 +443,244 @@
     return prefix + " — " + reasons.slice(0, -1).join(", ") + ", and " + reasons[reasons.length - 1] + ".";
   }
 
+  var BIOCHAR_MATCH_WEIGHTS = {
+    agronomic: 34,
+    chemistry: 16,
+    quality: 12,
+    scale: 10,
+    trust: 8,
+    economics: 14,
+    logistics: 6
+  };
+
+  function hasBiocharMatchProfile(profileLike) {
+    if (!profileLike) return false;
+    return Boolean(
+      (Array.isArray(profileLike.cropTypes) && profileLike.cropTypes.length) ||
+      profileLike.soilPH ||
+      profileLike.soilType ||
+      (Array.isArray(profileLike.soilIssues) && profileLike.soilIssues.length) ||
+      profileLike.organicCertified ||
+      profileLike.zipcode ||
+      profileLike.acreage ||
+      profileLike.applicationRate ||
+      profileLike.canSelfPickup
+    );
+  }
+
+  function addBucketReason(reasons, weight, ratio, positiveText, negativeText) {
+    var safeRatio = Math.max(0, Math.min(1, ratio));
+    var signedImpact = (safeRatio - 0.5) * weight;
+    var text = signedImpact >= 0 ? positiveText : negativeText;
+    if (!text) return;
+    reasons.push({
+      text: text,
+      impact: Math.abs(signedImpact),
+      direction: signedImpact >= 0 ? 'positive' : 'negative',
+      order: reasons.length
+    });
+  }
+
+  function topBucketReasons(reasons) {
+    return reasons.slice().sort(function (a, b) {
+      if (b.impact !== a.impact) return b.impact - a.impact;
+      if (a.direction !== b.direction) return a.direction === 'negative' ? -1 : 1;
+      return a.order - b.order;
+    }).slice(0, 3).map(function (reason) {
+      return reason.text;
+    });
+  }
+
+  function parseParticleMidpoint(value) {
+    if (!value) return null;
+    var matches = String(value).match(/\d+(\.\d+)?/g);
+    if (!matches || !matches.length) return null;
+    var nums = matches.map(function (n) { return parseFloat(n); }).filter(function (n) { return !isNaN(n); });
+    if (!nums.length) return null;
+    if (nums.length === 1) return nums[0];
+    return (nums[0] + nums[1]) / 2;
+  }
+
+  function estimateBuyerNeedTonnes(profileLike) {
+    var acreage = Number(profileLike && profileLike.acreage) || 0;
+    var applicationRate = Number(profileLike && profileLike.applicationRate) || 0;
+    if (acreage > 0 && applicationRate > 0) return acreage * applicationRate;
+    return null;
+  }
+
+  function estimateDeliveredProxy(listing, profileLike) {
+    var distanceMiles = getListingDistanceMiles(listing);
+    if (distanceMiles == null || !window.DeliveredCost || typeof window.DeliveredCost.getTruckRate !== 'function') {
+      return null;
+    }
+    var targetTonnes = Math.max(
+      Number(listing.minOrderTonnes) || 1,
+      Math.min(
+        Number(listing.availableTonnes) || Number(listing.minOrderTonnes) || 1,
+        Math.round(estimateBuyerNeedTonnes(profileLike) || 0) || Number(listing.minOrderTonnes) || 1
+      )
+    );
+    var moisturePct = listing.scorecard && typeof listing.scorecard.moisture === 'number' ? listing.scorecard.moisture : 0;
+    var physicalTons = typeof window.DeliveredCost.moistureAdjustedTons === 'function'
+      ? window.DeliveredCost.moistureAdjustedTons(targetTonnes, moisturePct)
+      : targetTonnes;
+    var truckloads = Math.ceil(Math.max(physicalTons, 1) / 20);
+    var ratePerMile = window.DeliveredCost.getTruckRate(distanceMiles);
+    var transportCostPerTonne = (distanceMiles * ratePerMile * 2 * truckloads) / Math.max(targetTonnes, 1);
+    return {
+      deliveredPerTonne: Number(listing.pricePerTonne || 0) + transportCostPerTonne,
+      distanceMiles: distanceMiles
+    };
+  }
+
   function scoreListingForInputs(listing, profileLike) {
+    // Biochar matching uses capped buckets so no one sub-factor can dominate.
     var score = 0;
     var reasons = [];
-
+    var scorecard = listing.scorecard || {};
     var crops = Array.isArray(profileLike.cropTypes) ? profileLike.cropTypes : [];
-    var cropMatches = crops.filter(function (crop) {
-      return listing.suitableFor.indexOf(crop) !== -1;
-    });
-    if (cropMatches.length) {
-      score += 30;
-      reasons.push("suitable for " + cropMatches[0].toLowerCase());
-    }
-
-    var soilPh = profileLike.soilPH || "";
-    if (soilPh === "Below 5.5" && listing.scorecard.pH > 7.0) {
-      score += 20;
-      reasons.push("alkaline profile aligns with low-pH soil");
-    } else if (soilPh === "5.5–6.5" && listing.scorecard.pH >= 6.5 && listing.scorecard.pH <= 8.0) {
-      score += 20;
-      reasons.push("pH compatibility in your target range");
-    } else if (soilPh === "Above 8.5" && listing.scorecard.pH < 7.5) {
-      score += 10;
-      reasons.push("more neutral pH for high-alkaline soils");
-    } else {
-      score += 10;
-    }
-
-    if (listing.availableTonnes >= 10) {
-      score += 15;
-      reasons.push("available in sufficient volume");
-    }
-
+    var suitableFor = Array.isArray(listing.suitableFor) ? listing.suitableFor : [];
     var soilType = profileLike.soilType || "";
     var soilIssues = Array.isArray(profileLike.soilIssues) ? profileLike.soilIssues : [];
-
-    if (soilIssues.indexOf("Low water retention") !== -1 && listing.scorecard.surfaceArea >= 300) {
-      score += 10;
-      reasons.push("high surface area addresses water retention");
-    }
-    if (soilIssues.indexOf("High salinity") !== -1 && listing.scorecard.electricalConductivity <= 1.5) {
-      score += 10;
-      reasons.push("low EC safe for salt-sensitive conditions");
-    }
-    if (soilIssues.indexOf("Compaction") !== -1 && listing.scorecard.particleSize) {
-      var ps = parseFloat(listing.scorecard.particleSize);
-      if (ps >= 1 && ps <= 4) {
-        score += 8;
-        reasons.push("particle size good for compacted soils");
-      }
-    }
-    if (soilType === "Sandy" && listing.scorecard.surfaceArea >= 200) {
-      score += 8;
-      reasons.push("high surface area beneficial for sandy soil");
-    }
-    if (soilType === "Clay" && listing.scorecard.particleSize) {
-      var psC = parseFloat(listing.scorecard.particleSize);
-      if (psC >= 2 && psC <= 6) {
-        score += 8;
-        reasons.push("coarser particle improves clay drainage");
-      }
-    }
-
-    if (listing.scorecard.carbonContent >= 70) {
-      score += 10;
-      reasons.push("high carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    } else if (listing.scorecard.carbonContent >= 60) {
-      score += 5;
-      reasons.push("solid carbon content (" + listing.scorecard.carbonContent.toFixed(1) + "%)");
-    }
-
-    if (listing.scorecard.labVerified) {
-      score += 10;
-      reasons.push("lab-verified");
-    }
-
     var organicFlag = String(profileLike.organicCertified || "").toLowerCase();
-    if (
-      (organicFlag === "yes" || organicFlag === "true") &&
-      (listing.certifications.indexOf("OMRI Listed") !== -1 || listing.certifications.indexOf("California Organic") !== -1)
-    ) {
-      score += 15;
-      reasons.push("organic-compatible certification");
-    }
+    var particleMid = parseParticleMidpoint(scorecard.particleSize);
 
-    var distanceScore = 0;
-    var profileZip = profileLike.zipcode || "";
-    if (profileZip && listing.producerZip) {
-      var cached = buyerGeo['_zip_' + listing.producerZip];
-      if (buyerGeo.lat && cached && cached.lat) {
-        var distMiles = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
-        if (distMiles <= 50) {
-          distanceScore = 20;
-          reasons.push("very close (" + Math.round(distMiles) + " mi away)");
-        } else if (distMiles <= 150) {
-          distanceScore = 15;
-          reasons.push("nearby (" + Math.round(distMiles) + " mi away)");
-        } else if (distMiles <= 300) {
-          distanceScore = 8;
-          reasons.push("regional distance (" + Math.round(distMiles) + " mi away)");
-        } else {
-          var reach = parseOptimalRadius(listing.optimalRadius);
-          distanceScore = 2;
-          if (reach && distMiles <= (reach * 1.5)) {
-            distanceScore = 4;
-            reasons.push("within producer service area");
-          } else if (!reach) {
-            reasons.push("nationwide service area");
-          }
-        }
-        if (profileLike.canSelfPickup && distMiles <= Number(profileLike.maxPickupRadius || 50)) {
-          score += 10;
-          reasons.push("Self-pickup available (+10)");
-        }
-      } else {
-        distanceScore = 5;
-        if (!parseOptimalRadius(listing.optimalRadius)) reasons.push("nationwide service area");
+    // Agronomic fit combines crop/application, soil issues, and soil type into one capped bucket.
+    var agronomicRatio = 0.18;
+    if (crops.length || soilIssues.length || soilType) {
+      var cropPart = 0.18;
+      if (crops.length) {
+        var cropMatches = crops.filter(function (crop) { return suitableFor.indexOf(crop) !== -1; });
+        if (cropMatches.length) cropPart = 1;
+        else if (suitableFor.length) cropPart = 0.08;
       }
-    } else {
-      distanceScore = 5;
-      if (!parseOptimalRadius(listing.optimalRadius)) reasons.push("nationwide service area");
-    }
-    score += distanceScore;
 
-    var normalized = Math.min(score, 100);
-    return { listing: listing, score: normalized, explanation: buildExplanation(normalized, reasons) };
+      var issuesPart = 0.2;
+      if (soilIssues.length) {
+        var issueSignals = [];
+        if (soilIssues.indexOf("Low water retention") !== -1) {
+          issueSignals.push(scorecard.surfaceArea >= 300 ? 1 : scorecard.surfaceArea >= 220 ? 0.65 : scorecard.surfaceArea ? 0.18 : 0.12);
+        }
+        if (soilIssues.indexOf("High salinity") !== -1) {
+          issueSignals.push(scorecard.electricalConductivity <= 1.2 ? 1 : scorecard.electricalConductivity <= 2.2 ? 0.5 : scorecard.electricalConductivity ? 0.12 : 0.12);
+        }
+        if (soilIssues.indexOf("Compaction") !== -1) {
+          issueSignals.push(particleMid != null ? (particleMid >= 1 && particleMid <= 4 ? 0.95 : particleMid <= 6 ? 0.55 : 0.15) : 0.15);
+        }
+        if (soilIssues.indexOf("Low organic matter") !== -1) {
+          issueSignals.push(scorecard.carbonContent >= 75 ? 0.95 : scorecard.carbonContent >= 65 ? 0.65 : scorecard.carbonContent ? 0.25 : 0.15);
+        }
+        if (issueSignals.length) {
+          issuesPart = issueSignals.reduce(function (sum, value) { return sum + value; }, 0) / issueSignals.length;
+        }
+      }
+
+      var soilTypePart = 0.25;
+      if (soilType === "Sandy") {
+        soilTypePart = scorecard.surfaceArea >= 250 ? 0.95 : scorecard.surfaceArea >= 180 ? 0.65 : scorecard.surfaceArea ? 0.22 : 0.18;
+      } else if (soilType === "Clay") {
+        soilTypePart = particleMid != null ? (particleMid >= 2 && particleMid <= 6 ? 0.9 : particleMid >= 1 && particleMid <= 8 ? 0.55 : 0.18) : 0.18;
+      } else if (soilType === "Loam") {
+        soilTypePart = 0.6;
+      }
+
+      agronomicRatio = (cropPart * 0.45) + (issuesPart * 0.35) + (soilTypePart * 0.2);
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.agronomic * agronomicRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.agronomic, agronomicRatio, agronomicRatio >= 0.7 ? 'Strong agronomic fit' : 'Some agronomic alignment', agronomicRatio <= 0.25 ? 'Weak agronomic fit' : 'Mixed agronomic fit');
+
+    var chemistryRatio = 0.28;
+    var listingPh = Number(scorecard.pH);
+    if (profileLike.soilPH && listingPh) {
+      if (profileLike.soilPH === "Below 5.5") chemistryRatio = listingPh >= 8.2 ? 1 : listingPh >= 7.4 ? 0.7 : listingPh >= 6.6 ? 0.32 : 0.08;
+      else if (profileLike.soilPH === "5.5–6.5") chemistryRatio = (listingPh >= 7.0 && listingPh <= 8.2) ? 1 : (listingPh >= 6.4 && listingPh <= 8.8) ? 0.6 : 0.2;
+      else if (profileLike.soilPH === "6.5–7.5") chemistryRatio = (listingPh >= 7.2 && listingPh <= 8.3) ? 0.82 : (listingPh >= 6.6 && listingPh <= 8.8) ? 0.5 : 0.16;
+      else if (profileLike.soilPH === "Above 8.5") chemistryRatio = listingPh <= 7.6 ? 0.88 : listingPh <= 8.2 ? 0.45 : 0.08;
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.chemistry * chemistryRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.chemistry, chemistryRatio, chemistryRatio >= 0.72 ? 'pH profile aligns well' : 'pH fit looks acceptable', chemistryRatio <= 0.18 ? 'pH fit looks weak' : 'pH fit is mixed');
+
+    var qualitySignals = [];
+    qualitySignals.push(scorecard.carbonContent >= 75 ? 1 : scorecard.carbonContent >= 65 ? 0.72 : scorecard.carbonContent >= 55 ? 0.42 : scorecard.carbonContent ? 0.18 : 0.2);
+    var surfaceNeed = soilIssues.indexOf("Low water retention") !== -1 || soilType === "Sandy";
+    qualitySignals.push(surfaceNeed ? (scorecard.surfaceArea >= 250 ? 1 : scorecard.surfaceArea >= 180 ? 0.65 : scorecard.surfaceArea ? 0.18 : 0.15) : (scorecard.surfaceArea >= 150 ? 0.7 : scorecard.surfaceArea ? 0.4 : 0.2));
+    qualitySignals.push(particleMid == null ? 0.2 : (particleMid >= 1 && particleMid <= 5 ? 0.8 : particleMid <= 8 ? 0.5 : 0.18));
+    qualitySignals.push(scorecard.electricalConductivity <= 1.5 ? 0.9 : scorecard.electricalConductivity <= 2.5 ? 0.55 : scorecard.electricalConductivity ? 0.18 : 0.22);
+    qualitySignals.push(scorecard.labVerified ? 0.92 : 0.2);
+    var qualityRatio = qualitySignals.reduce(function (sum, value) { return sum + value; }, 0) / qualitySignals.length;
+    score += BIOCHAR_MATCH_WEIGHTS.quality * qualityRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.quality, qualityRatio, qualityRatio >= 0.72 ? 'Strong material quality profile' : 'Material quality looks workable', qualityRatio <= 0.22 ? 'Material quality fit is weak' : 'Material quality is mixed');
+
+    var needTonnes = estimateBuyerNeedTonnes(profileLike);
+    var scaleRatio = 0.28;
+    if (needTonnes) {
+      var coverRatio = Number(listing.availableTonnes || 0) / Math.max(needTonnes, 1);
+      if (coverRatio >= 0.75) scaleRatio = 1;
+      else if (coverRatio >= 0.4) scaleRatio = 0.72;
+      else if (coverRatio >= 0.15) scaleRatio = 0.42;
+      else scaleRatio = 0.12;
+    } else {
+      var tonnes = Number(listing.availableTonnes || 0);
+      if (tonnes >= 50) scaleRatio = 0.88;
+      else if (tonnes >= 20) scaleRatio = 0.65;
+      else if (tonnes >= 5) scaleRatio = 0.4;
+      else scaleRatio = 0.16;
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.scale * scaleRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.scale, scaleRatio, scaleRatio >= 0.7 ? 'Supply volume fits likely need' : 'Supply volume could work', scaleRatio <= 0.2 ? 'Supply volume is probably undersized' : 'Supply volume may be tight');
+
+    var trustRatio = 0.08;
+    var organicNeeded = organicFlag === "yes" || organicFlag === "true";
+    var organicCertified = Array.isArray(listing.certifications) && (listing.certifications.indexOf("OMRI Listed") !== -1 || listing.certifications.indexOf("California Organic") !== -1);
+    if (listing.verifiedLevel2) trustRatio = 1;
+    else if (listing.verifiedLevel1 || listing.verified === true) trustRatio = 0.62;
+    else trustRatio = 0.05;
+    if (organicNeeded) {
+      trustRatio = Math.min(1, trustRatio + (organicCertified ? 0.3 : -0.08));
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.trust * trustRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.trust, trustRatio, organicNeeded && organicCertified ? 'Verified and organic-ready' : (trustRatio >= 0.6 ? 'Trusted seller signals' : 'Some trust signals present'), trustRatio <= 0.12 ? 'Limited trust and certification signals' : 'Trust signals are still developing');
+
+    var economicsRatio = 0.18;
+    var deliveredProxy = estimateDeliveredProxy(listing, profileLike);
+    if (deliveredProxy) {
+      var delivered = deliveredProxy.deliveredPerTonne;
+      if (delivered <= 360) economicsRatio = 1;
+      else if (delivered <= 460) economicsRatio = 0.82;
+      else if (delivered <= 560) economicsRatio = 0.56;
+      else if (delivered <= 700) economicsRatio = 0.28;
+      else economicsRatio = 0.1;
+      addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.economics, economicsRatio, 'Competitive delivered economics', delivered > 560 ? 'High delivered cost estimate' : 'Delivered economics are moderate');
+    } else {
+      var distanceMiles = getListingDistanceMiles(listing);
+      if (distanceMiles != null) {
+        if (distanceMiles <= 50) economicsRatio = 0.92;
+        else if (distanceMiles <= 150) economicsRatio = 0.7;
+        else if (distanceMiles <= 300) economicsRatio = 0.42;
+        else if (distanceMiles <= 500) economicsRatio = 0.22;
+        else economicsRatio = 0.1;
+        addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.economics, economicsRatio, distanceMiles <= 150 ? 'Logistics look efficient' : 'Regional freight is workable', distanceMiles > 300 ? 'Distance weakens delivered economics' : 'Distance adds some cost pressure');
+      } else {
+        economicsRatio = 0.22;
+        addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.economics, economicsRatio, 'Delivered economics look workable', 'Delivered economics are uncertain');
+      }
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.economics * economicsRatio;
+
+    var logisticsRatio = 0.2;
+    if (profileLike.canSelfPickup) {
+      logisticsRatio = canSelfPickupListing(listing, profileLike) ? 1 : 0.12;
+    } else if (parseOptimalRadius(listing.optimalRadius)) {
+      logisticsRatio = 0.5;
+    } else {
+      logisticsRatio = 0.35;
+    }
+    score += BIOCHAR_MATCH_WEIGHTS.logistics * logisticsRatio;
+    addBucketReason(reasons, BIOCHAR_MATCH_WEIGHTS.logistics, logisticsRatio, logisticsRatio >= 0.9 ? 'Self-pickup available' : 'Logistics look manageable', logisticsRatio <= 0.15 ? 'Pickup flexibility is limited' : 'Logistics preferences are only partly met');
+
+    var normalized = Math.round(Math.max(0, Math.min(100, score)));
+    var topReasons = topBucketReasons(reasons);
+    return { listing: listing, score: normalized, explanation: buildExplanation(normalized, topReasons), reasons: topReasons };
   }
 
   function listingCardHtml(listing, extraScore, explanation, options) {
@@ -649,7 +762,9 @@
       '<div style="margin-top:2px">' + renderAvailabilityIndicator(listing) + '</div>' +
 
       (typeof extraScore === 'number'
-        ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div></div>'
+        ? '<div><div style="display:flex;justify-content:space-between;font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:4px"><span>Match</span><span>' + htmlEscape(extraScore) + '%</span></div><div class="match-score-bar"><div class="match-score-fill" style="width:' + htmlEscape(extraScore) + '%"></div></div>' +
+            (explanation ? '<div class="match-reason-text">' + htmlEscape(explanation) + '</div>' : '') +
+          '</div>'
         : '') +
 
       '</div>' +
@@ -774,8 +889,6 @@
         if (cached === undefined) return true;
         if (cached === null) return true;
         var dist = haversineB(buyerGeo.lat, buyerGeo.lng, cached.lat, cached.lng);
-        var sellerReach = parseOptimalRadius(listing.optimalRadius);
-        if (sellerReach && dist > sellerReach * 1.5) return false;
         if (radiusMiles > 0 && dist > radiusMiles) return false;
       }
 
@@ -826,7 +939,7 @@
     var heading = document.getElementById("listings-heading");
     var subhead = document.getElementById("listings-subhead");
 
-    var hasProfile = state.user && state.profile && Array.isArray(state.profile.cropTypes) && state.profile.cropTypes.length > 0;
+    var hasProfile = state.user && hasBiocharMatchProfile(state.profile);
 
     if (hasProfile) {
       filtered = filtered.map(function(listing) {

@@ -75,15 +75,15 @@
   }
 
   var MATCH_WEIGHTS = {
-    type: 24,
-    distance: 18,
+    type: 22,
+    distance: 14,
     moisture: 14,
-    contamination: 14,
+    contamination: 16,
     particle: 8,
-    quantity: 10,
-    loading: 6,
-    verification: 6,
-    availability: 8
+    quantity: 12,
+    loading: 4,
+    verification: 4,
+    availability: 6
   };
 
   var MOISTURE_LEVEL = {
@@ -145,177 +145,241 @@
     return { score: MATCH_WEIGHTS.availability * 0.3, summary: 'Availability not specified' };
   }
 
-  // Hard filters remove fundamental incompatibilities; weighted factors rank the rest.
+  function biomassFamily(type) {
+    if (!type) return '';
+    if (['orchard_prunings', 'almond_shells', 'pistachio_shells', 'walnut_shells', 'corn_stover', 'rice_husks'].indexOf(type) !== -1) return 'ag';
+    if (['forestry_slash', 'logging_residue', 'thinning_material'].indexOf(type) !== -1) return 'forest';
+    if (['clean_wood_waste', 'construction_wood', 'tree_service_chips'].indexOf(type) !== -1) return 'urban';
+    return '';
+  }
+
+  function addMatchReason(reasons, weight, ratio, positiveText, negativeText) {
+    var safeRatio = Math.max(0, Math.min(1, ratio));
+    var signedImpact = (safeRatio - 0.5) * weight;
+    var text = signedImpact >= 0 ? positiveText : negativeText;
+    if (!text) return;
+    reasons.push({
+      text: text,
+      impact: Math.abs(signedImpact),
+      direction: signedImpact >= 0 ? 'positive' : 'negative',
+      ratio: safeRatio,
+      weight: weight,
+      order: reasons.length
+    });
+  }
+
+  function topMatchReasons(reasons) {
+    return reasons.slice().sort(function(a, b) {
+      if (b.impact !== a.impact) return b.impact - a.impact;
+      if (a.direction !== b.direction) return a.direction === 'negative' ? -1 : 1;
+      return a.order - b.order;
+    }).slice(0, 3).map(function(reason) {
+      return reason.text;
+    });
+  }
+
   function evaluateListingMatch(listing, profile) {
     if (!profile) return null;
 
+    // Biomass matching is bucketed and normalized so poor fits stay visible.
     var score = 0;
     var possible = 0;
-    var breakdown = [];
-    var hardReasons = [];
+    var reasons = [];
     var acceptedTypes = Array.isArray(profile.acceptedBiomassTypes) ? profile.acceptedBiomassTypes : [];
     var listingTypes = listing.biomassTypes && listing.biomassTypes.length ? listing.biomassTypes : [listing.biomassType];
     var overlap = listingTypes.filter(function (type) { return acceptedTypes.indexOf(type) !== -1; });
 
-    if (acceptedTypes.length) {
-      if (!overlap.length) {
-        hardReasons.push('Biomass type incompatible');
-      } else {
-        possible += MATCH_WEIGHTS.type;
-        if (acceptedTypes.indexOf(listing.biomassType) !== -1) {
-          score += MATCH_WEIGHTS.type;
-          breakdown.push('Direct biomass type match');
-        } else {
-          score += MATCH_WEIGHTS.type * 0.75;
-          breakdown.push('Accepted biomass category');
-        }
-      }
+    possible += MATCH_WEIGHTS.type;
+    if (!acceptedTypes.length) {
+      score += MATCH_WEIGHTS.type * 0.3;
+      addMatchReason(reasons, MATCH_WEIGHTS.type, 0.3, 'Feedstock preferences are flexible', 'Feedstock preferences not fully specified');
+    } else if (!listingTypes.length || !listingTypes[0]) {
+      score += MATCH_WEIGHTS.type * 0.16;
+      addMatchReason(reasons, MATCH_WEIGHTS.type, 0.16, 'Broad material compatibility', 'Material type not clearly specified');
+    } else if (acceptedTypes.indexOf(listing.biomassType) !== -1) {
+      score += MATCH_WEIGHTS.type;
+      addMatchReason(reasons, MATCH_WEIGHTS.type, 1, 'Strong type match', 'Weak type fit');
+    } else if (overlap.length) {
+      score += MATCH_WEIGHTS.type * 0.8;
+      addMatchReason(reasons, MATCH_WEIGHTS.type, 0.8, 'Compatible biomass family', 'Weak type fit');
+    } else {
+      var familyOverlap = listingTypes.some(function(type) {
+        var family = biomassFamily(type);
+        return family && acceptedTypes.some(function(candidate) { return biomassFamily(candidate) === family; });
+      });
+      var typeRatio = familyOverlap ? 0.38 : 0.06;
+      score += MATCH_WEIGHTS.type * typeRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.type, typeRatio, familyOverlap ? 'Broad biomass family overlap' : 'Broad discovery fit', familyOverlap ? 'Only a loose type-family fit' : 'Weak biomass type fit');
     }
 
     var dist = typeof listing._dist === 'number' ? listing._dist : null;
     var optimalRadius = parseMiles(profile.optimalRadius);
-    if (optimalRadius && dist != null) {
-      var hardLimit = Math.round(optimalRadius * 1.5);
-      if (dist > hardLimit) {
-        hardReasons.push('Outside sourcing radius');
-      } else {
-        possible += MATCH_WEIGHTS.distance;
-        if (dist <= optimalRadius * 0.5) {
-          score += MATCH_WEIGHTS.distance;
-          breakdown.push('Well within sourcing radius');
-        } else if (dist <= optimalRadius) {
-          score += MATCH_WEIGHTS.distance * 0.82;
-          breakdown.push('Within sourcing radius');
-        } else {
-          score += MATCH_WEIGHTS.distance * 0.45;
-          breakdown.push('Stretch distance but still workable');
-        }
-      }
+    possible += MATCH_WEIGHTS.distance;
+    if (optimalRadius && dist != null && optimalRadius > 0) {
+      var distanceRatio = dist / optimalRadius;
+      var distanceScoreRatio = 0.1;
+      if (distanceRatio <= 0.5) distanceScoreRatio = 1;
+      else if (distanceRatio <= 1) distanceScoreRatio = 0.82;
+      else if (distanceRatio <= 1.5) distanceScoreRatio = 0.5;
+      else if (distanceRatio <= 2) distanceScoreRatio = 0.28;
+      score += MATCH_WEIGHTS.distance * distanceScoreRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.distance, distanceScoreRatio, distanceRatio <= 1 ? 'Within preferred sourcing radius' : 'Stretch haul but still workable', distanceRatio <= 2 ? 'Long haul distance' : 'Very long haul distance');
     } else if (dist != null) {
-      possible += MATCH_WEIGHTS.distance;
-      if (dist <= 50) {
-        score += MATCH_WEIGHTS.distance;
-        breakdown.push('Nearby supplier');
-      } else if (dist <= 150) {
-        score += MATCH_WEIGHTS.distance * 0.7;
-      } else if (dist <= 300) {
-        score += MATCH_WEIGHTS.distance * 0.4;
-      }
+      var baseDistanceRatio = 0.18;
+      if (dist <= 50) baseDistanceRatio = 1;
+      else if (dist <= 150) baseDistanceRatio = 0.72;
+      else if (dist <= 300) baseDistanceRatio = 0.42;
+      else if (dist <= 500) baseDistanceRatio = 0.22;
+      score += MATCH_WEIGHTS.distance * baseDistanceRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.distance, baseDistanceRatio, dist <= 150 ? 'Nearby supplier' : 'Regional supply option', dist > 300 ? 'Long haul distance' : 'Moderate haul distance');
+    } else {
+      score += MATCH_WEIGHTS.distance * 0.18;
+      addMatchReason(reasons, MATCH_WEIGHTS.distance, 0.18, 'Distance fit looks workable', 'Distance unknown');
     }
 
     var moistureConstraint = profile.maxMoistureAccepted || '';
     var listingMoisture = listing.moistureContent || '';
+    possible += MATCH_WEIGHTS.moisture;
     if (moistureConstraint && moistureConstraint !== 'any') {
-      possible += MATCH_WEIGHTS.moisture;
       if (!listingMoisture || !MOISTURE_LEVEL[listingMoisture]) {
-        score += MATCH_WEIGHTS.moisture * 0.2;
+        score += MATCH_WEIGHTS.moisture * 0.18;
+        addMatchReason(reasons, MATCH_WEIGHTS.moisture, 0.18, 'Moisture fit looks workable', 'Moisture data missing');
       } else {
         var listingLevel = MOISTURE_LEVEL[listingMoisture];
+        var moistureRatio = 0.12;
         if (moistureConstraint === 'under_15') {
-          if (listingLevel >= 3) hardReasons.push('Too wet for process');
-          else if (listingLevel === 1) {
-            score += MATCH_WEIGHTS.moisture;
-            breakdown.push('Dry enough for tighter moisture spec');
-          } else {
-            score += MATCH_WEIGHTS.moisture * 0.55;
-          }
+          if (listingLevel === 1) moistureRatio = 0.92;
+          else if (listingLevel === 2) moistureRatio = 0.4;
+          else moistureRatio = 0.08;
         } else if (moistureConstraint === 'under_25') {
-          if (listingLevel >= 3) hardReasons.push('Too wet for process');
-          else if (listingLevel === 1) {
-            score += MATCH_WEIGHTS.moisture;
-            breakdown.push('Low moisture material');
-          } else {
-            score += MATCH_WEIGHTS.moisture * 0.8;
-          }
+          if (listingLevel === 1) moistureRatio = 1;
+          else if (listingLevel === 2) moistureRatio = 0.8;
+          else if (listingLevel === 3) moistureRatio = 0.14;
+          else moistureRatio = 0.05;
         } else if (moistureConstraint === 'under_40') {
-          if (listingLevel === 4) hardReasons.push('Too wet for process');
-          else {
-            score += listingLevel === 1 ? MATCH_WEIGHTS.moisture : MATCH_WEIGHTS.moisture * 0.8;
-            breakdown.push('Moisture within tolerance');
-          }
+          if (listingLevel === 1) moistureRatio = 1;
+          else if (listingLevel === 2) moistureRatio = 0.88;
+          else if (listingLevel === 3) moistureRatio = 0.7;
+          else moistureRatio = 0.12;
+        } else {
+          moistureRatio = listingLevel <= 2 ? 0.65 : 0.3;
         }
+        score += MATCH_WEIGHTS.moisture * moistureRatio;
+        addMatchReason(reasons, MATCH_WEIGHTS.moisture, moistureRatio, moistureRatio >= 0.75 ? 'Good moisture fit' : 'Borderline moisture fit', moistureRatio <= 0.15 ? 'Moisture likely too high' : 'Moisture fit is weak');
       }
+    } else if (listingMoisture && MOISTURE_LEVEL[listingMoisture]) {
+      var unconstrainedMoistureRatio = MOISTURE_LEVEL[listingMoisture] === 1 ? 0.58 : MOISTURE_LEVEL[listingMoisture] === 2 ? 0.5 : MOISTURE_LEVEL[listingMoisture] === 3 ? 0.34 : 0.18;
+      score += MATCH_WEIGHTS.moisture * unconstrainedMoistureRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.moisture, unconstrainedMoistureRatio, 'Moisture profile looks manageable', 'High moisture adds processing risk');
+    } else {
+      score += MATCH_WEIGHTS.moisture * 0.22;
+      addMatchReason(reasons, MATCH_WEIGHTS.moisture, 0.22, 'Moisture fit looks workable', 'Moisture data missing');
     }
 
     var contamTolerance = parseInt(profile.contaminationTolerance, 10);
     var contamScore = contaminationAvg(listing);
-    if (!Number.isNaN(contamTolerance) && contamTolerance > 0) {
-      possible += MATCH_WEIGHTS.contamination;
-      if (contamScore > contamTolerance) {
-        hardReasons.push('Contamination above tolerance');
-      } else if (contamScore <= 1.5) {
-        score += MATCH_WEIGHTS.contamination;
-        breakdown.push('Clean contamination profile');
-      } else {
-        score += MATCH_WEIGHTS.contamination * Math.max(0.35, 1 - ((contamScore - 1) / 5));
+    possible += MATCH_WEIGHTS.contamination;
+    if (typeof contamScore === 'number' && !Number.isNaN(contamScore)) {
+      var contaminationRatio = Math.max(0.04, 1 - Math.pow(Math.max(contamScore - 1, 0) / 4, 1.45));
+      if (!Number.isNaN(contamTolerance) && contamTolerance > 0 && contamScore > contamTolerance) {
+        contaminationRatio = Math.min(contaminationRatio, 0.08);
       }
+      score += MATCH_WEIGHTS.contamination * contaminationRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.contamination, contaminationRatio, contamScore <= 1.5 ? 'Clean contamination profile' : 'Contamination is manageable', contaminationRatio <= 0.12 ? 'High contamination risk' : 'Moderate contamination risk');
+    } else {
+      score += MATCH_WEIGHTS.contamination * 0.2;
+      addMatchReason(reasons, MATCH_WEIGHTS.contamination, 0.2, 'Contamination profile looks workable', 'Contamination data missing');
     }
 
     var preferredParticleGroups = inferPreferredParticleGroups(profile);
+    possible += MATCH_WEIGHTS.particle;
     if (preferredParticleGroups && preferredParticleGroups.length) {
-      possible += MATCH_WEIGHTS.particle;
-      if (!listing.particleSize || !PARTICLE_GROUP[listing.particleSize]) {
-        score += MATCH_WEIGHTS.particle * 0.2;
-      } else if (preferredParticleGroups.indexOf(PARTICLE_GROUP[listing.particleSize]) !== -1 || listing.particleSize === 'mixed') {
-        score += MATCH_WEIGHTS.particle;
-        breakdown.push('Particle size aligns');
-      } else {
-        score += MATCH_WEIGHTS.particle * 0.25;
-      }
+      var listingGroup = listing.particleSize ? PARTICLE_GROUP[listing.particleSize] : '';
+      var particleRatio = 0.18;
+      if (!listingGroup) particleRatio = 0.18;
+      else if (listing.particleSize === 'mixed') particleRatio = 0.42;
+      else if (preferredParticleGroups.indexOf(listingGroup) !== -1) particleRatio = 1;
+      else if ((preferredParticleGroups.indexOf('fine') !== -1 && listingGroup === 'medium') || (preferredParticleGroups.indexOf('medium') !== -1 && (listingGroup === 'fine' || listingGroup === 'coarse')) || (preferredParticleGroups.indexOf('coarse') !== -1 && listingGroup === 'medium')) particleRatio = 0.62;
+      else if (listingGroup === 'baled' || listingGroup === 'mixed') particleRatio = 0.32;
+      else particleRatio = 0.12;
+      score += MATCH_WEIGHTS.particle * particleRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.particle, particleRatio, particleRatio >= 0.75 ? 'Particle size fits your process' : 'Particle size could still work', particleRatio <= 0.2 ? 'Poor particle-size fit' : 'Particle size is only a weak fit');
+    } else {
+      score += MATCH_WEIGHTS.particle * 0.26;
+      addMatchReason(reasons, MATCH_WEIGHTS.particle, 0.26, 'Particle size looks workable', 'Particle-size needs are not fully specified');
     }
 
-    if (profile.annualCapacity && listing.minimumPickupTons) {
-      possible += MATCH_WEIGHTS.quantity;
-      if (listing.minimumPickupTons > profile.annualCapacity) {
-        hardReasons.push('Minimum pickup exceeds capacity');
-      } else {
-        var capacityRatio = listing.minimumPickupTons / Math.max(profile.annualCapacity, 1);
-        if (capacityRatio <= 0.15) {
-          score += MATCH_WEIGHTS.quantity;
-          breakdown.push('Pickup size fits capacity');
-        } else if (capacityRatio <= 0.35) {
-          score += MATCH_WEIGHTS.quantity * 0.72;
-        } else {
-          score += MATCH_WEIGHTS.quantity * 0.45;
-        }
+    possible += MATCH_WEIGHTS.quantity;
+    var annualCapacity = Number(profile.annualCapacity) || 0;
+    var minimumPickup = Number(listing.minimumPickupTons || listing.minimumPickup || 0) || 0;
+    var availableTons = Number(listing.estimatedQuantityTons || listing.quantityTons || 0) || 0;
+    var minPickupRatio = 0.35;
+    var usefulScaleRatio = 0.35;
+    if (annualCapacity > 0) {
+      if (!minimumPickup) minPickupRatio = 0.45;
+      else {
+        var pickupShare = minimumPickup / annualCapacity;
+        if (pickupShare <= 0.12) minPickupRatio = 1;
+        else if (pickupShare <= 0.3) minPickupRatio = 0.78;
+        else if (pickupShare <= 0.6) minPickupRatio = 0.45;
+        else minPickupRatio = 0.08;
       }
-    } else if (listing.minimumPickupTons) {
-      possible += MATCH_WEIGHTS.quantity;
-      score += listing.minimumPickupTons <= 50 ? MATCH_WEIGHTS.quantity * 0.8 : MATCH_WEIGHTS.quantity * 0.45;
+      if (!availableTons) usefulScaleRatio = 0.28;
+      else {
+        var supplyShare = availableTons / annualCapacity;
+        if (supplyShare >= 0.15 && supplyShare <= 1.25) usefulScaleRatio = 1;
+        else if ((supplyShare >= 0.05 && supplyShare < 0.15) || (supplyShare > 1.25 && supplyShare <= 2.5)) usefulScaleRatio = 0.68;
+        else if ((supplyShare >= 0.02 && supplyShare < 0.05) || (supplyShare > 2.5 && supplyShare <= 4)) usefulScaleRatio = 0.4;
+        else usefulScaleRatio = 0.16;
+      }
+    } else {
+      minPickupRatio = !minimumPickup ? 0.4 : minimumPickup <= 50 ? 0.78 : minimumPickup <= 150 ? 0.45 : 0.15;
+      usefulScaleRatio = !availableTons ? 0.3 : availableTons <= 150 ? 0.75 : availableTons <= 1000 ? 0.58 : 0.4;
     }
+    var quantityRatio = (minPickupRatio * 0.55) + (usefulScaleRatio * 0.45);
+    score += MATCH_WEIGHTS.quantity * quantityRatio;
+    addMatchReason(reasons, MATCH_WEIGHTS.quantity, quantityRatio, quantityRatio >= 0.72 ? 'Practical pickup and scale fit' : 'Supply scale is workable', quantityRatio <= 0.2 ? 'Pickup scale looks impractical' : 'Supply scale is only a partial fit');
 
+    possible += MATCH_WEIGHTS.loading;
     if (Array.isArray(profile.loadingEquipment) && profile.loadingEquipment.length) {
-      possible += MATCH_WEIGHTS.loading;
-      if (!listing.loadingType) {
-        score += MATCH_WEIGHTS.loading * 0.2;
-      } else if (listing.loadingType === 'pile' || listing.loadingType === 'stacked') {
-        score += MATCH_WEIGHTS.loading;
-      } else {
-        score += MATCH_WEIGHTS.loading * 0.55;
-      }
+      var loadingRatio = 0.12;
+      if (!listing.loadingType) loadingRatio = 0.06;
+      else if (listing.loadingType === 'pile' || listing.loadingType === 'stacked') loadingRatio = 1;
+      else if (listing.loadingType === 'trailer' || listing.loadingType === 'container') loadingRatio = 0.5;
+      else loadingRatio = 0.2;
+      score += MATCH_WEIGHTS.loading * loadingRatio;
+      addMatchReason(reasons, MATCH_WEIGHTS.loading, loadingRatio, loadingRatio >= 0.75 ? 'Easy loading setup' : 'Loading looks workable', loadingRatio <= 0.15 ? 'Loading setup may slow operations' : 'Loading setup is only a partial fit');
+    } else {
+      score += MATCH_WEIGHTS.loading * 0.08;
+      addMatchReason(reasons, MATCH_WEIGHTS.loading, 0.08, 'Loading fit looks workable', 'Loading preferences not specified');
     }
 
     possible += MATCH_WEIGHTS.verification;
     if (listing.verifiedLevel2) {
       score += MATCH_WEIGHTS.verification;
-      breakdown.push('Trusted supplier');
+      addMatchReason(reasons, MATCH_WEIGHTS.verification, 1, 'Trusted supplier', 'Supplier trust is still developing');
     } else if (listing.verifiedLevel1 || listing.supplierVerified || listing.verified) {
-      score += MATCH_WEIGHTS.verification * 0.75;
-      breakdown.push('Verified supplier');
+      score += MATCH_WEIGHTS.verification * 0.68;
+      addMatchReason(reasons, MATCH_WEIGHTS.verification, 0.68, 'Verified supplier', 'Supplier trust is still developing');
     } else {
-      score += MATCH_WEIGHTS.verification * 0.15;
+      score += MATCH_WEIGHTS.verification * 0.02;
+      addMatchReason(reasons, MATCH_WEIGHTS.verification, 0.02, 'Supplier trust looks solid', 'Unverified supplier');
     }
 
     possible += MATCH_WEIGHTS.availability;
     var availabilityFactor = scoreAvailabilityFactor(listing);
     score += availabilityFactor.score;
-    if (availabilityFactor.summary) breakdown.push(availabilityFactor.summary);
+    addMatchReason(
+      reasons,
+      MATCH_WEIGHTS.availability,
+      availabilityFactor.score / MATCH_WEIGHTS.availability,
+      availabilityFactor.summary === 'Available now' ? 'Available now' : availabilityFactor.summary,
+      availabilityFactor.summary === 'Availability not specified' ? 'Availability uncertain' : availabilityFactor.summary
+    );
 
     return {
-      hardRejected: hardReasons.length > 0,
-      hardReasons: hardReasons,
       score: possible > 0 ? Math.round((score / possible) * 100) : 0,
-      breakdown: breakdown.slice(0, 3)
+      breakdown: topMatchReasons(reasons)
     };
   }
 
@@ -444,7 +508,6 @@
       l._match = evaluateListingMatch(l, matchingProfile);
       l._matchScore = l._match ? l._match.score : null;
       l._matchSummary = l._match && l._match.breakdown.length ? l._match.breakdown.join(' · ') : '';
-      if (l._match && l._match.hardRejected) return false;
       if (f.biomassType && l.biomassType !== f.biomassType &&
           !(l.biomassTypes && l.biomassTypes.indexOf(f.biomassType) !== -1)) return false;
       if (f.contaminationMax) {
@@ -557,7 +620,7 @@
     '</div>';
 
     var availHtml = '<div style="margin-top:var(--space-2)">' + renderAvailabilityIndicator(l) + '</div>';
-    var matchHtml = l._match && !l._match.hardRejected
+    var matchHtml = l._match
       ? '<div class="biomass-match-row"><span class="biomass-match-pill">' + l._matchScore + '% match</span>' +
           (l._matchSummary ? '<span class="biomass-match-text">' + l._matchSummary + '</span>' : '') +
         '</div>'
