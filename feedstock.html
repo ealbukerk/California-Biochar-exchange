@@ -97,6 +97,21 @@
     </div>
   </section>
 
+  <section class="partner-questions-section">
+    <div class="container">
+      <div class="partner-question-grid">
+        <a href="#supported-partners" class="partner-question-card">
+          <span class="partner-question-icon">❓</span>
+          <span class="partner-question-text">What is an aggregator?</span>
+        </a>
+        <a href="#supported-partners" class="partner-question-card">
+          <span class="partner-question-icon">🤝</span>
+          <span class="partner-question-text">How do Supported Partners work?</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <section class="listings-section">
     <div class="container">
       <div id="panel-supply">
@@ -146,12 +161,12 @@
             <option value="4">Max score 4</option>
             <option value="5">Max score 5</option>
           </select>
-          <div style="display:flex;align-items:center;gap:var(--space-3);height:42px">
-            <label style="display:flex;align-items:center;gap:var(--space-2);font-size:var(--font-size-sm);cursor:pointer;height:42px">
-              <input type="checkbox" id="filter-verified-only" style="accent-color:var(--color-accent)" />
+          <div class="filter-inline-row">
+            <label class="filter-inline-label">
+              <input type="checkbox" id="filter-verified-only" class="filter-inline-checkbox" />
               Verified only
             </label>
-            <select id="filter-radius" style="height:42px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);font-family:inherit;background:var(--color-surface)">
+            <select id="filter-radius" class="filter-inline-select">
               <option value="0">Any distance</option>
               <option value="25">Within 25 mi</option>
               <option value="50">Within 50 mi</option>
@@ -163,41 +178,15 @@
         </div>
       </div>
 
-      <div id="aggregator-section" style="margin-bottom:var(--space-8)">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:var(--space-4)">
-          <div>
-            <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin:0">These suppliers collect, process, and test material from multiple operations — providing bulk loads with verified specs.</p>
-          </div>
-        </div>
-        <div id="aggregator-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-4)"></div>
-        <div id="aggregator-empty" style="display:none;font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators listed in this area yet.</div>
-      </div>
-
-      <div class="intake-card" style="margin-bottom:var(--space-8)">
-        <div style="font-weight:600;font-size:var(--font-size-sm);margin-bottom:4px">🌾 Need to move biomass into the marketplace?</div>
-        <div style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-4)">Use your saved profile to either find the right aggregator nearby or jump straight into listing biomass supply. We only ask for listing-specific details here — not your business profile again.</div>
-        <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;align-items:flex-end">
-          <div class="filter-group" style="min-width:190px">
+      <div class="intake-card intake-card--spaced">
+        <div class="intake-card-title">🌾 Need to move biomass into the marketplace?</div>
+        <div class="intake-card-copy">Use your saved profile to choose between supported partner pathways and direct biomass listing. We only ask for listing-specific details here — not your business profile again.</div>
+        <div class="intake-profile-row">
+          <div class="filter-group intake-zip-group">
             <span class="filter-group-label">Profile ZIP</span>
-            <div style="height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-bg);display:flex;align-items:center;color:var(--color-text-secondary)">
+            <div class="intake-zip-display">
               <span id="farmer-zip-display">Use your saved ZIP</span>
             </div>
-          </div>
-          <div class="filter-group">
-            <span class="filter-group-label">Material type</span>
-            <select id="farmer-type" style="height:38px;border:1px solid var(--color-border);border-radius:var(--radius-md);padding:0 var(--space-3);font-size:var(--font-size-sm);background:var(--color-surface)">
-              <option value="">Any type</option>
-              <option value="orchard_prunings">Orchard prunings</option>
-              <option value="almond_shells">Almond shells</option>
-              <option value="walnut_shells">Walnut shells</option>
-              <option value="pistachio_shells">Pistachio shells</option>
-              <option value="corn_stover">Corn stover</option>
-              <option value="rice_husks">Rice husks</option>
-              <option value="forestry_slash">Forestry slash</option>
-              <option value="logging_residue">Logging residue</option>
-              <option value="clean_wood_waste">Clean wood waste</option>
-              <option value="tree_service_chips">Tree service chips</option>
-            </select>
           </div>
         </div>
         <div id="intake-state" class="intake-state">
@@ -205,10 +194,33 @@
           <p id="intake-state-copy" class="intake-state-copy">We’ll look at your saved supplier type and ZIP to route you into the most useful biomass intake path.</p>
         </div>
         <div class="intake-actions">
-          <button id="farmer-find-btn" style="height:38px;padding:0 var(--space-5);background:#7A5C1E;color:white;border:none;border-radius:var(--radius-md);font-size:var(--font-size-sm);font-weight:600;cursor:pointer;white-space:nowrap">Find aggregators →</button>
+          <button id="farmer-find-btn" class="intake-primary-btn">See supported partners →</button>
           <a id="intake-secondary-link" href="list-feedstock.html" class="intake-link-btn">List biomass supply</a>
         </div>
-        <div id="farmer-results" style="display:none;margin-top:var(--space-4)"></div>
+      </div>
+
+      <div id="supported-partners" class="surface-card supported-partners-card">
+        <div class="supported-partners-header">
+          <div class="supported-partners-copy">
+            <h2 class="supported-partners-title">Supported Partners</h2>
+            <p class="supported-partners-text">Supported partners help move fragmented biomass into usable commercial supply. They are not example listings or guaranteed inventory. The platform can connect smaller sellers to partners who consolidate, coordinate hauling, and help standardize material before it reaches processors and buyers.</p>
+          </div>
+          <a href="list-feedstock.html" class="btn btn-secondary supported-partners-cta">List biomass supply</a>
+        </div>
+        <div class="supported-partners-grid">
+          <div class="supported-partner-panel">
+            <div class="supported-partner-panel-title">What is an aggregator?</div>
+            <div class="supported-partner-panel-text">An aggregator combines smaller biomass sources into larger, schedulable loads so buyers and processors can source material without managing dozens of separate pickups.</div>
+          </div>
+          <div class="supported-partner-panel">
+            <div class="supported-partner-panel-title">How supported partners help</div>
+            <div class="supported-partner-panel-text">They can coordinate supply windows, arrange logistics, and help connect fragmented sellers to processors when direct listing is not yet the best operational fit.</div>
+          </div>
+          <div class="supported-partner-panel">
+            <div class="supported-partner-panel-title">When to use a direct listing</div>
+            <div class="supported-partner-panel-text">If you already control enough consistent material and can describe the listing clearly, publish directly to the marketplace and let buyers contact you without an extra partner layer.</div>
+          </div>
+        </div>
       </div>
 
       <h2 style="margin-bottom:var(--space-6)">All feedstock listings</h2>
@@ -230,249 +242,6 @@
       </div>
       -->
     </div>
-    <script>
-      var aggBtn = document.getElementById('agg-find-btn');
-      if (aggBtn) aggBtn.addEventListener('click', function() {
-        var zip = document.getElementById('agg-zip').value.trim();
-        var type = document.getElementById('agg-biomass-type').value;
-        var resultsEl = document.getElementById('agg-results');
-        if (!zip || zip.length < 5) { resultsEl.style.display = 'none'; return; }
-        resultsEl.style.display = 'block';
-        resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
-
-        function geoZip(z) {
-          var cache = window._zipGeoCache || (window._zipGeoCache = {});
-          if (cache[z]) return cache[z];
-          var p = fetch('https://api.zippopotam.us/us/' + z)
-            .then(function(r) { return r.json(); })
-            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
-          cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
-          return cache[z];
-        }
-        function hav(a, b) {
-          var R = 3958.8, dLat = (b.lat-a.lat)*Math.PI/180, dLng = (b.lng-a.lng)*Math.PI/180;
-          var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
-          return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
-        }
-
-        geoZip(zip).then(function(myCoords) {
-          var db = firebase.firestore();
-          var query = db.collection('feedstock_listings')
-            .where('status', '==', 'active')
-            .where('supplierType', 'in', ['aggregator', 'broker']);
-          query.get().then(function(snap) {
-            var matches = [];
-            var checks = [];
-            snap.forEach(function(doc) {
-              var d = doc.data(); d._id = doc.id;
-              if (type && d.biomassTypes && d.biomassTypes.indexOf(type) === -1 && d.biomassType !== type) return;
-              if (!d.locationZip) return;
-              checks.push(geoZip(d.locationZip).then(function(c) {
-                var dist = Math.round(hav(myCoords, c));
-                matches.push({ d: d, dist: dist });
-              }).catch(function() {}));
-            });
-            Promise.all(checks).then(function() {
-              matches.sort(function(a,b) { return a.dist - b.dist; });
-              if (!matches.length) {
-                resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
-                return;
-              }
-              var BIOMASS_LABELS = { orchard_prunings:'Orchard prunings', almond_shells:'Almond shells', walnut_shells:'Walnut shells', pistachio_shells:'Pistachio shells', corn_stover:'Corn stover', rice_husks:'Rice husks', forestry_slash:'Forestry slash', logging_residue:'Logging residue', clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips' };
-              resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--space-3);margin-top:var(--space-2)">' +
-                matches.slice(0,3).map(function(m) {
-                  var types = (m.d.biomassTypes || [m.d.biomassType]).slice(0,3).map(function(t) { return '<span style="font-size:10px;padding:1px 6px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:10px">' + (BIOMASS_LABELS[t]||t) + '</span>'; }).join(' ');
-                  return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
-                    '<div style="font-weight:700;font-size:var(--font-size-sm);margin-bottom:2px">' + (m.d.company||m.d.supplierName||'Aggregator') + '</div>' +
-                    '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + m.dist + ' mi away &nbsp;·&nbsp; ZIP ' + m.d.locationZip + '</div>' +
-                    '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:var(--space-3)">' + types + '</div>' +
-                    '<a href="mailto:' + (m.d.contactEmail||'') + '?subject=Biomass inquiry from operation ZIP ' + zip + '" style="display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600">Contact →</a>' +
-                  '</div>';
-                }).join('') +
-              '</div>';
-            });
-          }).catch(function() {
-            resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Could not load aggregators. Try again.</p>';
-          });
-        }).catch(function() {
-          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">ZIP code not found.</p>';
-        });
-      });
-    </script>
-    <script>
-      (function() {
-        var PRICE_RANGES = {
-          almond_shells: '$30–55/ton', walnut_shells: '$28–50/ton',
-          pistachio_shells: '$25–45/ton', orchard_prunings: '$15–35/ton',
-          corn_stover: '$20–40/ton', rice_husks: '$18–38/ton',
-          forestry_slash: '$10–25/ton', logging_residue: '$8–22/ton',
-          clean_wood_waste: '$12–28/ton', tree_service_chips: '$0–20/ton'
-        };
-        var BIOMASS_LABELS = {
-          orchard_prunings:'Orchard prunings', almond_shells:'Almond shells',
-          walnut_shells:'Walnut shells', pistachio_shells:'Pistachio shells',
-          corn_stover:'Corn stover', rice_husks:'Rice husks',
-          forestry_slash:'Forestry slash', logging_residue:'Logging residue',
-          clean_wood_waste:'Clean wood waste', tree_service_chips:'Tree service chips'
-        };
-
-        function isAggregatorType(type) {
-          return type === 'aggregator' || type === 'broker';
-        }
-
-        function geoZip(z) {
-          var cache = window._zipGeoCache || (window._zipGeoCache = {});
-          if (cache[z]) return cache[z];
-          var p = fetch('https://api.zippopotam.us/us/' + z)
-            .then(function(r) { return r.json(); })
-            .then(function(d) { return { lat: parseFloat(d.places[0].latitude), lng: parseFloat(d.places[0].longitude) }; });
-          cache[z] = p.catch(function(err) { delete cache[z]; throw err; });
-          return cache[z];
-        }
-
-        function hav(a, b) {
-          var R = 3958.8, dLat=(b.lat-a.lat)*Math.PI/180, dLng=(b.lng-a.lng)*Math.PI/180;
-          var x = Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)*Math.sin(dLng/2);
-          return Math.round(R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x)));
-        }
-
-        function runAggregatorSearch(zip, type) {
-          var resultsEl = document.getElementById('farmer-results');
-          resultsEl.style.display = 'block';
-          resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Searching...</p>';
-
-          return geoZip(zip).then(function(myCoords) {
-            return firebase.firestore().collection('feedstock_listings')
-              .where('status', '==', 'active')
-              .where('supplierType', 'in', ['aggregator', 'broker'])
-              .get()
-              .then(function(snap) {
-                var checks = [];
-                var all = [];
-                snap.forEach(function(doc) { var d = doc.data(); d._id = doc.id; all.push(d); });
-                all.forEach(function(d) {
-                  if (!d.locationZip) return;
-                  checks.push(geoZip(d.locationZip).then(function(c) {
-                    d._dist = hav(myCoords, c);
-                  }).catch(function() {}));
-                });
-                return Promise.all(checks).then(function() {
-                  var sorted = all.filter(function(d) { return typeof d._dist === 'number'; });
-                  sorted.sort(function(a, b) { return a._dist - b._dist; });
-                  var top = sorted.slice(0, 3);
-                  if (!top.length) {
-                    resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">No aggregators found near ' + zip + ' yet. <a href="list-feedstock.html" style="color:#7A5C1E;font-weight:600">List your material directly →</a></p>';
-                    return;
-                  }
-                  resultsEl.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--space-3)">' +
-                    top.map(function(d) {
-                      var accepts = d.biomassTypes || (d.biomassType ? [d.biomassType] : []);
-                      var typeMatch = !type || accepts.indexOf(type) !== -1;
-                      var typeNote = typeMatch
-                        ? (type ? '<span style="font-size:11px;color:#3D6B45;font-weight:600">✓ Accepts ' + (BIOMASS_LABELS[type]||type) + '</span>' : '')
-                        : '<span style="font-size:11px;color:#B87333">Accepts: ' + accepts.slice(0,3).map(function(t){ return BIOMASS_LABELS[t]||t; }).join(', ') + ' only</span>';
-                      var priceEst = type && PRICE_RANGES[type] ? '<div style="font-size:var(--font-size-xs);color:#3D6B45;font-weight:600;margin-top:4px">Est. price: ' + PRICE_RANGES[type] + '</div>' : '';
-                      var contactStyle = typeMatch
-                        ? 'display:block;text-align:center;padding:var(--space-2);background:#7A5C1E;color:white;border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)'
-                        : 'display:block;text-align:center;padding:var(--space-2);background:var(--color-border);color:var(--color-text-muted);border-radius:var(--radius-md);text-decoration:none;font-size:var(--font-size-xs);font-weight:600;margin-top:var(--space-3)';
-                      var subject = type
-                        ? 'Biomass inquiry — ' + (BIOMASS_LABELS[type]||type) + ' from ZIP ' + zip
-                        : 'Biomass inquiry from ZIP ' + zip;
-                      return '<div style="background:var(--color-surface);border:1px solid #7A5C1E30;border-radius:var(--radius-md);padding:var(--space-4)">' +
-                        '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (d.company||d.supplierName||'Aggregator') + '</div>' +
-                        '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-bottom:var(--space-2)">' + d._dist + ' mi away · ZIP ' + (d.locationZip||'') + '</div>' +
-                        '<div style="margin-bottom:4px">' + typeNote + '</div>' +
-                        priceEst +
-                        '<a href="mailto:' + (d.contactEmail||'') + '?subject=' + encodeURIComponent(subject) + '" style="' + contactStyle + '">' + (typeMatch ? 'Contact →' : 'Request exception →') + '</a>' +
-                      '</div>';
-                    }).join('') +
-                  '</div>';
-                });
-              });
-          }).catch(function() {
-            resultsEl.innerHTML = '<p style="font-size:var(--font-size-sm);color:var(--color-text-muted)">Could not load aggregators from your profile ZIP. Please verify your ZIP in profile settings.</p>';
-          });
-        }
-
-        function configureIntake(profile, user) {
-          var zipDisplay = document.getElementById('farmer-zip-display');
-          var stateTitle = document.getElementById('intake-state-title');
-          var stateCopy = document.getElementById('intake-state-copy');
-          var primary = document.getElementById('farmer-find-btn');
-          var secondary = document.getElementById('intake-secondary-link');
-          var resultsEl = document.getElementById('farmer-results');
-          var zipcode = profile && profile.zipcode ? String(profile.zipcode).trim() : '';
-          var supplierType = profile && profile.supplierType ? String(profile.supplierType).trim() : '';
-
-          if (zipDisplay) zipDisplay.textContent = zipcode || (user ? 'Add your ZIP in profile' : 'Sign in to use your profile ZIP');
-          if (resultsEl) {
-            resultsEl.style.display = 'none';
-            resultsEl.innerHTML = '';
-          }
-
-          if (!user) {
-            stateTitle.textContent = 'Sign in to use the biomass seller intake.';
-            stateCopy.textContent = 'We’ll use your saved ZIP and supplier profile to route you to the right next step without asking for duplicate business details.';
-            primary.textContent = 'Sign in →';
-            primary.onclick = function() { window.location.href = 'auth.html'; };
-            secondary.textContent = 'Browse aggregators';
-            secondary.href = '#aggregator-section';
-            return;
-          }
-
-          if (!zipcode) {
-            stateTitle.textContent = 'Add your ZIP to unlock nearby aggregator search.';
-            stateCopy.textContent = 'ZIP is profile-owned in this flow, so once you save it in profile we can route you straight into nearby aggregator matches.';
-            primary.textContent = 'Update profile →';
-            primary.onclick = function() { window.location.href = 'settings.html'; };
-            secondary.textContent = 'List biomass supply';
-            secondary.href = 'list-feedstock.html';
-            return;
-          }
-
-          if (isAggregatorType(supplierType)) {
-            stateTitle.textContent = 'Your profile is set up as an aggregator.';
-            stateCopy.textContent = 'Best next step: publish a bulk biomass listing. You can also review current aggregator supply nearby to compare pricing and accepted material types.';
-            primary.textContent = 'List bulk supply →';
-            primary.onclick = function() { window.location.href = 'list-feedstock.html'; };
-            secondary.textContent = 'See aggregator listings';
-            secondary.href = '#aggregator-section';
-            return;
-          }
-
-          if (!supplierType) {
-            stateTitle.textContent = 'Add your supplier type to tailor this intake.';
-            stateCopy.textContent = 'Supplier type is profile-owned. Once it is saved, we can tell whether the best next step is nearby aggregator matching or going straight to a biomass supply listing.';
-            primary.textContent = 'Update profile →';
-            primary.onclick = function() { window.location.href = 'settings.html'; };
-            secondary.textContent = 'List biomass supply';
-            secondary.href = 'list-feedstock.html';
-            return;
-          }
-
-          stateTitle.textContent = 'Find the best aggregator or list supply directly.';
-          stateCopy.textContent = 'We’ll use your saved supplier type and ZIP to find nearby aggregators. If you already have enough volume, you can jump straight into a biomass listing instead.';
-          primary.textContent = 'Find aggregators →';
-          primary.onclick = function() {
-            runAggregatorSearch(zipcode, document.getElementById('farmer-type').value);
-          };
-          secondary.textContent = 'List biomass supply';
-          secondary.href = 'list-feedstock.html';
-        }
-
-        firebase.auth().onAuthStateChanged(function(user) {
-          if (!user) {
-            configureIntake(null, null);
-            return;
-          }
-          firebase.firestore().collection('users').doc(user.uid).get().then(function(doc) {
-            configureIntake(doc.exists ? doc.data() : {}, user);
-          }).catch(function() {
-            configureIntake({}, user);
-          });
-        });
-      })();
-    </script>
   </section>
 
   <section class="map-section">
@@ -511,6 +280,7 @@
   <script src="js/auth-state.js"></script>
   <script src="js/feedstock-data.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="js/delivered-cost.js"></script>
   <script src="js/feedstock.js"></script>
 </body>
 </html>

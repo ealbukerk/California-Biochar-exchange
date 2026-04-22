@@ -553,7 +553,6 @@
       });
     }
     _allFilteredListings = state.filtered.slice();
-    renderAggregatorSection();
     renderGrid();
   }
 
@@ -660,44 +659,6 @@
         '</div>' +
       '</a>' +
     '</div>';
-  }
-
-  function renderAggregatorSection() {
-    var grid = document.getElementById('aggregator-grid');
-    var empty = document.getElementById('aggregator-empty');
-    if (!grid || !empty) return;
-    var aggregators = state.listings.filter(function (listing) {
-      return listing.supplierType === 'aggregator' || listing.supplierType === 'broker';
-    }).sort(function (a, b) {
-      if (typeof a._dist === 'number' && typeof b._dist === 'number') return a._dist - b._dist;
-      var ta = a.createdAt && a.createdAt.toMillis ? a.createdAt.toMillis() : 0;
-      var tb = b.createdAt && b.createdAt.toMillis ? b.createdAt.toMillis() : 0;
-      return tb - ta;
-    }).slice(0, 3);
-
-    if (!aggregators.length) {
-      grid.innerHTML = '';
-      empty.style.display = 'block';
-      return;
-    }
-
-    empty.style.display = 'none';
-    grid.innerHTML = aggregators.map(function (listing) {
-      var types = (listing.biomassTypes || [listing.biomassType]).slice(0, 3).map(function (type) {
-        return '<span style="font-size:10px;padding:1px 6px;background:rgba(122,92,30,0.1);color:#7A5C1E;border-radius:10px">' + (BIOMASS_LABELS[type] || type) + '</span>';
-      }).join(' ');
-      var distanceLabel = typeof listing._dist === 'number'
-        ? listing._dist + ' mi away'
-        : 'Location available';
-      return '<div style="background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3)">' +
-        '<div>' +
-          '<div style="font-weight:700;font-size:var(--font-size-sm)">' + (listing.company || listing.supplierName || 'Aggregator') + '</div>' +
-          '<div style="font-size:var(--font-size-xs);color:var(--color-text-muted);margin-top:2px">' + distanceLabel + ' · ZIP ' + (listing.locationZip || '') + '</div>' +
-        '</div>' +
-        '<div style="display:flex;flex-wrap:wrap;gap:4px">' + types + '</div>' +
-        '<a href="feedstock-listing.html?id=' + encodeURIComponent(listing._id || listing.id || '') + '" class="btn btn-secondary" style="justify-content:center">View listing</a>' +
-      '</div>';
-    }).join('');
   }
 
   var fsCompareList = [];
@@ -831,8 +792,38 @@
 
   function injectDeliveredCosts() {
     var profile = window.AuthState && window.AuthState.profile ? window.AuthState.profile : null;
-    if (!profile || !profile.zipcode || !window.DeliveredCost) return;
-    state.filtered.slice(0, _currentPage * LISTINGS_PAGE_SIZE).forEach(function (listing) {
+    var visibleListings = (_allFilteredListings || []).slice(0, _currentPage * LISTINGS_PAGE_SIZE);
+    if (!window.DeliveredCost) {
+      visibleListings.forEach(function (listing) {
+        var targetEl = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
+        if (targetEl) {
+          targetEl.classList.add('muted');
+          targetEl.textContent = 'Cost unavailable';
+        }
+      });
+      return;
+    }
+    if (!(window.AuthState && window.AuthState.user)) {
+      visibleListings.forEach(function (listing) {
+        var targetEl = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
+        if (targetEl) {
+          targetEl.classList.add('muted');
+          targetEl.textContent = 'Sign in to see delivered cost';
+        }
+      });
+      return;
+    }
+    if (!profile || !profile.zipcode) {
+      visibleListings.forEach(function (listing) {
+        var targetEl = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
+        if (targetEl) {
+          targetEl.classList.add('muted');
+          targetEl.textContent = 'Add your ZIP in profile to see delivered cost';
+        }
+      });
+      return;
+    }
+    visibleListings.forEach(function (listing) {
       var target = document.getElementById('fs-dc-' + String(listing._id || listing.id || '').replace(/[^a-zA-Z0-9_-]/g, ''));
       if (!target || !listing.locationZip) return;
       target.classList.add('muted');
@@ -853,6 +844,71 @@
         target.textContent = 'Cost unavailable';
       });
     });
+  }
+
+  function configureSupportedPartnerIntake(user, profile) {
+    var zipDisplay = document.getElementById('farmer-zip-display');
+    var stateTitle = document.getElementById('intake-state-title');
+    var stateCopy = document.getElementById('intake-state-copy');
+    var primary = document.getElementById('farmer-find-btn');
+    var secondary = document.getElementById('intake-secondary-link');
+    if (!zipDisplay || !stateTitle || !stateCopy || !primary || !secondary) return;
+
+    var zipcode = profile && profile.zipcode ? String(profile.zipcode).trim() : '';
+    var supplierType = profile && profile.supplierType ? String(profile.supplierType).trim() : '';
+    var isAggregator = supplierType === 'aggregator' || supplierType === 'broker';
+
+    zipDisplay.textContent = zipcode || (user ? 'Add your ZIP in profile' : 'Sign in to use your profile ZIP');
+
+    if (!user) {
+      stateTitle.textContent = 'Sign in to use the biomass intake.';
+      stateCopy.textContent = 'We use your saved ZIP and supplier profile to route you to the right next step without asking for duplicate business details.';
+      primary.textContent = 'Sign in →';
+      primary.onclick = function () { window.location.href = 'auth.html'; };
+      secondary.textContent = 'What is an aggregator?';
+      secondary.href = '#supported-partners';
+      return;
+    }
+
+    if (!zipcode) {
+      stateTitle.textContent = 'Add your ZIP to unlock partner guidance.';
+      stateCopy.textContent = 'ZIP is profile-owned in this flow. Once it is saved, we can route you toward the right supported partner path or direct listing path.';
+      primary.textContent = 'Update profile →';
+      primary.onclick = function () { window.location.href = 'settings.html'; };
+      secondary.textContent = 'What is an aggregator?';
+      secondary.href = '#supported-partners';
+      return;
+    }
+
+    if (isAggregator) {
+      stateTitle.textContent = 'Your profile is set up as an aggregator.';
+      stateCopy.textContent = 'Best next step: publish a bulk biomass listing. Supported partners still explain how consolidated supply moves through the platform.';
+      primary.textContent = 'List bulk supply →';
+      primary.onclick = function () { window.location.href = 'list-feedstock.html'; };
+      secondary.textContent = 'See supported partners';
+      secondary.href = '#supported-partners';
+      return;
+    }
+
+    if (!supplierType) {
+      stateTitle.textContent = 'Add your supplier type to tailor this intake.';
+      stateCopy.textContent = 'Supplier type is profile-owned. Once it is saved, we can tell whether the best next step is direct listing or working through a supported partner.';
+      primary.textContent = 'Update profile →';
+      primary.onclick = function () { window.location.href = 'settings.html'; };
+      secondary.textContent = 'See supported partners';
+      secondary.href = '#supported-partners';
+      return;
+    }
+
+    stateTitle.textContent = 'Choose the best biomass path for your operation.';
+    stateCopy.textContent = 'Use supported partners if you need consolidation help, or jump straight into a biomass listing if you already have enough consistent volume.';
+    primary.textContent = 'See supported partners →';
+    primary.onclick = function () {
+      var section = document.getElementById('supported-partners');
+      if (section && section.scrollIntoView) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    secondary.textContent = 'List biomass supply';
+    secondary.href = 'list-feedstock.html';
   }
 
   function openModal(id) {
@@ -1269,6 +1325,7 @@
     initMap();
     if (window.AuthState && typeof window.AuthState.onReady === 'function') {
       window.AuthState.onReady(function(user, profile) {
+        configureSupportedPartnerIntake(user, profile);
         if (profile && profile.zipcode) {
           var radiusEl = document.getElementById('filter-radius');
           if (radiusEl && radiusEl.value === '0') radiusEl.value = '100';
@@ -1291,6 +1348,7 @@
           });
         }
         firebase.firestore().collection('users').doc(user.uid).get().then(function (doc) {
+          configureSupportedPartnerIntake(user, doc.exists ? doc.data() : {});
           if (doc.exists && doc.data().zipcode) {
             var z = doc.data().zipcode;
             var radiusEl = document.getElementById('filter-radius');
@@ -1305,6 +1363,8 @@
           }
           if (typeof window._centerMapOnUser === 'function') window._centerMapOnUser();
         });
+      } else {
+        configureSupportedPartnerIntake(null, null);
       }
       loadListings();
     });

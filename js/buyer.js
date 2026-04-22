@@ -997,20 +997,57 @@
     renderBrowseListings();
   }
 
+  function setBrowseDeliveredPlaceholder(message) {
+    var els = document.querySelectorAll('[id^="dc-"]');
+    Array.prototype.forEach.call(els, function (el) {
+      el.classList.add('muted');
+      el.textContent = message;
+    });
+  }
+
+  function estimateBiocharOrderTonnage(listing) {
+    var acreage = Number(state.profile && state.profile.acreage) || 0;
+    var appRateSlider = document.getElementById('pref-apprate-slider');
+    var applicationRate = appRateSlider ? (parseFloat(appRateSlider.value) || 0) : (Number(state.profile && state.profile.applicationRate) || 0);
+    var estimatedNeed = acreage > 0 && applicationRate > 0 ? Math.round(acreage * applicationRate) : 0;
+    var minOrder = Number(listing.minOrderTonnes) || 1;
+    var available = Number(listing.availableTonnes) || minOrder;
+    if (estimatedNeed > 0) {
+      return Math.max(minOrder, Math.min(available, estimatedNeed));
+    }
+    return Math.max(minOrder, Math.min(available, Math.max(minOrder, 10)));
+  }
+
   function injectDeliveredCosts() {
-    if (!state.profile || !state.profile.zipcode) return;
+    if (!window.DeliveredCost) {
+      setBrowseDeliveredPlaceholder('Cost unavailable');
+      return;
+    }
+    if (!state.user) {
+      setBrowseDeliveredPlaceholder('Sign in to see delivered cost');
+      return;
+    }
+    if (!state.profile || !state.profile.zipcode) {
+      setBrowseDeliveredPlaceholder('Add your ZIP in profile to see delivered cost');
+      return;
+    }
     var buyerZip = state.profile.zipcode;
     var appRateSlider = document.getElementById('pref-apprate-slider');
-    var appRate = appRateSlider ? (parseFloat(appRateSlider.value) || 7) : (state.profile.applicationRate || 7);
+    var appRate = appRateSlider ? (parseFloat(appRateSlider.value) || 0) : (Number(state.profile.applicationRate) || 0);
     var slider = document.getElementById('pref-spread-slider');
-    var spreadCost = slider ? (parseFloat(slider.value) || 60) : (state.profile.spreadCostPerTonne || 60);
-    getAllListings().forEach(function(listing) {
+    var spreadCost = slider ? (parseFloat(slider.value) || 0) : (Number(state.profile.spreadCostPerTonne) || 0);
+    (_allFilteredListings || []).slice(0, _currentPage * LISTINGS_PAGE_SIZE).forEach(function (entry) {
+      var listing = entry && entry.listing ? entry.listing : entry;
       var el = document.getElementById('dc-' + listing.id);
-      if (!el || !listing.producerZip) return;
+      if (!el) return;
+      if (!listing.producerZip) {
+        el.classList.add('muted');
+        el.textContent = 'Cost unavailable';
+        return;
+      }
       var targetTonnes = Math.max(
         Number(listing.minOrderTonnes) || 1,
-        Math.min(Number(listing.availableTonnes) || Number(listing.minOrderTonnes) || 1,
-          Math.round((Number(state.profile.acreage || 0) * Number(appRate || 0)) || 0))
+        Number(estimateBiocharOrderTonnage(listing)) || 1
       );
       el.classList.remove('muted');
       el.textContent = 'Calculating...';
@@ -1019,27 +1056,18 @@
         moisturePercent: listing.scorecard ? listing.scorecard.moisture : 0,
         feedstockType: listing.feedstock || 'default',
         isBiochar: true,
-        hasBiomassBackhaul: state.profile && state.profile.role === 'buyer' && state.profile.hasBiomassAvailable,
         buyerZip: buyerZip,
         pricePerTonne: listing.pricePerTonne,
         tonnes: targetTonnes,
         applicationRate: appRate,
         spreadCostPerTonne: spreadCost,
-        availableTonnes: listing.availableTonnes,
-        dryTonnes: targetTonnes
+        availableTonnes: listing.availableTonnes
       }).then(function(result) {
-        var backhaulSaving = '';
-        if (result.backhaulNote && state.profile && state.profile.hasBiomassAvailable) {
-          var savedCPT = Math.round(result.transportCostPerTonne * 0.35);
-          var netCPT = Math.round(result.deliveredPerTonne - savedCPT);
-          backhaulSaving = ' <span style="font-size:var(--font-size-xs);background:#ECFDF5;color:#065F46;border-radius:20px;padding:2px 8px;font-weight:600;white-space:nowrap">🔄 ~$' + netCPT + '/t with backhaul</span>';
-        }
         el.innerHTML = '<strong style="color:var(--color-text-primary)">~$' +
           Math.round(result.deliveredPerTonne) +
           '/t delivered</strong>' +
-          (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre' : '') +
-          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi · ' + targetTonnes + 't est.)</span>' +
-          backhaulSaving;
+          (result.costPerAcre ? ' · $' + Math.round(result.costPerAcre) + '/acre applied' : '') +
+          ' <span style="color:var(--color-text-muted)">(' + result.distance + ' mi · ' + targetTonnes + 't est.)</span>';
         var co2El = document.getElementById('co2cost-' + listing.id);
         if (co2El && result && result.deliveredPerTonne && listing.scorecard && listing.scorecard.carbonContent) {
           var co2PerTonne = listing.scorecard.carbonContent / 100 * 3.67;
@@ -1049,6 +1077,8 @@
       }).catch(function() {
         el.classList.add('muted');
         el.textContent = 'Cost unavailable';
+        var co2El = document.getElementById('co2cost-' + listing.id);
+        if (co2El) co2El.textContent = '';
       });
     });
   }
